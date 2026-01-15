@@ -97,6 +97,81 @@ export type Database = {
           },
         ]
       }
+      course_enrollments: {
+        Row: {
+          access_type: string
+          course_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          course_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          course_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "course_enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          cover_image_url: string | null
+          created_at: string
+          description_short: string | null
+          id: string
+          is_published: boolean
+          route_slug: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          cover_image_url?: string | null
+          created_at?: string
+          description_short?: string | null
+          id?: string
+          is_published?: boolean
+          route_slug: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          cover_image_url?: string | null
+          created_at?: string
+          description_short?: string | null
+          id?: string
+          is_published?: boolean
+          route_slug?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_content: {
         Row: {
           created_at: string
