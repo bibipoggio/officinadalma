@@ -513,9 +513,50 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      anonymous_reports: {
+        Row: {
+          checkin_id: string | null
+          created_at: string | null
+          id: string | null
+          reason: string | null
+          status: Database["public"]["Enums"]["report_status"] | null
+        }
+        Insert: {
+          checkin_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          reason?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+        }
+        Update: {
+          checkin_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          reason?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
+      get_anonymous_reports: {
+        Args: { p_status?: Database["public"]["Enums"]["report_status"] }
+        Returns: {
+          checkin_id: string
+          created_at: string
+          id: string
+          reason: string
+          status: Database["public"]["Enums"]["report_status"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
