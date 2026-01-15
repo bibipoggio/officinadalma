@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-
+import logoOfficina from "@/assets/logo_officina.jpg";
 interface FormErrors {
   email?: string;
   password?: string;
@@ -85,8 +85,21 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-md shadow-card">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Background with logo */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${logoOfficina})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      {/* Overlay for better contrast */}
+      <div className="absolute inset-0 z-0 bg-background/85 backdrop-blur-sm" />
+      
+      <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-display">Entrar</CardTitle>
           <CardDescription>
