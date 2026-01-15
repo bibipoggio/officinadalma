@@ -7,59 +7,74 @@
 
 @layer base {
   :root {
-    /* Core palette - amethyst purple, cool whites */
-    --background: 0 0% 100%;
-    --foreground: 260 15% 12%;
+    /* Core palette - crystal violet, amber, soft rose inspired by sacred geometry */
+    --background: 250 30% 98%;
+    --foreground: 260 20% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 260 15% 12%;
+    --card-foreground: 260 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 15% 12%;
+    --popover-foreground: 260 20% 15%;
 
-    /* Amethyst Purple - primary brand color */
-    --primary: 270 50% 45%;
+    /* Crystal Violet - primary brand color */
+    --primary: 265 55% 55%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light purple secondary */
-    --secondary: 270 30% 95%;
-    --secondary-foreground: 270 50% 35%;
+    /* Light lavender secondary */
+    --secondary: 265 40% 94%;
+    --secondary-foreground: 265 50% 40%;
 
-    --muted: 260 10% 96%;
-    --muted-foreground: 260 10% 45%;
+    --muted: 255 20% 95%;
+    --muted-foreground: 260 15% 45%;
 
-    /* Soft ethereal accent */
-    --accent: 270 40% 92%;
-    --accent-foreground: 270 50% 35%;
+    /* Soft rose accent */
+    --accent: 320 40% 92%;
+    --accent-foreground: 320 45% 40%;
 
     --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 15% 90%;
-    --input: 260 15% 90%;
-    --ring: 270 50% 45%;
+    --border: 255 25% 88%;
+    --input: 255 25% 88%;
+    --ring: 265 55% 55%;
 
     --radius: 0.625rem;
 
-    /* Custom tokens for Officina */
-    --amethyst: 270 50% 45%;
-    --amethyst-light: 270 40% 92%;
-    --amethyst-dark: 270 50% 35%;
-    --amethyst-glow: 270 60% 70%;
+    /* Custom tokens for Officina da Alma - Crystal palette */
+    --crystal-violet: 265 55% 55%;
+    --crystal-violet-light: 265 45% 92%;
+    --crystal-violet-dark: 265 55% 40%;
+    --crystal-glow: 265 65% 72%;
     
-    --surface: 0 0% 100%;
-    --surface-elevated: 260 20% 98%;
+    /* Amber/Orange accent (from meditator's robe) */
+    --amber: 25 85% 55%;
+    --amber-light: 30 80% 92%;
+    --amber-dark: 20 80% 40%;
     
-    --gray-50: 260 10% 98%;
-    --gray-100: 260 10% 96%;
-    --gray-200: 260 10% 90%;
-    --gray-300: 260 10% 80%;
-    --gray-400: 260 10% 60%;
-    --gray-500: 260 10% 45%;
-    --gray-600: 260 10% 35%;
-    --gray-700: 260 10% 25%;
-    --gray-800: 260 15% 15%;
-    --gray-900: 260 15% 12%;
+    /* Rose/Magenta accent */
+    --rose: 320 50% 60%;
+    --rose-light: 320 45% 92%;
+    --rose-dark: 320 50% 45%;
+    
+    /* Rainbow glow for special effects */
+    --rainbow-start: 265 60% 70%;
+    --rainbow-mid: 320 50% 70%;
+    --rainbow-end: 25 80% 65%;
+    
+    --surface: 250 30% 99%;
+    --surface-elevated: 255 25% 97%;
+    
+    --gray-50: 255 15% 98%;
+    --gray-100: 255 15% 95%;
+    --gray-200: 255 12% 88%;
+    --gray-300: 255 10% 78%;
+    --gray-400: 255 10% 58%;
+    --gray-500: 255 10% 45%;
+    --gray-600: 255 12% 35%;
+    --gray-700: 255 15% 25%;
+    --gray-800: 260 18% 15%;
+    --gray-900: 260 20% 12%;
 
     /* States */
     --success: 145 60% 40%;
@@ -70,72 +85,81 @@
     --info: 210 80% 50%;
     --info-foreground: 0 0% 100%;
 
-    /* Shadows */
-    --shadow-soft: 0 2px 8px -2px hsl(260 15% 12% / 0.06);
-    --shadow-card: 0 4px 16px -4px hsl(260 15% 12% / 0.08);
-    --shadow-elevated: 0 8px 32px -8px hsl(260 15% 12% / 0.12);
-    --shadow-glow: 0 0 24px hsl(270 50% 45% / 0.15);
+    /* Shadows - crystal-inspired */
+    --shadow-soft: 0 2px 8px -2px hsl(265 30% 30% / 0.08);
+    --shadow-card: 0 4px 16px -4px hsl(265 30% 30% / 0.1);
+    --shadow-elevated: 0 8px 32px -8px hsl(265 30% 30% / 0.14);
+    --shadow-glow: 0 0 24px hsl(265 55% 55% / 0.2);
+    --shadow-crystal: 0 0 40px hsl(265 60% 70% / 0.15), 0 0 80px hsl(320 50% 70% / 0.1);
 
     /* Typography */
     --font-display: 'Playfair Display', Georgia, serif;
     --font-body: 'Inter', system-ui, sans-serif;
 
     /* Sidebar */
-    --sidebar-background: 260 20% 98%;
-    --sidebar-foreground: 260 15% 12%;
-    --sidebar-primary: 270 50% 45%;
+    --sidebar-background: 255 25% 97%;
+    --sidebar-foreground: 260 20% 15%;
+    --sidebar-primary: 265 55% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 270 40% 92%;
-    --sidebar-accent-foreground: 270 50% 35%;
-    --sidebar-border: 260 15% 90%;
-    --sidebar-ring: 270 50% 45%;
+    --sidebar-accent: 265 40% 92%;
+    --sidebar-accent-foreground: 265 50% 40%;
+    --sidebar-border: 255 25% 88%;
+    --sidebar-ring: 265 55% 55%;
   }
 
   .dark {
-    --background: 260 15% 8%;
-    --foreground: 260 10% 95%;
+    --background: 260 25% 6%;
+    --foreground: 255 15% 94%;
 
-    --card: 260 15% 10%;
-    --card-foreground: 260 10% 95%;
+    --card: 260 22% 9%;
+    --card-foreground: 255 15% 94%;
 
-    --popover: 260 15% 10%;
-    --popover-foreground: 260 10% 95%;
+    --popover: 260 22% 9%;
+    --popover-foreground: 255 15% 94%;
 
-    --primary: 270 50% 60%;
-    --primary-foreground: 260 15% 8%;
+    --primary: 265 55% 65%;
+    --primary-foreground: 260 25% 6%;
 
-    --secondary: 270 20% 18%;
-    --secondary-foreground: 270 40% 80%;
+    --secondary: 265 25% 16%;
+    --secondary-foreground: 265 45% 80%;
 
-    --muted: 260 12% 18%;
-    --muted-foreground: 260 10% 60%;
+    --muted: 260 18% 15%;
+    --muted-foreground: 255 12% 58%;
 
-    --accent: 270 25% 20%;
-    --accent-foreground: 270 40% 80%;
+    --accent: 320 30% 18%;
+    --accent-foreground: 320 40% 80%;
 
     --destructive: 0 55% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 260 12% 20%;
-    --input: 260 12% 20%;
-    --ring: 270 50% 60%;
+    --border: 260 18% 18%;
+    --input: 260 18% 18%;
+    --ring: 265 55% 65%;
 
-    --amethyst: 270 50% 60%;
-    --amethyst-light: 270 25% 18%;
-    --amethyst-dark: 270 45% 50%;
-    --amethyst-glow: 270 50% 50%;
+    --crystal-violet: 265 55% 65%;
+    --crystal-violet-light: 265 25% 18%;
+    --crystal-violet-dark: 265 50% 55%;
+    --crystal-glow: 265 55% 55%;
+    
+    --amber: 25 80% 55%;
+    --amber-light: 25 30% 18%;
+    --amber-dark: 20 70% 45%;
+    
+    --rose: 320 45% 60%;
+    --rose-light: 320 25% 18%;
+    --rose-dark: 320 45% 50%;
 
-    --surface: 260 15% 10%;
-    --surface-elevated: 260 12% 14%;
+    --surface: 260 22% 9%;
+    --surface-elevated: 260 18% 12%;
 
-    --sidebar-background: 260 15% 10%;
-    --sidebar-foreground: 260 10% 90%;
-    --sidebar-primary: 270 50% 60%;
-    --sidebar-primary-foreground: 260 15% 8%;
-    --sidebar-accent: 270 25% 20%;
-    --sidebar-accent-foreground: 270 40% 80%;
-    --sidebar-border: 260 12% 20%;
-    --sidebar-ring: 270 50% 60%;
+    --sidebar-background: 260 22% 9%;
+    --sidebar-foreground: 255 12% 90%;
+    --sidebar-primary: 265 55% 65%;
+    --sidebar-primary-foreground: 260 25% 6%;
+    --sidebar-accent: 265 25% 18%;
+    --sidebar-accent-foreground: 265 45% 80%;
+    --sidebar-border: 260 18% 18%;
+    --sidebar-ring: 265 55% 65%;
   }
 }
 
@@ -224,13 +248,23 @@
     text-wrap: balance;
   }
 
-  /* Ethereal gradient - subtle, used sparingly (5%) */
+  /* Ethereal gradient - crystal-inspired */
   .gradient-ethereal {
-    background: linear-gradient(135deg, hsl(270 40% 98%) 0%, hsl(270 30% 95%) 100%);
+    background: linear-gradient(135deg, hsl(265 45% 97%) 0%, hsl(320 35% 95%) 50%, hsl(255 30% 96%) 100%);
   }
 
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(270 50% 45%) 0%, hsl(270 55% 55%) 100%);
+    background: linear-gradient(135deg, hsl(265 55% 55%) 0%, hsl(285 50% 60%) 100%);
+  }
+  
+  /* Crystal rainbow gradient for special elements */
+  .gradient-crystal {
+    background: linear-gradient(135deg, hsl(265 60% 70%) 0%, hsl(320 50% 70%) 50%, hsl(25 80% 65%) 100%);
+  }
+  
+  /* Subtle ambient glow */
+  .glow-crystal {
+    box-shadow: var(--shadow-crystal);
   }
 }
 
