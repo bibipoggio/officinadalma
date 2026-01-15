@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import loginBg from "@/assets/login-bg.jpg";
 interface FormErrors {
   email?: string;
   password?: string;
@@ -90,7 +90,7 @@ const Login = () => {
       <div 
         className="absolute inset-0 z-0"
         style={{
-          backgroundImage: `url(${heroBg})`,
+          backgroundImage: `url(${loginBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
