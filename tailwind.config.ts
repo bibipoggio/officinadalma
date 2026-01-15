@@ -64,12 +64,22 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-        // Officina custom colors
-        amethyst: {
-          DEFAULT: "hsl(var(--amethyst))",
-          light: "hsl(var(--amethyst-light))",
-          dark: "hsl(var(--amethyst-dark))",
-          glow: "hsl(var(--amethyst-glow))",
+        // Officina da Alma - Crystal palette
+        crystal: {
+          DEFAULT: "hsl(var(--crystal-violet))",
+          light: "hsl(var(--crystal-violet-light))",
+          dark: "hsl(var(--crystal-violet-dark))",
+          glow: "hsl(var(--crystal-glow))",
+        },
+        amber: {
+          DEFAULT: "hsl(var(--amber))",
+          light: "hsl(var(--amber-light))",
+          dark: "hsl(var(--amber-dark))",
+        },
+        rose: {
+          DEFAULT: "hsl(var(--rose))",
+          light: "hsl(var(--rose-light))",
+          dark: "hsl(var(--rose-dark))",
         },
         surface: {
           DEFAULT: "hsl(var(--surface))",
@@ -143,6 +153,7 @@ export default {
         card: "var(--shadow-card)",
         elevated: "var(--shadow-elevated)",
         glow: "var(--shadow-glow)",
+        crystal: "var(--shadow-crystal)",
       },
     },
   },

@@ -1,6 +1,7 @@
 import * as React from "react";
-import { Menu, Sparkles } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logoOfficina from "@/assets/logo_officina.jpg";
 
 interface AppHeaderProps {
   onMenuClick: () => void;
@@ -18,8 +19,12 @@ export function AppHeader({ onMenuClick, className }: AppHeaderProps) {
       <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center group-hover:shadow-glow transition-shadow duration-300">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+          <div className="w-10 h-10 rounded-lg overflow-hidden group-hover:shadow-glow transition-shadow duration-300">
+            <img 
+              src={logoOfficina} 
+              alt="Officina da Alma" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <span className="font-display text-lg font-semibold text-foreground hidden sm:inline">
             Officina da Alma
