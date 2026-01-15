@@ -14,16 +14,290 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkin_reactions: {
+        Row: {
+          checkin_id: string
+          created_at: string
+          emoji: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          checkin_id: string
+          created_at?: string
+          emoji: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          checkin_id?: string
+          created_at?: string
+          emoji?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_reactions_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkin_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkins: {
+        Row: {
+          created_at: string
+          date: string
+          energy: number
+          feeling_text: string
+          id: string
+          published: boolean
+          share_mode: Database["public"]["Enums"]["share_mode"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          energy: number
+          feeling_text: string
+          id?: string
+          published?: boolean
+          share_mode?: Database["public"]["Enums"]["share_mode"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          energy?: number
+          feeling_text?: string
+          id?: string
+          published?: boolean
+          share_mode?: Database["public"]["Enums"]["share_mode"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_content: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date: string
+          id: string
+          meditation_audio_url: string | null
+          meditation_duration_seconds: number | null
+          published: boolean
+          spotify_episode_url: string | null
+          tonica_full: string
+          tonica_practice: string
+          tonica_short: string
+          tonica_title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date: string
+          id?: string
+          meditation_audio_url?: string | null
+          meditation_duration_seconds?: number | null
+          published?: boolean
+          spotify_episode_url?: string | null
+          tonica_full: string
+          tonica_practice: string
+          tonica_short: string
+          tonica_title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date?: string
+          id?: string
+          meditation_audio_url?: string | null
+          meditation_duration_seconds?: number | null
+          published?: boolean
+          spotify_episode_url?: string | null
+          tonica_full?: string
+          tonica_practice?: string
+          tonica_short?: string
+          tonica_title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_content_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          checkin_id: string
+          created_at: string
+          id: string
+          reason: string
+          reporter_user_id: string
+          status: Database["public"]["Enums"]["report_status"]
+        }
+        Insert: {
+          checkin_id: string
+          created_at?: string
+          id?: string
+          reason: string
+          reporter_user_id: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Update: {
+          checkin_id?: string
+          created_at?: string
+          id?: string
+          reason?: string
+          reporter_user_id?: string
+          status?: Database["public"]["Enums"]["report_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_user_id_fkey"
+            columns: ["reporter_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          provider: Database["public"]["Enums"]["subscription_provider"]
+          provider_customer_id: string | null
+          provider_subscription_id: string | null
+          trial_ends_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          provider?: Database["public"]["Enums"]["subscription_provider"]
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          provider?: Database["public"]["Enums"]["subscription_provider"]
+          provider_customer_id?: string | null
+          provider_subscription_id?: string | null
+          trial_ends_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_moderator_or_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "user" | "moderator" | "admin"
+      report_status: "pending" | "reviewed" | "dismissed" | "actioned"
+      share_mode: "private" | "community" | "anonymous"
+      subscription_provider: "mercado_pago"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +424,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["user", "moderator", "admin"],
+      report_status: ["pending", "reviewed", "dismissed", "actioned"],
+      share_mode: ["private", "community", "anonymous"],
+      subscription_provider: ["mercado_pago"],
+    },
   },
 } as const
