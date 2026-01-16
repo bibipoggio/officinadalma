@@ -13,7 +13,7 @@ const Conta = () => {
   const menuItems = [
     { icon: User, label: "Editar Perfil", onClick: () => navigate("/conta/editar") },
     { icon: Mail, label: "Alterar Email", onClick: () => {} },
-    { icon: Lock, label: "Alterar Senha", onClick: () => {} },
+    { icon: Lock, label: "Alterar Senha", onClick: () => navigate("/conta/alterar-senha") },
     { icon: Bell, label: "Notificações", onClick: () => {} },
     { icon: CreditCard, label: "Assinatura", onClick: () => navigate("/assinar") },
   ];
