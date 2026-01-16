@@ -2,6 +2,7 @@ import * as React from "react";
 import { AppHeader } from "./AppHeader";
 import { AppSidebar } from "./AppSidebar";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import loginBg from "@/assets/login-bg.jpg";
 
 interface AppLayoutProps {
@@ -12,6 +13,7 @@ interface AppLayoutProps {
 export function AppLayout({ children, className }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [scrollY, setScrollY] = React.useState(0);
+  const isMobile = useIsMobile();
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -22,8 +24,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Parallax factor - lower = more subtle effect
-  const parallaxOffset = scrollY * 0.3;
+  // Reduced parallax on mobile for better performance (10% vs 30%)
+  const parallaxFactor = isMobile ? 0.1 : 0.3;
+  const parallaxOffset = scrollY * parallaxFactor;
 
   return (
     <div className="min-h-screen relative">
