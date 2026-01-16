@@ -388,19 +388,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          birth_city: string | null
+          birth_country: string | null
+          birth_date: string | null
+          birth_state: string | null
+          birth_time: string | null
           created_at: string
           display_name: string | null
           id: string
+          phone: string | null
         }
         Insert: {
+          birth_city?: string | null
+          birth_country?: string | null
+          birth_date?: string | null
+          birth_state?: string | null
+          birth_time?: string | null
           created_at?: string
           display_name?: string | null
           id: string
+          phone?: string | null
         }
         Update: {
+          birth_city?: string | null
+          birth_country?: string | null
+          birth_date?: string | null
+          birth_state?: string | null
+          birth_time?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          phone?: string | null
         }
         Relationships: []
       }
