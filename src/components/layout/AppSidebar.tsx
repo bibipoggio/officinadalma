@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AppSidebarProps {
   open: boolean;
@@ -36,7 +37,7 @@ const adminItems = [
 
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const location = useLocation();
-  const isAdmin = location.pathname.startsWith("/admin");
+  const { hasAdminAccess } = useAuth();
 
   // Close on escape key
   React.useEffect(() => {
@@ -122,7 +123,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
             </ul>
 
             {/* Admin Section */}
-            {(isAdmin || process.env.NODE_ENV === 'development') && (
+            {hasAdminAccess && (
               <>
                 <div className="my-4 border-t border-sidebar-border" />
                 <p className="px-3 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
