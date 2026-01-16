@@ -388,15 +388,15 @@ const Home = () => {
                 </div>
 
                 {/* Privacy Options */}
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <label className="text-sm font-medium text-foreground">
                     Privacidade
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {([
-                      { value: "private", label: "Privado" },
-                      { value: "community", label: "Comunidade" },
-                      { value: "anonymous", label: "Anônimo" },
+                      { value: "private", label: "Privado", desc: "Só você vê" },
+                      { value: "community", label: "Comunidade", desc: "Público com seu nome" },
+                      { value: "anonymous", label: "Anônimo", desc: "Público sem nome" },
                     ] as const).map((option) => (
                       <button
                         key={option.value}
@@ -408,11 +408,21 @@ const Home = () => {
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
+                        title={option.desc}
                       >
                         {option.label}
                       </button>
                     ))}
                   </div>
+                  {/* Privacy warning for public modes */}
+                  {shareMode !== "private" && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      {shareMode === "community" 
+                        ? "Seu nome, energia e texto serão visíveis para todos os usuários"
+                        : "Sua energia e texto serão visíveis para todos (sem seu nome)"}
+                    </p>
+                  )}
                 </div>
 
                 {/* Published Toggle */}
