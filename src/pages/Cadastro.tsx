@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 import loginBg from "@/assets/login-bg.jpg";
+import logoOfficina from "@/assets/logo_officina.jpg";
 
 interface FormErrors {
   displayName?: string;
@@ -233,11 +234,21 @@ const Cadastro = () => {
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
       
       <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20 max-h-[90vh] overflow-y-auto">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-display">Criar Conta</CardTitle>
-          <CardDescription>
-            Junte-se à Officina da Alma
-          </CardDescription>
+        <CardHeader className="text-center space-y-4 pt-8">
+          {/* Logo */}
+          <div className="w-20 h-20 mx-auto rounded-full overflow-hidden shadow-lg ring-2 ring-crystal/30">
+            <img 
+              src={logoOfficina} 
+              alt="Officina da Alma" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-display">Criar Conta</CardTitle>
+            <CardDescription>
+              Junte-se à Officina da Alma
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
