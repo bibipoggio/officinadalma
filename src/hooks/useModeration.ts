@@ -85,7 +85,7 @@ export function useModeration() {
           let profilesMap: Record<string, string | null> = {};
           if (communityUserIds.length > 0) {
             const { data: profiles } = await supabase
-              .from("profiles")
+              .from("public_profiles")
               .select("id, display_name")
               .in("id", communityUserIds);
 
