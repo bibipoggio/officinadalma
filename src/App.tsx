@@ -16,6 +16,7 @@ import Aulas from "./pages/Aulas";
 import Curso from "./pages/Curso";
 import Aula from "./pages/Aula";
 import Conta from "./pages/Conta";
+import EditarPerfil from "./pages/EditarPerfil";
 import Assinar from "./pages/Assinar";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/aulas/:slug" element={<ProtectedRoute><Curso /></ProtectedRoute>} />
             <Route path="/aulas/:slug/aula/:lessonId" element={<ProtectedRoute><Aula /></ProtectedRoute>} />
             <Route path="/conta" element={<ProtectedRoute><Conta /></ProtectedRoute>} />
+            <Route path="/conta/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
             <Route path="/assinar" element={<ProtectedRoute><Assinar /></ProtectedRoute>} />
             
             {/* Admin Routes (requires moderator or admin) */}

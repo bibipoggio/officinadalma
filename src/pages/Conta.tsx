@@ -11,7 +11,7 @@ const Conta = () => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { icon: User, label: "Editar Perfil", onClick: () => {} },
+    { icon: User, label: "Editar Perfil", onClick: () => navigate("/conta/editar") },
     { icon: Mail, label: "Alterar Email", onClick: () => {} },
     { icon: Lock, label: "Alterar Senha", onClick: () => {} },
     { icon: Bell, label: "Notificações", onClick: () => {} },
