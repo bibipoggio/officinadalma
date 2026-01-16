@@ -236,7 +236,7 @@ const Cadastro = () => {
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-display">Criar Conta</CardTitle>
           <CardDescription>
-            Junte-se à Oficina da Alma
+            Junte-se à Officina da Alma
           </CardDescription>
         </CardHeader>
         <CardContent>
