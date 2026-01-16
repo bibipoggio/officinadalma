@@ -122,6 +122,7 @@ const Login = () => {
               src={logoOfficina} 
               alt="Officina da Alma" 
               className="w-full h-full object-cover"
+              fetchPriority="high"
             />
           </div>
           <div className="space-y-1">
