@@ -4,15 +4,25 @@ import { LoadingState } from "@/components/layout/PageState";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShieldX, LogIn } from "lucide-react";
+import { ShieldX } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
 }
 
+// Check if profile is complete (has required fields)
+function isProfileComplete(profile: { 
+  birth_date?: string | null; 
+  birth_city?: string | null;
+  phone?: string | null;
+} | null): boolean {
+  if (!profile) return false;
+  return !!(profile.birth_date && profile.birth_city && profile.phone);
+}
+
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, hasAdminAccess } = useAuth();
+  const { isAuthenticated, isLoading, hasAdminAccess, profile } = useAuth();
   const location = useLocation();
 
   // Show loading while checking auth state
@@ -27,6 +37,12 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Redirect to complete profile if profile is incomplete
+  // Skip this check if already on the complete profile page
+  if (location.pathname !== "/completar-perfil" && !isProfileComplete(profile)) {
+    return <Navigate to="/completar-perfil" replace />;
   }
 
   // Check admin access for admin routes
