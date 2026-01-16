@@ -39,6 +39,7 @@ interface AuthContextType {
   hasAdminAccess: boolean;
   signUp: (email: string, password: string, profileData?: SignUpProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -206,6 +207,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearUserData();
   };
 
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+
+      if (error) {
+        return { error };
+      }
+
+      return { error: null };
+    } catch (error) {
+      return { error: error as Error };
+    }
+  };
+
   const refreshProfile = async () => {
     if (user) {
       await fetchUserData(user.id);
@@ -231,6 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         hasAdminAccess,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         refreshProfile,
       }}
