@@ -11,6 +11,7 @@ import {
   CreditCard,
   Settings,
   LayoutDashboard,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -33,6 +34,7 @@ const menuItems = [
 const adminItems = [
   { href: "/admin/conteudo-diario", label: "Conteúdo Diário", icon: LayoutDashboard },
   { href: "/admin/cursos", label: "Cursos", icon: Settings },
+  { href: "/admin/moderacao", label: "Moderação", icon: Shield },
 ];
 
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
