@@ -25,6 +25,7 @@ import RecuperarSenha from "./pages/RecuperarSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import AdminConteudoDiario from "./pages/AdminConteudoDiario";
 import AdminCursos from "./pages/AdminCursos";
+import AdminModeracao from "./pages/AdminModeracao";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
             {/* Admin Routes (requires moderator or admin) */}
             <Route path="/admin/conteudo-diario" element={<ProtectedRoute requireAdmin><AdminConteudoDiario /></ProtectedRoute>} />
             <Route path="/admin/cursos" element={<ProtectedRoute requireAdmin><AdminCursos /></ProtectedRoute>} />
+            <Route path="/admin/moderacao" element={<ProtectedRoute requireAdmin><AdminModeracao /></ProtectedRoute>} />
             
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
