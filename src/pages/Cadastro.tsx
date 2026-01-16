@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { AlertCircle, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
+import loginBg from "@/assets/login-bg.jpg";
 
 interface FormErrors {
   displayName?: string;
@@ -114,8 +115,21 @@ const Cadastro = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-        <Card className="w-full max-w-md shadow-card">
+      <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
+        {/* Background with image */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `url(${loginBg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center top',
+            backgroundRepeat: 'no-repeat',
+          }}
+        />
+        {/* Overlay for better contrast */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
+        
+        <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20">
           <CardContent className="p-8 text-center space-y-4">
             <div className="w-16 h-16 mx-auto rounded-full bg-success/10 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-success" />
@@ -133,8 +147,21 @@ const Cadastro = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <Card className="w-full max-w-md shadow-card">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 relative overflow-hidden">
+      {/* Background with image */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${loginBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      {/* Overlay for better contrast */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
+      
+      <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-display">Criar Conta</CardTitle>
           <CardDescription>
