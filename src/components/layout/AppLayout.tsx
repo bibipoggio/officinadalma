@@ -11,17 +11,31 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, className }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const [scrollY, setScrollY] = React.useState(0);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Parallax factor - lower = more subtle effect
+  const parallaxOffset = scrollY * 0.3;
 
   return (
     <div className="min-h-screen relative">
-      {/* Background with image */}
+      {/* Background with image and parallax effect */}
       <div 
-        className="fixed inset-0 z-0"
+        className="fixed inset-0 z-0 transition-transform duration-100 ease-out will-change-transform"
         style={{
           backgroundImage: `url(${loginBg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
+          transform: `translateY(${parallaxOffset}px) scale(1.1)`,
         }}
       />
       {/* Overlay for better contrast */}
