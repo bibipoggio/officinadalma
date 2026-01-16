@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { AlertCircle, Loader2, CheckCircle } from "lucide-react";
+import { AlertCircle, Loader2, CheckCircle, Camera, User } from "lucide-react";
 import loginBg from "@/assets/login-bg.jpg";
-import logoOfficina from "@/assets/logo_officina.jpg";
 
 interface FormErrors {
   displayName?: string;
@@ -17,6 +16,7 @@ interface FormErrors {
   birthState?: string;
   birthCountry?: string;
   phone?: string;
+  avatar?: string;
   general?: string;
 }
 
@@ -31,6 +31,10 @@ const CompletarPerfil = () => {
   const [birthState, setBirthState] = useState("");
   const [birthCountry, setBirthCountry] = useState("Brasil");
   const [phone, setPhone] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -41,6 +45,7 @@ const CompletarPerfil = () => {
   const birthStateRef = useRef<HTMLInputElement>(null);
   const birthCountryRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Pre-fill with existing profile data
   useEffect(() => {
@@ -52,6 +57,7 @@ const CompletarPerfil = () => {
       if (profile.birth_state) setBirthState(profile.birth_state);
       if (profile.birth_country) setBirthCountry(profile.birth_country);
       if (profile.phone) setPhone(formatPhone(profile.phone));
+      // Avatar URL would need to be fetched from profile if the column exists
     }
   }, [profile]);
 
@@ -79,6 +85,71 @@ const CompletarPerfil = () => {
     const formatted = formatPhone(e.target.value);
     setPhone(formatted);
     if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      setErrors((prev) => ({ ...prev, avatar: "Por favor, selecione uma imagem" }));
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors((prev) => ({ ...prev, avatar: "A imagem deve ter no máximo 5MB" }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, avatar: undefined }));
+    setAvatarFile(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setAvatarPreview(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile || !user) return avatarUrl;
+
+    setIsUploadingAvatar(true);
+
+    try {
+      const fileExt = avatarFile.name.split(".").pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, avatarFile, { upsert: true });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      setErrors((prev) => ({ ...prev, avatar: "Erro ao enviar imagem. Tente novamente." }));
+      return null;
+    } finally {
+      setIsUploadingAvatar(false);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -140,6 +211,16 @@ const CompletarPerfil = () => {
     setIsSubmitting(true);
     setErrors({});
 
+    // Upload avatar if selected
+    let finalAvatarUrl = avatarUrl;
+    if (avatarFile) {
+      finalAvatarUrl = await uploadAvatar();
+      if (errors.avatar) {
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -150,6 +231,7 @@ const CompletarPerfil = () => {
         birth_state: birthState.trim(),
         birth_country: birthCountry.trim(),
         phone: phone.replace(/\D/g, ""),
+        avatar_url: finalAvatarUrl,
       })
       .eq("id", user.id);
 
@@ -214,13 +296,51 @@ const CompletarPerfil = () => {
       
       <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20 max-h-[90vh] overflow-y-auto">
         <CardHeader className="text-center space-y-4 pt-8">
-          <div className="w-20 h-20 mx-auto rounded-full overflow-hidden shadow-lg ring-2 ring-crystal/30">
-            <img 
-              src={logoOfficina} 
-              alt="Officina da Alma" 
-              className="w-full h-full object-cover"
+          {/* Avatar Upload */}
+          <div className="relative mx-auto">
+            <button
+              type="button"
+              onClick={handleAvatarClick}
+              disabled={isSubmitting || isUploadingAvatar}
+              className="w-24 h-24 rounded-full overflow-hidden shadow-lg ring-2 ring-crystal/30 hover:ring-primary/50 transition-all cursor-pointer group relative"
+            >
+              {avatarPreview ? (
+                <img 
+                  src={avatarPreview} 
+                  alt="Foto de perfil" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-muted flex items-center justify-center">
+                  <User className="w-10 h-10 text-muted-foreground" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {isUploadingAvatar ? (
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                ) : (
+                  <Camera className="w-6 h-6 text-white" />
+                )}
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              className="hidden"
+              disabled={isSubmitting || isUploadingAvatar}
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Clique para adicionar sua foto
+          </p>
+          {errors.avatar && (
+            <p className="text-sm text-destructive" role="alert">
+              {errors.avatar}
+            </p>
+          )}
+          
           <div className="space-y-1">
             <CardTitle className="text-2xl font-display">Complete seu Perfil</CardTitle>
             <CardDescription>
@@ -399,7 +519,7 @@ const CompletarPerfil = () => {
             </div>
 
             {/* Submit button */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button type="submit" className="w-full" disabled={isSubmitting || isUploadingAvatar}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
