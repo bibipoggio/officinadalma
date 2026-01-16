@@ -388,6 +388,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           birth_city: string | null
           birth_country: string | null
           birth_date: string | null
@@ -399,6 +400,7 @@ export type Database = {
           phone: string | null
         }
         Insert: {
+          avatar_url?: string | null
           birth_city?: string | null
           birth_country?: string | null
           birth_date?: string | null
@@ -410,6 +412,7 @@ export type Database = {
           phone?: string | null
         }
         Update: {
+          avatar_url?: string | null
           birth_city?: string | null
           birth_country?: string | null
           birth_date?: string | null
