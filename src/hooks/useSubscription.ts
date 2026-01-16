@@ -32,9 +32,10 @@ export function useSubscription(): SubscriptionStatus {
 
     const fetchSubscription = async () => {
       try {
+        // Use user_subscriptions view to avoid exposing sensitive payment provider IDs
         const { data, error } = await supabase
-          .from("subscriptions")
-          .select("*")
+          .from("user_subscriptions")
+          .select("id, user_id, provider, current_period_end, trial_ends_at, status")
           .eq("user_id", user.id)
           .maybeSingle();
 
