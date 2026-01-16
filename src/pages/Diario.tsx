@@ -10,6 +10,10 @@ import { Modal } from "@/components/ui/Modal";
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { Calendar } from "@/components/ui/calendar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  PrivacyDisclaimerModal, 
+  hasAcceptedPrivacyDisclaimer 
+} from "@/components/ui/PrivacyDisclaimerModal";
 import {
   BookOpen,
   CalendarDays,
@@ -101,6 +105,10 @@ const Diario = () => {
   const [editText, setEditText] = useState("");
   const [editShareMode, setEditShareMode] = useState<ShareMode>("private");
   const [editPublished, setEditPublished] = useState(false);
+  
+  // Privacy modal state
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [pendingShareMode, setPendingShareMode] = useState<ShareMode | null>(null);
 
   // Hooks
   const { checkins: monthlyCheckins, isLoading: loadingCalendar, error: calendarError, refetch: refetchCalendar } = useMonthlyCheckins();
@@ -178,6 +186,29 @@ const Diario = () => {
   const handleFilterChange = (key: keyof FilterState, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
+  };
+
+  // Handle share mode change with privacy check
+  const handleEditShareModeChange = (newMode: ShareMode) => {
+    if ((newMode === "community" || newMode === "anonymous") && !hasAcceptedPrivacyDisclaimer()) {
+      setPendingShareMode(newMode);
+      setShowPrivacyModal(true);
+    } else {
+      setEditShareMode(newMode);
+    }
+  };
+
+  const handlePrivacyAccept = () => {
+    if (pendingShareMode) {
+      setEditShareMode(pendingShareMode);
+      setPendingShareMode(null);
+    }
+    setShowPrivacyModal(false);
+  };
+
+  const handlePrivacyCancel = () => {
+    setPendingShareMode(null);
+    setShowPrivacyModal(false);
   };
 
   const isLoading = loadingCalendar || loadingHistory || loadingEnrollments;
@@ -659,7 +690,7 @@ const Diario = () => {
                   key={mode}
                   variant={editShareMode === mode ? "default" : "outline"}
                   className="cursor-pointer"
-                  onClick={() => setEditShareMode(mode)}
+                  onClick={() => handleEditShareModeChange(mode)}
                 >
                   {shareModeIcons[mode]}
                   <span className="ml-1">{shareModeLabels[mode]}</span>
@@ -688,6 +719,15 @@ const Diario = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Privacy Disclaimer Modal */}
+      <PrivacyDisclaimerModal
+        open={showPrivacyModal}
+        onOpenChange={setShowPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onCancel={handlePrivacyCancel}
+        shareMode={pendingShareMode === "anonymous" ? "anonymous" : "community"}
+      />
     </AppLayout>
   );
 };

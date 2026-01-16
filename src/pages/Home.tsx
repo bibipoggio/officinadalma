@@ -6,6 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { 
+  PrivacyDisclaimerModal, 
+  hasAcceptedPrivacyDisclaimer 
+} from "@/components/ui/PrivacyDisclaimerModal";
+import { 
   useSubscription, 
   useDailyContentForDate, 
   useCheckin, 
@@ -55,6 +59,8 @@ const Home = () => {
   const [feelingText, setFeelingText] = useState("");
   const [shareMode, setShareMode] = useState<ShareMode>("private");
   const [published, setPublished] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [pendingShareMode, setPendingShareMode] = useState<ShareMode | null>(null);
 
   // Sync form with existing checkin
   useEffect(() => {
@@ -65,6 +71,29 @@ const Home = () => {
       setPublished(checkin.published);
     }
   }, [checkin]);
+
+  // Handle share mode change with privacy check
+  const handleShareModeChange = (newMode: ShareMode) => {
+    if ((newMode === "community" || newMode === "anonymous") && !hasAcceptedPrivacyDisclaimer()) {
+      setPendingShareMode(newMode);
+      setShowPrivacyModal(true);
+    } else {
+      setShareMode(newMode);
+    }
+  };
+
+  const handlePrivacyAccept = () => {
+    if (pendingShareMode) {
+      setShareMode(pendingShareMode);
+      setPendingShareMode(null);
+    }
+    setShowPrivacyModal(false);
+  };
+
+  const handlePrivacyCancel = () => {
+    setPendingShareMode(null);
+    setShowPrivacyModal(false);
+  };
 
   const handleSaveCheckin = async () => {
     const result = await saveCheckin({
@@ -372,7 +401,7 @@ const Home = () => {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => setShareMode(option.value)}
+                        onClick={() => handleShareModeChange(option.value)}
                         disabled={isSaving}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                           shareMode === option.value
@@ -422,6 +451,15 @@ const Home = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Privacy Disclaimer Modal */}
+      <PrivacyDisclaimerModal
+        open={showPrivacyModal}
+        onOpenChange={setShowPrivacyModal}
+        onAccept={handlePrivacyAccept}
+        onCancel={handlePrivacyCancel}
+        shareMode={pendingShareMode === "anonymous" ? "anonymous" : "community"}
+      />
     </AppLayout>
   );
 };
