@@ -196,6 +196,16 @@ const Login = () => {
               )}
             </div>
 
+            {/* Forgot password link */}
+            <div className="text-center">
+              <Link 
+                to="/recuperar-senha" 
+                className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              >
+                Esqueceu sua senha?
+              </Link>
+            </div>
+
             {/* Submit button */}
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (

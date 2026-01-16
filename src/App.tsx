@@ -21,6 +21,8 @@ import AlterarSenha from "./pages/AlterarSenha";
 import Assinar from "./pages/Assinar";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import RecuperarSenha from "./pages/RecuperarSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import AdminConteudoDiario from "./pages/AdminConteudoDiario";
 import AdminCursos from "./pages/AdminCursos";
 import NotFound from "./pages/NotFound";
@@ -38,6 +40,8 @@ const App = () => (
             {/* Auth Routes (public only) */}
             <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
             <Route path="/cadastro" element={<PublicOnlyRoute><Cadastro /></PublicOnlyRoute>} />
+            <Route path="/recuperar-senha" element={<PublicOnlyRoute><RecuperarSenha /></PublicOnlyRoute>} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
             {/* Protected Routes (requires login) */}
             <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
