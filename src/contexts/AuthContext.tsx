@@ -8,7 +8,23 @@ type AppRole = Database["public"]["Enums"]["app_role"];
 interface UserProfile {
   id: string;
   display_name: string | null;
+  birth_date: string | null;
+  birth_time: string | null;
+  birth_city: string | null;
+  birth_state: string | null;
+  birth_country: string | null;
+  phone: string | null;
   created_at: string;
+}
+
+interface SignUpProfileData {
+  displayName?: string;
+  birthDate?: string;
+  birthTime?: string;
+  birthCity?: string;
+  birthState?: string;
+  birthCountry?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -21,7 +37,7 @@ interface AuthContextType {
   isAdmin: boolean;
   isModerator: boolean;
   hasAdminAccess: boolean;
-  signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, profileData?: SignUpProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -125,21 +141,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (email: string, password: string, profileData?: SignUpProfileData) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: window.location.origin,
           data: {
-            display_name: displayName,
+            display_name: profileData?.displayName,
           },
         },
       });
 
       if (error) {
         return { error };
+      }
+
+      // If signup successful and we have user, update profile with additional data
+      if (data.user && profileData) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            display_name: profileData.displayName || null,
+            birth_date: profileData.birthDate || null,
+            birth_time: profileData.birthTime || null,
+            birth_city: profileData.birthCity || null,
+            birth_state: profileData.birthState || null,
+            birth_country: profileData.birthCountry || null,
+            phone: profileData.phone || null,
+          })
+          .eq("id", data.user.id);
+
+        if (profileError) {
+          console.error("Error updating profile:", profileError);
+        }
       }
 
       return { error: null };

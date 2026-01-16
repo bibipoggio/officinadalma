@@ -13,6 +13,11 @@ interface FormErrors {
   email?: string;
   password?: string;
   confirmPassword?: string;
+  birthDate?: string;
+  birthCity?: string;
+  birthState?: string;
+  birthCountry?: string;
+  phone?: string;
   general?: string;
 }
 
@@ -24,6 +29,12 @@ const Cadastro = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [birthTime, setBirthTime] = useState("");
+  const [birthCity, setBirthCity] = useState("");
+  const [birthState, setBirthState] = useState("");
+  const [birthCountry, setBirthCountry] = useState("Brasil");
+  const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,11 +45,31 @@ const Cadastro = () => {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
+  const birthDateRef = useRef<HTMLInputElement>(null);
+  const birthCityRef = useRef<HTMLInputElement>(null);
+  const birthStateRef = useRef<HTMLInputElement>(null);
+  const birthCountryRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   // Focus first field on mount
   useEffect(() => {
     displayNameRef.current?.focus();
   }, []);
+
+  // Format phone number as user types
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setPhone(formatted);
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+  };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
@@ -67,6 +98,28 @@ const Cadastro = () => {
       newErrors.confirmPassword = "As senhas não coincidem";
     }
 
+    if (!birthDate) {
+      newErrors.birthDate = "Data de nascimento é obrigatória";
+    }
+
+    if (!birthCity.trim()) {
+      newErrors.birthCity = "Cidade de nascimento é obrigatória";
+    }
+
+    if (!birthState.trim()) {
+      newErrors.birthState = "Estado é obrigatório";
+    }
+
+    if (!birthCountry.trim()) {
+      newErrors.birthCountry = "País é obrigatório";
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = "Telefone é obrigatório";
+    } else if (phone.replace(/\D/g, "").length < 10) {
+      newErrors.phone = "Telefone inválido";
+    }
+
     setErrors(newErrors);
 
     // Focus first invalid field
@@ -74,6 +127,16 @@ const Cadastro = () => {
       displayNameRef.current?.focus();
     } else if (newErrors.email) {
       emailRef.current?.focus();
+    } else if (newErrors.phone) {
+      phoneRef.current?.focus();
+    } else if (newErrors.birthDate) {
+      birthDateRef.current?.focus();
+    } else if (newErrors.birthCity) {
+      birthCityRef.current?.focus();
+    } else if (newErrors.birthState) {
+      birthStateRef.current?.focus();
+    } else if (newErrors.birthCountry) {
+      birthCountryRef.current?.focus();
     } else if (newErrors.password) {
       passwordRef.current?.focus();
     } else if (newErrors.confirmPassword) {
@@ -91,7 +154,15 @@ const Cadastro = () => {
     setIsSubmitting(true);
     setErrors({});
 
-    const { error } = await signUp(email, password, displayName.trim());
+    const { error } = await signUp(email, password, {
+      displayName: displayName.trim(),
+      birthDate,
+      birthTime: birthTime || undefined,
+      birthCity: birthCity.trim(),
+      birthState: birthState.trim(),
+      birthCountry: birthCountry.trim(),
+      phone: phone.replace(/\D/g, ""),
+    });
 
     if (error) {
       let errorMessage = error.message;
@@ -161,7 +232,7 @@ const Cadastro = () => {
       {/* Overlay for better contrast */}
       <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
       
-      <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20">
+      <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20 max-h-[90vh] overflow-y-auto">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-display">Criar Conta</CardTitle>
           <CardDescription>
@@ -184,12 +255,12 @@ const Cadastro = () => {
 
             {/* Display Name field */}
             <div className="space-y-2">
-              <Label htmlFor="displayName">Nome</Label>
+              <Label htmlFor="displayName">Nome completo</Label>
               <Input
                 ref={displayNameRef}
                 id="displayName"
                 type="text"
-                placeholder="Seu nome"
+                placeholder="Seu nome completo"
                 value={displayName}
                 onChange={(e) => {
                   setDisplayName(e.target.value);
@@ -230,6 +301,138 @@ const Cadastro = () => {
                   {errors.email}
                 </p>
               )}
+            </div>
+
+            {/* Phone field */}
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone para contato</Label>
+              <Input
+                ref={phoneRef}
+                id="phone"
+                type="tel"
+                placeholder="(11) 99999-9999"
+                value={phone}
+                onChange={handlePhoneChange}
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : undefined}
+                autoComplete="tel"
+                disabled={isSubmitting}
+              />
+              {errors.phone && (
+                <p id="phone-error" className="text-sm text-destructive" role="alert">
+                  {errors.phone}
+                </p>
+              )}
+            </div>
+
+            {/* Birth Date and Time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="birthDate">Data de nascimento</Label>
+                <Input
+                  ref={birthDateRef}
+                  id="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => {
+                    setBirthDate(e.target.value);
+                    if (errors.birthDate) setErrors((prev) => ({ ...prev, birthDate: undefined }));
+                  }}
+                  aria-invalid={!!errors.birthDate}
+                  aria-describedby={errors.birthDate ? "birthDate-error" : undefined}
+                  disabled={isSubmitting}
+                />
+                {errors.birthDate && (
+                  <p id="birthDate-error" className="text-sm text-destructive" role="alert">
+                    {errors.birthDate}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="birthTime">Hora (opcional)</Label>
+                <Input
+                  id="birthTime"
+                  type="time"
+                  value={birthTime}
+                  onChange={(e) => setBirthTime(e.target.value)}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            {/* Birth Location */}
+            <div className="space-y-3">
+              <Label className="text-muted-foreground text-xs uppercase tracking-wide">Local de nascimento</Label>
+              
+              <div className="space-y-2">
+                <Label htmlFor="birthCity">Cidade</Label>
+                <Input
+                  ref={birthCityRef}
+                  id="birthCity"
+                  type="text"
+                  placeholder="São Paulo"
+                  value={birthCity}
+                  onChange={(e) => {
+                    setBirthCity(e.target.value);
+                    if (errors.birthCity) setErrors((prev) => ({ ...prev, birthCity: undefined }));
+                  }}
+                  aria-invalid={!!errors.birthCity}
+                  aria-describedby={errors.birthCity ? "birthCity-error" : undefined}
+                  disabled={isSubmitting}
+                />
+                {errors.birthCity && (
+                  <p id="birthCity-error" className="text-sm text-destructive" role="alert">
+                    {errors.birthCity}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label htmlFor="birthState">Estado</Label>
+                  <Input
+                    ref={birthStateRef}
+                    id="birthState"
+                    type="text"
+                    placeholder="SP"
+                    value={birthState}
+                    onChange={(e) => {
+                      setBirthState(e.target.value);
+                      if (errors.birthState) setErrors((prev) => ({ ...prev, birthState: undefined }));
+                    }}
+                    aria-invalid={!!errors.birthState}
+                    aria-describedby={errors.birthState ? "birthState-error" : undefined}
+                    disabled={isSubmitting}
+                  />
+                  {errors.birthState && (
+                    <p id="birthState-error" className="text-sm text-destructive" role="alert">
+                      {errors.birthState}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="birthCountry">País</Label>
+                  <Input
+                    ref={birthCountryRef}
+                    id="birthCountry"
+                    type="text"
+                    placeholder="Brasil"
+                    value={birthCountry}
+                    onChange={(e) => {
+                      setBirthCountry(e.target.value);
+                      if (errors.birthCountry) setErrors((prev) => ({ ...prev, birthCountry: undefined }));
+                    }}
+                    aria-invalid={!!errors.birthCountry}
+                    aria-describedby={errors.birthCountry ? "birthCountry-error" : undefined}
+                    disabled={isSubmitting}
+                  />
+                  {errors.birthCountry && (
+                    <p id="birthCountry-error" className="text-sm text-destructive" role="alert">
+                      {errors.birthCountry}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Password field */}
