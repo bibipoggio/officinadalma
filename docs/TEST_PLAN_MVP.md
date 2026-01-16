@@ -714,6 +714,283 @@
 
 ---
 
+## P) Performance - Tempo de Carregamento
+
+### P1. First Contentful Paint (FCP)
+| Step | Ação |
+|------|------|
+| **Given** | Página inicial (cold start) |
+| **When** | Medir FCP com Lighthouse |
+| **Then** | ✅ FCP < 1.8s (bom) |
+| **Target** | 🎯 < 1.2s (excelente) |
+
+### P2. Largest Contentful Paint (LCP)
+| Step | Ação |
+|------|------|
+| **Given** | Home com imagens e conteúdo |
+| **When** | Medir LCP com Lighthouse |
+| **Then** | ✅ LCP < 2.5s (bom) |
+| **Target** | 🎯 < 1.5s (excelente) |
+
+### P3. Time to Interactive (TTI)
+| Step | Ação |
+|------|------|
+| **Given** | Qualquer página principal |
+| **When** | Medir TTI |
+| **Then** | ✅ TTI < 3.8s |
+| **And** | ✅ Botões respondem imediatamente após TTI |
+
+### P4. Cumulative Layout Shift (CLS)
+| Step | Ação |
+|------|------|
+| **Given** | Página carregando |
+| **When** | Medir CLS com Lighthouse |
+| **Then** | ✅ CLS < 0.1 (bom) |
+| **And** | ✅ Sem "saltos" visuais durante carregamento |
+
+### P5. Total Blocking Time (TBT)
+| Step | Ação |
+|------|------|
+| **Given** | Navegação entre páginas |
+| **When** | Medir TBT |
+| **Then** | ✅ TBT < 200ms |
+| **And** | ✅ UI não trava durante transições |
+
+---
+
+## Q) Performance - API e Banco de Dados
+
+### Q1. Query daily_content
+| Step | Ação |
+|------|------|
+| **Given** | Usuário abrindo Home |
+| **When** | Medir tempo de resposta da query |
+| **Then** | ✅ Resposta < 200ms |
+| **Target** | 🎯 < 100ms (P95) |
+
+### Q2. Query checkins do mês (streak)
+| Step | Ação |
+|------|------|
+| **Given** | Usuário com 30 check-ins |
+| **When** | Carregar streak mensal |
+| **Then** | ✅ Resposta < 150ms |
+
+### Q3. Query feed comunidade (7 dias)
+| Step | Ação |
+|------|------|
+| **Given** | Feed com 100+ check-ins |
+| **When** | Carregar `/comunidade` |
+| **Then** | ✅ Resposta < 300ms |
+| **And** | ✅ Paginação funcional |
+
+### Q4. Query cursos com módulos e aulas
+| Step | Ação |
+|------|------|
+| **Given** | Curso com 10 módulos, 50 aulas |
+| **When** | Carregar página do curso |
+| **Then** | ✅ Resposta < 400ms |
+
+### Q5. Insert/Update check-in
+| Step | Ação |
+|------|------|
+| **Given** | Usuário salvando check-in |
+| **When** | Submeter formulário |
+| **Then** | ✅ Operação < 300ms |
+| **And** | ✅ Feedback visual imediato (spinner) |
+
+### Q6. Salvar progresso de aula
+| Step | Ação |
+|------|------|
+| **Given** | Player de vídeo/áudio |
+| **When** | Auto-save a cada 10s |
+| **Then** | ✅ Operação < 100ms |
+| **And** | ✅ Não interromper playback |
+
+---
+
+## R) Performance - Mídia e Streaming
+
+### R1. Carregamento de imagens
+| Step | Ação |
+|------|------|
+| **Given** | Página com múltiplas imagens |
+| **When** | Carregar página |
+| **Then** | ✅ Lazy loading ativo (loading="lazy") |
+| **And** | ✅ Imagens otimizadas (WebP quando possível) |
+
+### R2. Background parallax (mobile)
+| Step | Ação |
+|------|------|
+| **Given** | Dispositivo móvel |
+| **When** | Scroll na página |
+| **Then** | ✅ 60fps consistente |
+| **And** | ✅ Sem jank ou travamentos |
+
+### R3. Player de áudio (meditação)
+| Step | Ação |
+|------|------|
+| **Given** | Página de meditação |
+| **When** | Iniciar reprodução |
+| **Then** | ✅ Áudio inicia em < 2s |
+| **And** | ✅ Buffering < 5% do tempo total |
+
+### R4. Player de vídeo (aulas)
+| Step | Ação |
+|------|------|
+| **Given** | Aula com vídeo |
+| **When** | Iniciar reprodução |
+| **Then** | ✅ Vídeo inicia em < 3s |
+| **And** | ✅ Quality adaptativa funcional |
+
+### R5. Spotify embed
+| Step | Ação |
+|------|------|
+| **Given** | Home com player Spotify |
+| **When** | Carregar página |
+| **Then** | ✅ Player carrega em < 2s |
+| **And** | ✅ Não bloqueia renderização da página |
+
+---
+
+## S) Testes de Carga
+
+### S1. Carga normal (baseline)
+| Step | Ação |
+|------|------|
+| **Given** | 50 usuários simultâneos |
+| **When** | Navegação normal por 5 minutos |
+| **Then** | ✅ Tempo médio de resposta < 500ms |
+| **And** | ✅ Taxa de erro < 1% |
+| **And** | ✅ CPU servidor < 70% |
+
+### S2. Carga moderada
+| Step | Ação |
+|------|------|
+| **Given** | 200 usuários simultâneos |
+| **When** | Mix de operações (leitura 80%, escrita 20%) |
+| **Then** | ✅ Tempo médio de resposta < 1s |
+| **And** | ✅ Taxa de erro < 2% |
+| **And** | ✅ Sem degradação progressiva |
+
+### S3. Pico de carga
+| Step | Ação |
+|------|------|
+| **Given** | 500 usuários simultâneos |
+| **When** | Simular horário de pico (8h manhã) |
+| **Then** | ✅ Sistema mantém funcionalidade |
+| **And** | ✅ Tempo de resposta < 3s (P95) |
+| **And** | ✅ Graceful degradation (não crash) |
+
+### S4. Stress test
+| Step | Ação |
+|------|------|
+| **Given** | Aumento gradual até 1000 usuários |
+| **When** | Identificar ponto de ruptura |
+| **Then** | ✅ Documentar limite máximo |
+| **And** | ✅ Sistema recupera após redução de carga |
+
+### S5. Endurance test (soak)
+| Step | Ação |
+|------|------|
+| **Given** | 100 usuários por 2 horas |
+| **When** | Monitorar recursos continuamente |
+| **Then** | ✅ Sem memory leaks |
+| **And** | ✅ Sem degradação de performance |
+| **And** | ✅ Conexões DB estáveis |
+
+---
+
+## T) Performance - Mobile e Rede
+
+### T1. 3G lento
+| Step | Ação |
+|------|------|
+| **Given** | Throttling "Slow 3G" no DevTools |
+| **When** | Carregar Home |
+| **Then** | ✅ Página utilizável em < 8s |
+| **And** | ✅ Skeleton/loading visível |
+| **And** | ✅ Conteúdo crítico priorizado |
+
+### T2. 4G regular
+| Step | Ação |
+|------|------|
+| **Given** | Throttling "Regular 4G" |
+| **When** | Navegação completa |
+| **Then** | ✅ LCP < 4s |
+| **And** | ✅ Interatividade em < 5s |
+
+### T3. Offline/reconexão
+| Step | Ação |
+|------|------|
+| **Given** | Conexão perdida durante uso |
+| **When** | Tentar salvar check-in |
+| **Then** | ✅ Exibir mensagem de erro clara |
+| **And** | ✅ Não perder dados do formulário |
+| **And** | ✅ Retry automático quando reconectar |
+
+### T4. Bundle size
+| Step | Ação |
+|------|------|
+| **Given** | Build de produção |
+| **When** | Analisar bundle |
+| **Then** | ✅ JS inicial < 200KB (gzipped) |
+| **And** | ✅ CSS < 50KB (gzipped) |
+| **And** | ✅ Code splitting ativo |
+
+### T5. Cache efetivo
+| Step | Ação |
+|------|------|
+| **Given** | Segunda visita à página |
+| **When** | Carregar do cache |
+| **Then** | ✅ Assets estáticos cacheados |
+| **And** | ✅ LCP < 1s (cache hit) |
+
+---
+
+## U) Performance - Monitoramento
+
+### U1. Core Web Vitals em produção
+| Step | Ação |
+|------|------|
+| **Given** | Produção com usuários reais |
+| **When** | Coletar métricas por 7 dias |
+| **Then** | ✅ LCP P75 < 2.5s |
+| **And** | ✅ FID P75 < 100ms |
+| **And** | ✅ CLS P75 < 0.1 |
+
+### U2. Alertas de performance
+| Step | Ação |
+|------|------|
+| **Given** | Sistema de monitoramento |
+| **When** | Tempo de resposta > 2s |
+| **Then** | ✅ Alerta disparado |
+| **And** | ✅ Log com contexto (rota, query, etc) |
+
+### U3. Database connection pool
+| Step | Ação |
+|------|------|
+| **Given** | Supabase em produção |
+| **When** | Monitorar conexões |
+| **Then** | ✅ Conexões < 80% do limite |
+| **And** | ✅ Sem connection timeouts |
+
+---
+
+## Ferramentas Recomendadas
+
+| Categoria | Ferramenta | Uso |
+|-----------|------------|-----|
+| Web Vitals | Lighthouse | FCP, LCP, CLS, TTI local |
+| Web Vitals | PageSpeed Insights | Métricas de campo e lab |
+| Load Testing | k6 | Testes de carga programáticos |
+| Load Testing | Artillery | Cenários de carga YAML |
+| Profiling | Chrome DevTools | Performance, Memory, Network |
+| Monitoring | Supabase Dashboard | Queries lentas, conexões |
+| Bundle | vite-bundle-visualizer | Análise de bundle size |
+| Mobile | Chrome Remote Debug | Performance em dispositivo real |
+
+---
+
 ## Checklist de Execução
 
 | Seção | Total | Passou | Falhou | Bloqueado |
@@ -733,7 +1010,27 @@
 | M) Admin Cursos | 5 | | | |
 | N) Acessibilidade | 5 | | | |
 | O) Segurança | 5 | | | |
-| **TOTAL** | **81** | | | |
+| P) Performance - Carregamento | 5 | | | |
+| Q) Performance - API/DB | 6 | | | |
+| R) Performance - Mídia | 5 | | | |
+| S) Testes de Carga | 5 | | | |
+| T) Performance - Mobile | 5 | | | |
+| U) Performance - Monitoramento | 3 | | | |
+| **TOTAL** | **110** | | | |
+
+---
+
+## Métricas Alvo (SLOs)
+
+| Métrica | Target | Crítico |
+|---------|--------|---------|
+| LCP (P75) | < 2.5s | < 4s |
+| FCP (P75) | < 1.8s | < 3s |
+| CLS (P75) | < 0.1 | < 0.25 |
+| TTI | < 3.8s | < 7s |
+| API Response (P95) | < 500ms | < 2s |
+| Error Rate | < 1% | < 5% |
+| Uptime | 99.9% | 99% |
 
 ---
 
@@ -744,6 +1041,10 @@
 **Testador:** _______________
 
 **Ambiente:** [ ] Preview [ ] Produção
+
+**Device:** [ ] Desktop [ ] Mobile [ ] Tablet
+
+**Conexão:** [ ] WiFi [ ] 4G [ ] 3G
 
 **Observações:**
 
