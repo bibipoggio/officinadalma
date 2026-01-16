@@ -67,10 +67,10 @@ export function PrivacyDisclaimerModal({
           <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              Informação importante sobre compartilhamento
+              Atenção: Dados Sensíveis Serão Públicos
             </p>
             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-              Ao compartilhar na comunidade, seu conteúdo ficará visível para outros usuários.
+              Seu estado emocional, nível de energia e reflexões pessoais serão visíveis para <strong>todos os usuários</strong> da comunidade.
             </p>
           </div>
         </div>
@@ -87,24 +87,26 @@ export function PrivacyDisclaimerModal({
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
                 {shareMode === "community"
-                  ? "Seu nome de exibição será mostrado junto ao seu check-in."
-                  : "Seu check-in será exibido sem identificação, mas o conteúdo ainda será público."}
+                  ? "Seu nome de exibição será mostrado junto ao seu check-in. Outros usuários poderão ver quem você é."
+                  : "Seu check-in será exibido sem seu nome, mas o conteúdo emocional ainda será público e visível para todos."}
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Eye className="w-4 h-4 text-primary" />
+            <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4 text-destructive" />
             </div>
             <div>
               <p className="text-sm font-medium text-foreground">
-                Visibilidade do Conteúdo
+                O que será visível publicamente
               </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Todos os usuários autenticados poderão ver seu check-in na página da comunidade, 
-                incluindo seu nível de energia e texto sobre como você está se sentindo.
-              </p>
+              <ul className="text-sm text-muted-foreground mt-1 space-y-1">
+                <li>• <strong>Seu nível de energia</strong> (escala de 1 a 10)</li>
+                <li>• <strong>Seu texto pessoal</strong> sobre como você está se sentindo</li>
+                <li>• <strong>A data</strong> do seu check-in</li>
+                {shareMode === "community" && <li>• <strong>Seu nome de exibição</strong></li>}
+              </ul>
             </div>
           </div>
 
@@ -117,8 +119,8 @@ export function PrivacyDisclaimerModal({
                 Seus Direitos
               </p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Você pode alterar a privacidade ou despublicar seu check-in a qualquer momento 
-                através do seu Diário.
+                Você pode alterar a privacidade para "Privado" ou despublicar seu check-in a qualquer momento 
+                através do seu Diário. Isso removerá imediatamente da comunidade.
               </p>
             </div>
           </div>

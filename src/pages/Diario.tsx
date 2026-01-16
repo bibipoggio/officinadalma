@@ -697,6 +697,15 @@ const Diario = () => {
                 </Badge>
               ))}
             </div>
+            {/* Privacy warning for public modes */}
+            {editShareMode !== "private" && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                {editShareMode === "community" 
+                  ? "Seu nome, energia e texto serão visíveis para todos"
+                  : "Sua energia e texto serão visíveis (sem seu nome)"}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
