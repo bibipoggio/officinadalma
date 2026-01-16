@@ -91,14 +91,13 @@ const Login = () => {
         className="absolute inset-0 z-0"
         style={{
           backgroundImage: `url(${loginBg})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top',
           backgroundRepeat: 'no-repeat',
-          backgroundColor: 'hsl(var(--background))',
         }}
       />
       {/* Overlay for better contrast */}
-      <div className="absolute inset-0 z-0 bg-background/60" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-background/40 via-background/50 to-background/70" />
       
       <Card className="w-full max-w-md shadow-card relative z-10 bg-card/95 backdrop-blur-md border-crystal/20">
         <CardHeader className="text-center space-y-2">
