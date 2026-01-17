@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
+
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { 
   PrivacyDisclaimerModal, 
@@ -58,9 +58,7 @@ const Home = () => {
   const [energy, setEnergy] = useState(5);
   const [feelingText, setFeelingText] = useState("");
   const [shareMode, setShareMode] = useState<ShareMode>("private");
-  const [published, setPublished] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [pendingShareMode, setPendingShareMode] = useState<ShareMode | null>(null);
 
   // Sync form with existing checkin
   useEffect(() => {
@@ -68,43 +66,46 @@ const Home = () => {
       setEnergy(checkin.energy);
       setFeelingText(checkin.feeling_text);
       setShareMode(checkin.share_mode);
-      setPublished(checkin.published);
     }
   }, [checkin]);
 
-  // Handle share mode change with privacy check
+  // Handle share mode change
   const handleShareModeChange = (newMode: ShareMode) => {
-    if ((newMode === "community" || newMode === "anonymous") && !hasAcceptedPrivacyDisclaimer()) {
-      setPendingShareMode(newMode);
+    setShareMode(newMode);
+  };
+
+  // Handle save button click
+  const handleSaveClick = () => {
+    // If public mode and not yet accepted privacy, show modal
+    if ((shareMode === "community" || shareMode === "anonymous") && !hasAcceptedPrivacyDisclaimer()) {
       setShowPrivacyModal(true);
     } else {
-      setShareMode(newMode);
+      // Save directly
+      performSave();
     }
   };
 
-  const handlePrivacyAccept = () => {
-    if (pendingShareMode) {
-      setShareMode(pendingShareMode);
-      setPendingShareMode(null);
-    }
-    setShowPrivacyModal(false);
-  };
-
-  const handlePrivacyCancel = () => {
-    setPendingShareMode(null);
-    setShowPrivacyModal(false);
-  };
-
-  const handleSaveCheckin = async () => {
+  // Actually save the check-in
+  const performSave = async () => {
+    // If private, published = false; otherwise published = true
+    const shouldPublish = shareMode !== "private";
+    
     const result = await saveCheckin({
       energy,
       feeling_text: feelingText,
       share_mode: shareMode,
-      published,
+      published: shouldPublish,
     });
 
     if (result.success) {
-      toast({ title: "Check-in salvo." });
+      toast({ 
+        title: "Check-in salvo!", 
+        description: shouldPublish 
+          ? (shareMode === "community" 
+            ? "Seu check-in foi compartilhado com a comunidade." 
+            : "Seu check-in foi compartilhado de forma anônima.")
+          : "Seu check-in foi salvo de forma privada."
+      });
     } else {
       toast({ 
         title: "Erro", 
@@ -114,19 +115,29 @@ const Home = () => {
     }
   };
 
+  const handlePrivacyAccept = () => {
+    setShowPrivacyModal(false);
+    // After accepting, save the check-in
+    performSave();
+  };
+
+  const handlePrivacyCancel = () => {
+    setShowPrivacyModal(false);
+  };
+
   const isLoading = subscriptionLoading || contentLoading || checkinLoading || streakLoading;
 
-  const getPrivacyExplanation = () => {
-    if (!published) {
-      return "Somente você vê.";
+  const getPrivacyDescription = () => {
+    if (shareMode === "private") {
+      return "Somente você verá este check-in.";
     }
     if (shareMode === "community") {
-      return "A comunidade vê com seu nome.";
+      return "Seu nome e check-in serão visíveis para a comunidade.";
     }
     if (shareMode === "anonymous") {
-      return "A comunidade vê como Anônimo.";
+      return "Seu check-in será visível para a comunidade, mas sem seu nome.";
     }
-    return "Somente você vê.";
+    return "";
   };
 
   return (
@@ -402,70 +413,57 @@ const Home = () => {
                 {/* Privacy Options */}
                 <div className="space-y-3">
                   <label className="text-sm font-medium text-foreground">
-                    Privacidade
+                    Compartilhar como
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {([
-                      { value: "private", label: "Privado", desc: "Só você vê" },
-                      { value: "community", label: "Comunidade", desc: "Público com seu nome" },
-                      { value: "anonymous", label: "Anônimo", desc: "Público sem nome" },
+                      { value: "private", label: "🔒 Privado", desc: "Só você vê" },
+                      { value: "community", label: "👥 Comunidade", desc: "Com seu nome" },
+                      { value: "anonymous", label: "🎭 Anônimo", desc: "Sem seu nome" },
                     ] as const).map((option) => (
                       <button
                         key={option.value}
                         type="button"
                         onClick={() => handleShareModeChange(option.value)}
                         disabled={isSaving}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
                           shareMode === option.value
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground hover:bg-muted/50 border-border"
                         }`}
-                        title={option.desc}
                       >
-                        {option.label}
+                        <span className="block text-base">{option.label}</span>
+                        <span className="block text-xs opacity-80 mt-0.5">{option.desc}</span>
                       </button>
                     ))}
                   </div>
-                  {/* Privacy warning for public modes */}
-                  {shareMode !== "private" && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                  {/* Privacy description */}
+                  <p className={`text-xs flex items-center gap-1.5 ${
+                    shareMode === "private" 
+                      ? "text-muted-foreground" 
+                      : "text-amber-600 dark:text-amber-400"
+                  }`}>
+                    {shareMode !== "private" && (
                       <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                      {shareMode === "community" 
-                        ? "Seu nome, energia e texto serão visíveis para todos os usuários"
-                        : "Sua energia e texto serão visíveis para todos (sem seu nome)"}
-                    </p>
-                  )}
-                </div>
-
-                {/* Published Toggle */}
-                <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
-                  <div>
-                    <label className="text-sm font-medium text-foreground">
-                      Publicado
-                    </label>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {getPrivacyExplanation()}
-                    </p>
-                  </div>
-                  <Switch
-                    checked={published}
-                    onCheckedChange={setPublished}
-                    disabled={isSaving || shareMode === "private"}
-                  />
+                    )}
+                    {getPrivacyDescription()}
+                  </p>
                 </div>
 
                 {/* Save Button */}
                 <Button
                   className="w-full"
                   size="lg"
-                  onClick={handleSaveCheckin}
+                  onClick={handleSaveClick}
                   disabled={isSaving || !feelingText.trim()}
                 >
                   {isSaving 
                     ? "Salvando..." 
-                    : checkin 
-                      ? "Salvar alterações" 
-                      : "Salvar check-in"
+                    : shareMode === "private"
+                      ? (checkin ? "Salvar alterações" : "Salvar check-in")
+                      : shareMode === "community"
+                        ? "Compartilhar com a comunidade"
+                        : "Compartilhar anonimamente"
                   }
                 </Button>
               </>
@@ -480,7 +478,7 @@ const Home = () => {
         onOpenChange={setShowPrivacyModal}
         onAccept={handlePrivacyAccept}
         onCancel={handlePrivacyCancel}
-        shareMode={pendingShareMode === "anonymous" ? "anonymous" : "community"}
+        shareMode={shareMode === "anonymous" ? "anonymous" : "community"}
       />
     </AppLayout>
   );
