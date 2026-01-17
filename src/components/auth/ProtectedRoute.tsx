@@ -12,12 +12,16 @@ interface ProtectedRouteProps {
 }
 
 // Check if profile is complete (has required fields)
+// Returns null if profile hasn't loaded yet (don't redirect during loading)
 function isProfileComplete(profile: { 
   birth_date?: string | null; 
   birth_city?: string | null;
   phone?: string | null;
-} | null): boolean {
-  if (!profile) return false;
+} | null | undefined): boolean | null {
+  // Profile not yet loaded - return null to indicate "unknown"
+  if (profile === undefined) return null;
+  // Profile loaded but empty (shouldn't happen with proper triggers)
+  if (profile === null) return false;
   return !!(profile.birth_date && profile.birth_city && profile.phone);
 }
 
@@ -39,9 +43,21 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Check if profile is complete
+  const profileComplete = isProfileComplete(profile);
+
+  // If profile status is unknown (still loading), show loading state
+  if (profileComplete === null) {
+    return (
+      <AppLayout>
+        <LoadingState message="Carregando perfil..." />
+      </AppLayout>
+    );
+  }
+
   // Redirect to complete profile if profile is incomplete
   // Skip this check if already on the complete profile page
-  if (location.pathname !== "/completar-perfil" && !isProfileComplete(profile)) {
+  if (location.pathname !== "/completar-perfil" && !profileComplete) {
     return <Navigate to="/completar-perfil" replace />;
   }
 

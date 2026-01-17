@@ -31,7 +31,7 @@ interface SignUpProfileData {
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: UserProfile | null;
+  profile: UserProfile | null | undefined; // undefined = not loaded yet, null = loaded but doesn't exist
   role: AppRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -50,7 +50,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null | undefined>(undefined); // undefined = not loaded
   const [role, setRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -99,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clearUserData = () => {
     setUser(null);
     setSession(null);
-    setProfile(null);
+    setProfile(undefined); // Reset to undefined so next login waits for profile
     setRole(null);
   };
 

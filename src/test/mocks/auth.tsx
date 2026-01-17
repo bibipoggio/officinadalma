@@ -14,7 +14,7 @@ export interface MockAuthContextValue {
   isLoading: boolean;
   role: AppRole | null;
   hasAdminAccess: boolean;
-  profile: any;
+  profile: any | null | undefined; // undefined = not loaded, null = loaded but doesn't exist
 }
 
 const defaultMockValue: MockAuthContextValue = {
@@ -23,7 +23,7 @@ const defaultMockValue: MockAuthContextValue = {
   isLoading: false,
   role: null,
   hasAdminAccess: false,
-  profile: null,
+  profile: undefined, // Changed from null to undefined to match real context
 };
 
 const MockAuthContext = createContext<MockAuthContextValue>(defaultMockValue);
