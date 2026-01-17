@@ -9,6 +9,7 @@ import { useDailyContent } from "@/hooks/useDailyContent";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { AudioUpload } from "@/components/admin/AudioUpload";
 
 const formatDateDisplay = (dateStr: string) => {
   const date = new Date(dateStr + "T12:00:00");
@@ -219,19 +220,11 @@ const AdminConteudoDiario = () => {
               </p>
               
               <div className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="meditation_audio_url" className="text-lg font-medium">
-                    Link do áudio (Bunny)
-                  </Label>
-                  <Input
-                    id="meditation_audio_url"
-                    type="url"
-                    value={content.meditation_audio_url || ""}
-                    onChange={(e) => updateField("meditation_audio_url", e.target.value || null)}
-                    placeholder="https://..."
-                    className="text-lg h-14"
-                  />
-                </div>
+                <AudioUpload
+                  currentUrl={content.meditation_audio_url}
+                  onUrlChange={(url) => updateField("meditation_audio_url", url)}
+                  date={selectedDate}
+                />
 
                 <div className="space-y-2">
                   <Label htmlFor="meditation_duration" className="text-lg font-medium">
