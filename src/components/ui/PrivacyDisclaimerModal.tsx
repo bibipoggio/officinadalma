@@ -75,59 +75,8 @@ export function PrivacyDisclaimerModal({
           </div>
         </div>
 
-        {/* Info sections */}
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                {shareMode === "community" ? "Modo Comunidade" : "Modo Anônimo"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {shareMode === "community"
-                  ? "Seu nome de exibição será mostrado junto ao seu check-in. Outros usuários poderão ver quem você é."
-                  : "Seu check-in será exibido sem seu nome, mas o conteúdo emocional ainda será público e visível para todos."}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
-              <Eye className="w-4 h-4 text-destructive" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                O que será visível publicamente
-              </p>
-              <ul className="text-sm text-muted-foreground mt-1 space-y-1">
-                <li>• <strong>Seu nível de energia</strong> (escala de 1 a 10)</li>
-                <li>• <strong>Seu texto pessoal</strong> sobre como você está se sentindo</li>
-                <li>• <strong>A data</strong> do seu check-in</li>
-                {shareMode === "community" && <li>• <strong>Seu nome de exibição</strong></li>}
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Shield className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-foreground">
-                Seus Direitos
-              </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                Você pode alterar a privacidade para "Privado" ou despublicar seu check-in a qualquer momento 
-                através do seu Diário. Isso removerá imediatamente da comunidade.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Checkbox confirmation */}
-        <div className="pt-2 border-t">
+        {/* Checkbox confirmation - moved up for better UX */}
+        <div className="p-3 rounded-lg bg-muted/50 border">
           <label className="flex items-start gap-3 cursor-pointer">
             <Checkbox
               checked={understood}
@@ -139,6 +88,49 @@ export function PrivacyDisclaimerModal({
               concordo em compartilhar.
             </span>
           </label>
+        </div>
+
+        {/* Info sections */}
+        <div className="space-y-4 text-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">
+                {shareMode === "community" ? "Modo Comunidade" : "Modo Anônimo"}
+              </p>
+              <p className="text-muted-foreground mt-0.5">
+                {shareMode === "community"
+                  ? "Seu nome de exibição será mostrado junto ao seu check-in."
+                  : "Seu check-in será exibido sem seu nome."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+              <Eye className="w-4 h-4 text-destructive" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">O que será visível</p>
+              <p className="text-muted-foreground mt-0.5">
+                Energia, texto pessoal{shareMode === "community" ? " e seu nome" : ""}.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Shield className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <p className="font-medium text-foreground">Seus Direitos</p>
+              <p className="text-muted-foreground mt-0.5">
+                Você pode despublicar a qualquer momento pelo Diário.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </Modal>
