@@ -27,6 +27,7 @@ import RedefinirSenha from "./pages/RedefinirSenha";
 import AdminConteudoDiario from "./pages/AdminConteudoDiario";
 import AdminCursos from "./pages/AdminCursos";
 import AdminModeracao from "./pages/AdminModeracao";
+import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/cadastro" element={<PublicOnlyRoute><Cadastro /></PublicOnlyRoute>} />
             <Route path="/recuperar-senha" element={<PublicOnlyRoute><RecuperarSenha /></PublicOnlyRoute>} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+            <Route path="/instalar" element={<Instalar />} />
             <Route path="/completar-perfil" element={<ProtectedRoute><CompletarPerfil /></ProtectedRoute>} />
 
             {/* Protected Routes (requires login) */}
