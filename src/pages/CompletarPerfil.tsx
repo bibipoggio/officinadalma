@@ -57,7 +57,7 @@ const CompletarPerfil = () => {
       if (profile.birth_state) setBirthState(profile.birth_state);
       if (profile.birth_country) setBirthCountry(profile.birth_country);
       if (profile.phone) setPhone(formatPhone(profile.phone));
-      // Avatar URL would need to be fetched from profile if the column exists
+      if (profile.avatar_url) setAvatarUrl(profile.avatar_url);
     }
   }, [profile]);
 

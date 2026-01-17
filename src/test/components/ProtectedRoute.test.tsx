@@ -4,11 +4,26 @@ import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/auth/ProtectedRoute";
 
 // Mock AuthContext
-const mockAuthContext = {
+const mockAuthContext: {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  hasAdminAccess: boolean;
+  profile: null | undefined | Record<string, unknown>;
+  user: null;
+  session: null;
+  role: null | string;
+  signUp: ReturnType<typeof vi.fn>;
+  signIn: ReturnType<typeof vi.fn>;
+  signInWithGoogle: ReturnType<typeof vi.fn>;
+  signOut: ReturnType<typeof vi.fn>;
+  refreshProfile: ReturnType<typeof vi.fn>;
+  isAdmin: boolean;
+  isModerator: boolean;
+} = {
   isAuthenticated: false,
   isLoading: false,
   hasAdminAccess: false,
-  profile: null,
+  profile: undefined, // undefined = not loaded, null = loaded but doesn't exist
   user: null,
   session: null,
   role: null,
@@ -17,6 +32,8 @@ const mockAuthContext = {
   signInWithGoogle: vi.fn(),
   signOut: vi.fn(),
   refreshProfile: vi.fn(),
+  isAdmin: false,
+  isModerator: false,
 };
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -43,7 +60,7 @@ describe("ProtectedRoute", () => {
     mockAuthContext.isAuthenticated = false;
     mockAuthContext.isLoading = false;
     mockAuthContext.hasAdminAccess = false;
-    mockAuthContext.profile = null;
+    mockAuthContext.profile = undefined; // Reset to undefined
   });
 
   describe("Loading State", () => {
@@ -60,6 +77,23 @@ describe("ProtectedRoute", () => {
 
       expect(screen.getByTestId("loading-state")).toBeInTheDocument();
       expect(screen.getByText("Verificando autenticação...")).toBeInTheDocument();
+    });
+
+    it("should show loading state while profile is loading (undefined)", () => {
+      mockAuthContext.isAuthenticated = true;
+      mockAuthContext.isLoading = false;
+      mockAuthContext.profile = undefined;
+
+      render(
+        <MemoryRouter>
+          <ProtectedRoute>
+            <div>Protected Content</div>
+          </ProtectedRoute>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByTestId("loading-state")).toBeInTheDocument();
+      expect(screen.getByText("Carregando perfil...")).toBeInTheDocument();
     });
   });
 
