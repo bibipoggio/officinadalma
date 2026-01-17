@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { PWAInstallBanner } from "@/components/ui/PWAInstallBanner";
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { 
   PrivacyDisclaimerModal, 
@@ -480,6 +480,9 @@ const Home = () => {
         onCancel={handlePrivacyCancel}
         shareMode={shareMode === "anonymous" ? "anonymous" : "community"}
       />
+      
+      {/* PWA Install Banner */}
+      <PWAInstallBanner />
     </AppLayout>
   );
 };
