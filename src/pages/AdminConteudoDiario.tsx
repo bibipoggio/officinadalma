@@ -10,6 +10,7 @@ import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
 import { AudioUpload } from "@/components/admin/AudioUpload";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 
 const formatDateDisplay = (dateStr: string) => {
   const date = new Date(dateStr + "T12:00:00");
@@ -152,6 +153,14 @@ const AdminConteudoDiario = () => {
               </p>
               
               <div className="space-y-5">
+                {/* Image Upload */}
+                <ImageUpload
+                  currentUrl={content.cover_image_url}
+                  onUrlChange={(url) => updateField("cover_image_url", url)}
+                  date={selectedDate}
+                  label="Imagem de Capa (opcional)"
+                />
+
                 <div className="space-y-2">
                   <Label htmlFor="tonica_title" className="text-lg font-medium">
                     Título da Tônica *
