@@ -70,14 +70,20 @@ export function useCommunityFeed() {
 
       let profilesMap: Record<string, string | null> = {};
       if (communityUserIds.length > 0) {
-        const { data: profiles } = await supabase
+        const { data: profiles, error: profilesError } = await supabase
           .from("public_profiles")
           .select("id, display_name")
           .in("id", communityUserIds);
 
+        if (profilesError) {
+          console.error("Error fetching profiles:", profilesError);
+        }
+
         if (profiles) {
           profilesMap = profiles.reduce((acc, p) => {
-            acc[p.id] = p.display_name;
+            if (p.id) {
+              acc[p.id] = p.display_name;
+            }
             return acc;
           }, {} as Record<string, string | null>);
         }
