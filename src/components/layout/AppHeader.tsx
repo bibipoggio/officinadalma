@@ -12,9 +12,11 @@ export function AppHeader({ onMenuClick, className }: AppHeaderProps) {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-40 h-16 bg-background/95 backdrop-blur-sm border-b border-border",
+        "fixed top-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border",
+        "pt-[env(safe-area-inset-top)]",
         className
       )}
+      style={{ minHeight: 'calc(4rem + env(safe-area-inset-top))' }}
     >
       <div className="flex items-center justify-between h-full px-4 max-w-screen-xl mx-auto">
         {/* Logo */}

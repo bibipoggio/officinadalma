@@ -48,7 +48,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
         <AppHeader onMenuClick={() => setSidebarOpen(true)} />
         <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         
-        <main className={cn("pt-16 min-h-screen", className)}>
+        <main className={cn("pt-16 min-h-screen", className)} style={{ paddingTop: 'calc(4rem + env(safe-area-inset-top))' }}>
           <div className="container mx-auto px-4 py-6 md:py-8">
             {children}
           </div>
