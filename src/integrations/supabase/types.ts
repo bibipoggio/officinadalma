@@ -305,6 +305,7 @@ export type Database = {
       }
       daily_content: {
         Row: {
+          cover_image_url: string | null
           created_at: string
           created_by: string | null
           date: string
@@ -320,6 +321,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           date: string
@@ -335,6 +337,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cover_image_url?: string | null
           created_at?: string
           created_by?: string | null
           date?: string
