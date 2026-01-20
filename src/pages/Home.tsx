@@ -206,71 +206,6 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* Pérolas de Sabedoria - Basic Course Preview */}
-        {basicCourse && (
-          <Card className="bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/30">
-            <CardContent className="p-5">
-              {courseLoading ? (
-                <div className="space-y-3">
-                  <Skeleton className="h-6 w-40" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-xs uppercase tracking-wide text-amber-600/80 dark:text-amber-400/80 font-medium">
-                        Curso Gratuito
-                      </p>
-                      <h3 className="font-display text-lg font-semibold text-foreground">
-                        {basicCourse.title}
-                      </h3>
-                    </div>
-                    {totalLessons > 0 && (
-                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 rounded-full">
-                        <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
-                          {totalLessons} {totalLessons === 1 ? "lição" : "lições"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <p className="text-muted-foreground leading-relaxed">
-                    {basicCourse.description_short || "Pequenas reflexões diárias para nutrir sua alma."}
-                  </p>
-
-                  {latestLesson && (
-                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 border border-amber-200/30 dark:border-amber-800/20">
-                      <p className="text-xs text-amber-600/70 dark:text-amber-400/70 font-medium mb-1">
-                        Última lição
-                      </p>
-                      <p className="text-sm font-medium text-foreground">
-                        {latestLesson.title}
-                      </p>
-                      {latestLesson.summary && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {latestLesson.summary}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <Link to={`/aulas/${basicCourse.route_slug}`}>
-                    <Button variant="outline" className="w-full sm:w-auto border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30">
-                      Explorar curso <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
         {/* Error State */}
         {contentError && (
           <Card className="border-destructive/50 bg-destructive/5">
@@ -283,6 +218,7 @@ const Home = () => {
             </CardContent>
           </Card>
         )}
+
 
         {/* Tônica do Dia */}
         <Card>
@@ -430,6 +366,71 @@ const Home = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Gotas de Sabedoria - Basic Course Preview */}
+        {basicCourse && (
+          <Card className="bg-gradient-to-br from-amber-50/50 to-orange-50/50 dark:from-amber-950/20 dark:to-orange-950/20 border-amber-200/50 dark:border-amber-800/30">
+            <CardContent className="p-5">
+              {courseLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs uppercase tracking-wide text-amber-600/80 dark:text-amber-400/80 font-medium">
+                        Curso Gratuito
+                      </p>
+                      <h3 className="font-display text-lg font-semibold text-foreground">
+                        Gotas de Sabedoria
+                      </h3>
+                    </div>
+                    {totalLessons > 0 && (
+                      <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 rounded-full">
+                        <BookOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs font-medium text-amber-600 dark:text-amber-400">
+                          {totalLessons} {totalLessons === 1 ? "lição" : "lições"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <p className="text-muted-foreground leading-relaxed">
+                    {basicCourse.description_short || "Pequenas reflexões diárias para nutrir sua alma."}
+                  </p>
+
+                  {latestLesson && (
+                    <div className="bg-white/60 dark:bg-black/20 rounded-lg p-3 border border-amber-200/30 dark:border-amber-800/20">
+                      <p className="text-xs text-amber-600/70 dark:text-amber-400/70 font-medium mb-1">
+                        Última lição
+                      </p>
+                      <p className="text-sm font-medium text-foreground">
+                        {latestLesson.title}
+                      </p>
+                      {latestLesson.summary && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {latestLesson.summary}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <Link to={`/aulas/${basicCourse.route_slug}`}>
+                    <Button variant="outline" className="w-full sm:w-auto border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30">
+                      Explorar curso <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Check-in do Dia */}
         <Card>
