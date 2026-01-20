@@ -8,6 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { useAulasHub, getCourseTypeLabel } from "@/hooks/useAulasHub";
 import { cn } from "@/lib/utils";
 
+// Get badge variant based on course type
+function getCourseTypeBadgeVariant(type: string): "default" | "secondary" | "outline" {
+  if (type === "aparte") return "default";
+  if (type === "basic") return "outline";
+  return "secondary";
+}
+
 const Aulas = () => {
   const navigate = useNavigate();
   const { enrollments, availableCourses, isPremium, isLoading, error, refetch } = useAulasHub();
@@ -96,7 +103,7 @@ const Aulas = () => {
                         {enrollment.courses.title}
                       </h3>
                       <Badge
-                        variant={enrollment.courses.type === "aparte" ? "default" : "secondary"}
+                        variant={getCourseTypeBadgeVariant(enrollment.courses.type)}
                         className="shrink-0 text-xs"
                       >
                         {getCourseTypeLabel(enrollment.courses.type)}
@@ -194,7 +201,7 @@ const Aulas = () => {
                           {course.title}
                         </h3>
                         <Badge
-                          variant={isPremiumCourse ? "default" : "secondary"}
+                          variant={getCourseTypeBadgeVariant(course.type)}
                           className="shrink-0 text-xs"
                         >
                           {getCourseTypeLabel(course.type)}

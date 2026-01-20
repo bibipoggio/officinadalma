@@ -142,8 +142,11 @@ export function useCourseDetails(slug: string) {
       }
 
       // Determine access
+      const isBasicCourse = courseData.type === "basic";
       const isPremiumCourse = courseData.type === "aparte";
-      const hasAccess = !isPremiumCourse || isPremium || userHasEnrollment;
+      // Basic courses are free for all authenticated users
+      // Premium courses require subscription or enrollment
+      const hasAccess = isBasicCourse || !isPremiumCourse || isPremium || userHasEnrollment;
 
       // Build modules with lessons
       const modulesWithLessons: ModuleWithLessons[] = (modulesData || []).map((mod) => {
@@ -152,7 +155,10 @@ export function useCourseDetails(slug: string) {
           .map((lesson) => {
             // Determine if lesson is locked
             let isLocked = false;
-            if (isPremiumCourse && !hasAccess) {
+            if (isBasicCourse) {
+              // Basic course - all lessons are free for authenticated users
+              isLocked = !user;
+            } else if (isPremiumCourse && !hasAccess) {
               // Premium course without access - all locked
               isLocked = true;
             } else if (lesson.access_level === "premium" && !isPremium && !userHasEnrollment) {
@@ -228,5 +234,7 @@ export function formatDuration(seconds: number | null): string {
 
 // Get course type label
 export function getCourseTypeLabel(type: string): string {
-  return type === "aparte" ? "Premium" : "Básico";
+  if (type === "aparte") return "Premium";
+  if (type === "basic") return "Gratuito";
+  return "Básico";
 }

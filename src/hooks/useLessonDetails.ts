@@ -299,5 +299,7 @@ export function formatDuration(seconds: number | null): string {
 
 // Get course type label
 export function getCourseTypeLabel(type: string): string {
-  return type === "aparte" ? "Premium" : "Básico";
+  if (type === "aparte") return "Premium";
+  if (type === "basic") return "Gratuito";
+  return "Básico";
 }

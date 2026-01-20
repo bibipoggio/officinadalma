@@ -37,6 +37,7 @@ type EditMode = "view" | "edit-course" | "new-course" | "edit-module" | "new-mod
 const typeLabels: Record<string, string> = {
   regular: "Básico",
   aparte: "Premium",
+  basic: "Gratuito",
 };
 
 const contentTypeLabels: Record<string, string> = {
@@ -372,12 +373,21 @@ const AdminCursos = () => {
 
         <div className="space-y-2">
           <Label className="text-lg">Tipo *</Label>
-          <div className="flex gap-4">
+          <div className="flex gap-3 flex-wrap">
+            <Button
+              type="button"
+              variant={courseForm.type === "basic" ? "default" : "outline"}
+              size="lg"
+              className="flex-1 min-w-[100px] text-lg h-14"
+              onClick={() => setCourseForm(prev => ({ ...prev, type: "basic" }))}
+            >
+              Gratuito
+            </Button>
             <Button
               type="button"
               variant={courseForm.type === "regular" ? "default" : "outline"}
               size="lg"
-              className="flex-1 text-lg h-14"
+              className="flex-1 min-w-[100px] text-lg h-14"
               onClick={() => setCourseForm(prev => ({ ...prev, type: "regular" }))}
             >
               Básico
@@ -386,7 +396,7 @@ const AdminCursos = () => {
               type="button"
               variant={courseForm.type === "aparte" ? "default" : "outline"}
               size="lg"
-              className="flex-1 text-lg h-14"
+              className="flex-1 min-w-[100px] text-lg h-14"
               onClick={() => setCourseForm(prev => ({ ...prev, type: "aparte" }))}
             >
               Premium
