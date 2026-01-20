@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { Upload, X, Music, Loader2, Check } from "lucide-react";
+import { Upload, X, Music, Loader2, Check, Video } from "lucide-react";
 import { toast } from "sonner";
 
 interface AudioUploadProps {
@@ -21,9 +21,11 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith("audio/")) {
-      toast.error("Por favor, selecione um arquivo de áudio");
+    // Validate file type (audio or mp4 video)
+    const isAudio = file.type.startsWith("audio/");
+    const isMp4 = file.type === "video/mp4";
+    if (!isAudio && !isMp4) {
+      toast.error("Por favor, selecione um arquivo de áudio ou MP4");
       return;
     }
 
@@ -98,12 +100,16 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
       
       {currentUrl ? (
         <div className="space-y-3">
-          {/* Current audio preview */}
+          {/* Current media preview */}
           <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
             <Check className="w-5 h-5 text-green-600" />
-            <Music className="w-5 h-5 text-green-600" />
+            {currentUrl?.endsWith(".mp4") ? (
+              <Video className="w-5 h-5 text-green-600" />
+            ) : (
+              <Music className="w-5 h-5 text-green-600" />
+            )}
             <span className="flex-1 text-sm text-green-700 dark:text-green-400 truncate">
-              Áudio carregado
+              {currentUrl?.endsWith(".mp4") ? "Vídeo carregado" : "Áudio carregado"}
             </span>
             <Button
               variant="ghost"
@@ -115,10 +121,16 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
             </Button>
           </div>
           
-          {/* Audio player */}
-          <audio controls className="w-full" src={currentUrl}>
-            Seu navegador não suporta o elemento de áudio.
-          </audio>
+          {/* Media player */}
+          {currentUrl?.endsWith(".mp4") ? (
+            <video controls className="w-full rounded-lg" src={currentUrl}>
+              Seu navegador não suporta o elemento de vídeo.
+            </video>
+          ) : (
+            <audio controls className="w-full" src={currentUrl}>
+              Seu navegador não suporta o elemento de áudio.
+            </audio>
+          )}
           
           {/* URL input for manual editing */}
           <div className="space-y-2">
@@ -150,7 +162,7 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
             <input
               ref={fileInputRef}
               type="file"
-              accept="audio/*"
+              accept="audio/*,video/mp4"
               onChange={handleFileSelect}
               disabled={isUploading}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
@@ -166,10 +178,10 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
                 <Upload className="w-10 h-10 mx-auto text-muted-foreground" />
                 <div>
                   <p className="text-lg font-medium text-foreground">
-                    Clique ou arraste o arquivo de áudio
+                    Clique ou arraste o arquivo
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    MP3, WAV, M4A (máx. 50MB)
+                    MP3, WAV, M4A, MP4 (máx. 50MB)
                   </p>
                 </div>
               </div>
