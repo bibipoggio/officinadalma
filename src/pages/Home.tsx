@@ -245,9 +245,10 @@ const Home = () => {
                     </h3>
                   </div>
                 </div>
-                <p className="text-muted-foreground leading-relaxed">
-                  {dailyContent.tonica_short}
-                </p>
+                <div 
+                  className="text-muted-foreground leading-relaxed prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
+                  dangerouslySetInnerHTML={{ __html: dailyContent.tonica_short }}
+                />
                 <Link to={`/tonica/${today}`}>
                   <Button variant="outline" className="w-full sm:w-auto">
                     Ver mais <ArrowRight className="w-4 h-4 ml-2" />
