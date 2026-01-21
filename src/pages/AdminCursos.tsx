@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   useAdminCourses, 
   useAdminModules, 
@@ -30,11 +32,17 @@ import {
   Copy,
   Calendar as CalendarIcon,
   X,
+  Video,
+  FileAudio,
+  FileText,
+  Pencil,
+  Trash2,
+  GripVertical,
+  FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-type Step = "courses" | "modules" | "lessons";
-type EditMode = "view" | "edit-course" | "new-course" | "edit-module" | "new-module" | "edit-lesson" | "new-lesson";
+type ViewMode = "list" | "edit-course";
 
 const typeLabels: Record<string, string> = {
   regular: "Básico",
@@ -42,10 +50,10 @@ const typeLabels: Record<string, string> = {
   basic: "Gratuito",
 };
 
-const contentTypeLabels: Record<string, string> = {
-  video: "Vídeo",
-  audio: "Áudio",
-  text: "Texto",
+const contentTypeConfig = {
+  video: { label: "Vídeo", icon: Video, color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30" },
+  audio: { label: "Áudio", icon: FileAudio, color: "text-purple-600 bg-purple-100 dark:bg-purple-900/30" },
+  text: { label: "Texto", icon: FileText, color: "text-green-600 bg-green-100 dark:bg-green-900/30" },
 };
 
 const accessLabels: Record<string, string> = {
@@ -71,11 +79,14 @@ const getLessonStatus = (lesson: CourseLesson): { label: string; color: string }
 
 const AdminCursos = () => {
   const { toast } = useToast();
-  const [step, setStep] = useState<Step>("courses");
-  const [editMode, setEditMode] = useState<EditMode>("view");
-  
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("info");
+  
+  // Editing states
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [expandedModules, setExpandedModules] = useState<string[]>([]);
   
   // Form states
   const [courseForm, setCourseForm] = useState({
@@ -102,70 +113,66 @@ const AdminCursos = () => {
     released_at: Date | null;
     is_published: boolean;
     summary: string;
+    module_id: string;
   }>({
     title: "",
     access_level: "basic",
-    content_type: "video",
+    content_type: "text",
     media_url: "",
     body_markdown: "",
     duration_minutes: "",
     released_at: null,
     is_published: false,
     summary: "",
+    module_id: "",
   });
   
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCreatingModule, setIsCreatingModule] = useState(false);
+  const [isCreatingLesson, setIsCreatingLesson] = useState(false);
+  const [creatingLessonForModule, setCreatingLessonForModule] = useState<string | null>(null);
 
   const { courses, isLoading: coursesLoading, createCourse, updateCourse, toggleCoursePublished } = useAdminCourses();
   const { modules, isLoading: modulesLoading, createModule, updateModule, moveModule } = useAdminModules(selectedCourseId);
-  const { lessons, isLoading: lessonsLoading, createLesson, updateLesson, duplicateLesson, moveLesson } = useAdminLessons(selectedModuleId, selectedCourseId);
+  
+  // We need to fetch lessons for all modules at once
+  const [allLessons, setAllLessons] = useState<Record<string, CourseLesson[]>>({});
+  const [lessonsLoading, setLessonsLoading] = useState(false);
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
-  const selectedModule = modules.find(m => m.id === selectedModuleId);
+
+  // Fetch lessons when modules change
+  useEffect(() => {
+    if (!selectedCourseId || modules.length === 0) {
+      setAllLessons({});
+      return;
+    }
+    
+    const fetchAllLessons = async () => {
+      setLessonsLoading(true);
+      const lessonsMap: Record<string, CourseLesson[]> = {};
+      
+      for (const module of modules) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data } = await supabase
+          .from("course_lessons")
+          .select("*")
+          .eq("module_id", module.id)
+          .order("position", { ascending: true });
+        
+        lessonsMap[module.id] = (data || []) as CourseLesson[];
+      }
+      
+      setAllLessons(lessonsMap);
+      setLessonsLoading(false);
+    };
+    
+    fetchAllLessons();
+  }, [modules, selectedCourseId]);
 
   // Handlers
-  const handleSelectCourse = (courseId: string) => {
-    setSelectedCourseId(courseId);
-    setSelectedModuleId(null);
-    setStep("modules");
-    setEditMode("view");
-  };
-
-  const handleSelectModule = (moduleId: string) => {
-    setSelectedModuleId(moduleId);
-    setStep("lessons");
-    setEditMode("view");
-  };
-
-  const handleBackToCourses = () => {
-    setStep("courses");
-    setSelectedCourseId(null);
-    setSelectedModuleId(null);
-    setEditMode("view");
-  };
-
-  const handleBackToModules = () => {
-    setStep("modules");
-    setSelectedModuleId(null);
-    setEditMode("view");
-  };
-
-  // Course form handlers
-  const handleNewCourse = () => {
-    setCourseForm({
-      title: "",
-      type: "regular",
-      description_short: "",
-      cover_image_url: "",
-      route_slug: "",
-      is_published: false,
-    });
-    setEditingId(null);
-    setEditMode("new-course");
-  };
-
-  const handleEditCourse = (course: Course) => {
+  const handleSelectCourse = (course: Course) => {
+    setSelectedCourseId(course.id);
     setCourseForm({
       title: course.title,
       type: course.type,
@@ -174,8 +181,32 @@ const AdminCursos = () => {
       route_slug: course.route_slug,
       is_published: course.is_published,
     });
-    setEditingId(course.id);
-    setEditMode("edit-course");
+    setViewMode("edit-course");
+    setActiveTab("info");
+    setExpandedModules([]);
+  };
+
+  const handleNewCourse = () => {
+    setSelectedCourseId(null);
+    setCourseForm({
+      title: "",
+      type: "regular",
+      description_short: "",
+      cover_image_url: "",
+      route_slug: "",
+      is_published: false,
+    });
+    setViewMode("edit-course");
+    setActiveTab("info");
+  };
+
+  const handleBackToList = () => {
+    setViewMode("list");
+    setSelectedCourseId(null);
+    setEditingModuleId(null);
+    setEditingLessonId(null);
+    setIsCreatingModule(false);
+    setIsCreatingLesson(false);
   };
 
   const handleSaveCourse = async () => {
@@ -190,8 +221,8 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
-      if (editingId) {
-        await updateCourse(editingId, {
+      if (selectedCourseId) {
+        await updateCourse(selectedCourseId, {
           title: courseForm.title.trim(),
           type: courseForm.type,
           description_short: courseForm.description_short.trim() || null,
@@ -199,6 +230,7 @@ const AdminCursos = () => {
           route_slug: courseForm.route_slug.trim(),
           is_published: courseForm.is_published,
         });
+        toast({ title: "Curso salvo com sucesso!" });
       } else {
         const result = await createCourse({
           title: courseForm.title.trim(),
@@ -210,28 +242,26 @@ const AdminCursos = () => {
         });
         if (result) {
           setSelectedCourseId(result.id);
+          toast({ title: "Curso criado! Agora adicione módulos e aulas." });
+          setActiveTab("modules");
         }
       }
-      setEditMode("view");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Module form handlers
-  const handleNewModule = () => {
+  // Module handlers
+  const handleStartCreateModule = () => {
     setModuleForm({ title: "", is_published: false });
-    setEditingId(null);
-    setEditMode("new-module");
+    setIsCreatingModule(true);
+    setEditingModuleId(null);
   };
 
   const handleEditModule = (module: CourseModule) => {
-    setModuleForm({
-      title: module.title,
-      is_published: module.is_published,
-    });
-    setEditingId(module.id);
-    setEditMode("edit-module");
+    setModuleForm({ title: module.title, is_published: module.is_published });
+    setEditingModuleId(module.id);
+    setIsCreatingModule(false);
   };
 
   const handleSaveModule = async () => {
@@ -242,35 +272,48 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
-      if (editingId) {
-        await updateModule(editingId, {
+      if (editingModuleId) {
+        await updateModule(editingModuleId, {
           title: moduleForm.title.trim(),
           is_published: moduleForm.is_published,
         });
+        setEditingModuleId(null);
       } else {
-        await createModule(moduleForm.title.trim(), moduleForm.is_published);
+        const newModule = await createModule(moduleForm.title.trim(), moduleForm.is_published);
+        if (newModule) {
+          setExpandedModules(prev => [...prev, newModule.id]);
+        }
+        setIsCreatingModule(false);
       }
-      setEditMode("view");
+      setModuleForm({ title: "", is_published: false });
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Lesson form handlers
-  const handleNewLesson = () => {
+  const handleCancelModuleEdit = () => {
+    setEditingModuleId(null);
+    setIsCreatingModule(false);
+    setModuleForm({ title: "", is_published: false });
+  };
+
+  // Lesson handlers
+  const handleStartCreateLesson = (moduleId: string, contentType: string = "text") => {
     setLessonForm({
       title: "",
       access_level: "basic",
-      content_type: "video",
+      content_type: contentType,
       media_url: "",
       body_markdown: "",
       duration_minutes: "",
       released_at: null,
       is_published: false,
       summary: "",
+      module_id: moduleId,
     });
-    setEditingId(null);
-    setEditMode("new-lesson");
+    setCreatingLessonForModule(moduleId);
+    setIsCreatingLesson(true);
+    setEditingLessonId(null);
   };
 
   const handleEditLesson = (lesson: CourseLesson) => {
@@ -284,9 +327,11 @@ const AdminCursos = () => {
       released_at: lesson.released_at ? new Date(lesson.released_at) : null,
       is_published: lesson.is_published,
       summary: lesson.summary || "",
+      module_id: lesson.module_id,
     });
-    setEditingId(lesson.id);
-    setEditMode("edit-lesson");
+    setEditingLessonId(lesson.id);
+    setIsCreatingLesson(false);
+    setCreatingLessonForModule(null);
   };
 
   const handleSaveLesson = async () => {
@@ -296,17 +341,17 @@ const AdminCursos = () => {
     }
 
     if ((lessonForm.content_type === "video" || lessonForm.content_type === "audio") && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Link do vídeo/áudio", variant: "destructive" });
+      toast({ title: "Falta preencher: Arquivo de mídia", variant: "destructive" });
       return;
     }
 
     if ((lessonForm.content_type === "video" || lessonForm.content_type === "audio") && lessonForm.media_url && !isValidUrl(lessonForm.media_url)) {
-      toast({ title: "O link do vídeo/áudio não é válido.", variant: "destructive" });
+      toast({ title: "O link da mídia não é válido.", variant: "destructive" });
       return;
     }
 
     if (lessonForm.content_type === "text" && !lessonForm.body_markdown.trim()) {
-      toast({ title: "Falta preencher: Texto da aula", variant: "destructive" });
+      toast({ title: "Falta preencher: Conteúdo do texto", variant: "destructive" });
       return;
     }
 
@@ -315,6 +360,8 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
       const lessonData = {
         title: lessonForm.title.trim(),
         access_level: lessonForm.access_level,
@@ -326,329 +373,241 @@ const AdminCursos = () => {
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
         course_id: selectedCourseId!,
-        module_id: selectedModuleId!,
+        module_id: lessonForm.module_id,
       };
 
-      if (editingId) {
-        await updateLesson(editingId, lessonData);
+      if (editingLessonId) {
+        await supabase
+          .from("course_lessons")
+          .update(lessonData)
+          .eq("id", editingLessonId);
+        setEditingLessonId(null);
       } else {
-        await createLesson(lessonData);
+        // Get next position
+        const moduleLessons = allLessons[lessonForm.module_id] || [];
+        const nextPosition = moduleLessons.length + 1;
+        
+        await supabase
+          .from("course_lessons")
+          .insert({ ...lessonData, position: nextPosition });
+        setIsCreatingLesson(false);
+        setCreatingLessonForModule(null);
       }
-      setEditMode("view");
+      
+      // Refresh lessons
+      const { data: refreshedLessons } = await supabase
+        .from("course_lessons")
+        .select("*")
+        .eq("module_id", lessonForm.module_id)
+        .order("position", { ascending: true });
+      
+      setAllLessons(prev => ({
+        ...prev,
+        [lessonForm.module_id]: (refreshedLessons || []) as CourseLesson[],
+      }));
+      
+      toast({ title: "Aula salva com sucesso!" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDuplicateLesson = async (lesson: CourseLesson) => {
-    await duplicateLesson(lesson);
+  const handleCancelLessonEdit = () => {
+    setEditingLessonId(null);
+    setIsCreatingLesson(false);
+    setCreatingLessonForModule(null);
   };
 
-  // Render course form
-  const renderCourseForm = () => (
-    <div className="bg-card border rounded-2xl p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-display font-semibold">
-          {editingId ? "Editar Curso" : "Novo Curso"}
-        </h2>
-        <Button variant="ghost" size="lg" onClick={() => setEditMode("view")}>
-          <X className="w-5 h-5 mr-2" /> Cancelar
-        </Button>
-      </div>
+  const handleDuplicateLesson = async (lesson: CourseLesson) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const moduleLessons = allLessons[lesson.module_id] || [];
+    const nextPosition = moduleLessons.length + 1;
+    
+    await supabase
+      .from("course_lessons")
+      .insert({
+        ...lesson,
+        id: undefined,
+        title: `${lesson.title} (cópia)`,
+        position: nextPosition,
+        is_published: false,
+        created_at: undefined,
+        updated_at: undefined,
+      });
+    
+    // Refresh lessons
+    const { data: refreshedLessons } = await supabase
+      .from("course_lessons")
+      .select("*")
+      .eq("module_id", lesson.module_id)
+      .order("position", { ascending: true });
+    
+    setAllLessons(prev => ({
+      ...prev,
+      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
+    }));
+    
+    toast({ title: "Aula duplicada!" });
+  };
 
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label className="text-lg">Nome do curso *</Label>
-          <Input
-            value={courseForm.title}
-            onChange={(e) => {
-              setCourseForm(prev => ({
-                ...prev,
-                title: e.target.value,
-                route_slug: prev.route_slug || generateSlug(e.target.value),
-              }));
-            }}
-            placeholder="Ex: Despertar Interior"
-            className="text-lg h-14"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg">Tipo *</Label>
-          <div className="flex gap-3 flex-wrap">
-            <Button
-              type="button"
-              variant={courseForm.type === "basic" ? "default" : "outline"}
-              size="lg"
-              className="flex-1 min-w-[100px] text-lg h-14"
-              onClick={() => setCourseForm(prev => ({ ...prev, type: "basic" }))}
-            >
-              Gratuito
-            </Button>
-            <Button
-              type="button"
-              variant={courseForm.type === "regular" ? "default" : "outline"}
-              size="lg"
-              className="flex-1 min-w-[100px] text-lg h-14"
-              onClick={() => setCourseForm(prev => ({ ...prev, type: "regular" }))}
-            >
-              Básico
-            </Button>
-            <Button
-              type="button"
-              variant={courseForm.type === "aparte" ? "default" : "outline"}
-              size="lg"
-              className="flex-1 min-w-[100px] text-lg h-14"
-              onClick={() => setCourseForm(prev => ({ ...prev, type: "aparte" }))}
-            >
-              Premium
-            </Button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg">Resumo curto (opcional)</Label>
-          <Textarea
-            value={courseForm.description_short}
-            onChange={(e) => setCourseForm(prev => ({ ...prev, description_short: e.target.value }))}
-            placeholder="Breve descrição do curso..."
-            className="text-lg min-h-[100px]"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg">Capa (link da imagem) (opcional)</Label>
-          <Input
-            value={courseForm.cover_image_url}
-            onChange={(e) => setCourseForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
-            placeholder="https://..."
-            className="text-lg h-14"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg">Endereço do curso (slug) *</Label>
-          <Input
-            value={courseForm.route_slug}
-            onChange={(e) => setCourseForm(prev => ({ ...prev, route_slug: e.target.value }))}
-            placeholder="despertar-interior"
-            className="text-lg h-14"
-          />
-          <p className="text-muted-foreground">Este será o endereço: /aulas/{courseForm.route_slug || "exemplo"}</p>
-        </div>
-
-        <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
-          <Label className="text-lg">Publicado</Label>
-          <Switch
-            checked={courseForm.is_published}
-            onCheckedChange={(checked) => setCourseForm(prev => ({ ...prev, is_published: checked }))}
-          />
-        </div>
-      </div>
-
-      <Button 
-        size="lg" 
-        className="w-full text-xl h-16"
-        onClick={handleSaveCourse}
-        disabled={isSaving}
-      >
-        {isSaving ? "Salvando..." : "Salvar Curso"}
-      </Button>
-    </div>
-  );
-
-  // Render module form
-  const renderModuleForm = () => (
-    <div className="bg-card border rounded-2xl p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-display font-semibold">
-          {editingId ? "Editar Módulo" : "Novo Módulo"}
-        </h2>
-        <Button variant="ghost" size="lg" onClick={() => setEditMode("view")}>
-          <X className="w-5 h-5 mr-2" /> Cancelar
-        </Button>
-      </div>
-
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <Label className="text-lg">Nome do módulo *</Label>
-          <Input
-            value={moduleForm.title}
-            onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
-            placeholder="Ex: Introdução"
-            className="text-lg h-14"
-          />
-        </div>
-
-        <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
-          <Label className="text-lg">Publicado</Label>
-          <Switch
-            checked={moduleForm.is_published}
-            onCheckedChange={(checked) => setModuleForm(prev => ({ ...prev, is_published: checked }))}
-          />
-        </div>
-      </div>
-
-      <Button 
-        size="lg" 
-        className="w-full text-xl h-16"
-        onClick={handleSaveModule}
-        disabled={isSaving}
-      >
-        {isSaving ? "Salvando..." : "Salvar Módulo"}
-      </Button>
-    </div>
-  );
+  const handleMoveLesson = async (lesson: CourseLesson, direction: "up" | "down") => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const moduleLessons = allLessons[lesson.module_id] || [];
+    const currentIndex = moduleLessons.findIndex(l => l.id === lesson.id);
+    
+    if (direction === "up" && currentIndex > 0) {
+      const otherLesson = moduleLessons[currentIndex - 1];
+      await supabase.from("course_lessons").update({ position: currentIndex }).eq("id", lesson.id);
+      await supabase.from("course_lessons").update({ position: currentIndex + 1 }).eq("id", otherLesson.id);
+    } else if (direction === "down" && currentIndex < moduleLessons.length - 1) {
+      const otherLesson = moduleLessons[currentIndex + 1];
+      await supabase.from("course_lessons").update({ position: currentIndex + 2 }).eq("id", lesson.id);
+      await supabase.from("course_lessons").update({ position: currentIndex + 1 }).eq("id", otherLesson.id);
+    }
+    
+    // Refresh lessons
+    const { data: refreshedLessons } = await supabase
+      .from("course_lessons")
+      .select("*")
+      .eq("module_id", lesson.module_id)
+      .order("position", { ascending: true });
+    
+    setAllLessons(prev => ({
+      ...prev,
+      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
+    }));
+  };
 
   // Render lesson form
-  const renderLessonForm = () => (
-    <div className="bg-card border rounded-2xl p-6 space-y-6">
+  const renderLessonForm = (moduleId: string) => (
+    <div className="bg-muted/30 border rounded-xl p-4 space-y-4 mt-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-display font-semibold">
-          {editingId ? "Editar Aula" : "Nova Aula"}
-        </h2>
-        <Button variant="ghost" size="lg" onClick={() => setEditMode("view")}>
-          <X className="w-5 h-5 mr-2" /> Cancelar
+        <h4 className="font-semibold">
+          {editingLessonId ? "Editar Aula" : "Nova Aula"}
+        </h4>
+        <Button variant="ghost" size="sm" onClick={handleCancelLessonEdit}>
+          <X className="w-4 h-4" />
         </Button>
       </div>
 
-      <div className="space-y-5">
+      <div className="grid gap-4">
         <div className="space-y-2">
-          <Label className="text-lg">Título *</Label>
+          <Label>Título *</Label>
           <Input
             value={lessonForm.title}
             onChange={(e) => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
-            placeholder="Ex: Bem-vindo ao curso"
-            className="text-lg h-14"
+            placeholder="Ex: Introdução ao tema"
           />
         </div>
 
         <div className="space-y-2">
-          <Label className="text-lg">Acesso *</Label>
-          <div className="flex gap-4">
-            <Button
-              type="button"
-              variant={lessonForm.access_level === "basic" ? "default" : "outline"}
-              size="lg"
-              className="flex-1 text-lg h-14"
-              onClick={() => setLessonForm(prev => ({ ...prev, access_level: "basic" }))}
-            >
-              Básico
-            </Button>
-            <Button
-              type="button"
-              variant={lessonForm.access_level === "premium" ? "default" : "outline"}
-              size="lg"
-              className="flex-1 text-lg h-14"
-              onClick={() => setLessonForm(prev => ({ ...prev, access_level: "premium" }))}
-            >
-              Premium
-            </Button>
+          <Label>Tipo de conteúdo *</Label>
+          <div className="grid grid-cols-3 gap-2">
+            {(["text", "video", "audio"] as const).map((type) => {
+              const config = contentTypeConfig[type];
+              const Icon = config.icon;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setLessonForm(prev => ({ ...prev, content_type: type }))}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                    lessonForm.content_type === type
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <Icon className={`w-6 h-6 ${lessonForm.content_type === type ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-sm font-medium">{config.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
-
-        <div className="space-y-2">
-          <Label className="text-lg">Tipo *</Label>
-          <div className="flex gap-4">
-            {["video", "audio", "text"].map((type) => (
-              <Button
-                key={type}
-                type="button"
-                variant={lessonForm.content_type === type ? "default" : "outline"}
-                size="lg"
-                className="flex-1 text-lg h-14"
-                onClick={() => setLessonForm(prev => ({ ...prev, content_type: type }))}
-              >
-                {contentTypeLabels[type]}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
-          <div className="space-y-5">
-            <MediaUpload
-              currentUrl={lessonForm.media_url || null}
-              onUrlChange={(url) => setLessonForm(prev => ({ ...prev, media_url: url || "" }))}
-              onDurationChange={(seconds) => setLessonForm(prev => ({ 
-                ...prev, 
-                duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
-              }))}
-              mediaType={lessonForm.content_type as "video" | "audio"}
-              label={`${lessonForm.content_type === "video" ? "Vídeo" : "Áudio"} da Aula *`}
-            />
-
-            <div className="space-y-2">
-              <Label className="text-lg">Duração em minutos (opcional)</Label>
-              <Input
-                type="number"
-                min="0"
-                value={lessonForm.duration_minutes}
-                onChange={(e) => setLessonForm(prev => ({ ...prev, duration_minutes: e.target.value }))}
-                placeholder="Ex: 15"
-                className="text-lg h-14 w-32"
-              />
-              <p className="text-sm text-muted-foreground">
-                A duração é detectada automaticamente no upload
-              </p>
-            </div>
-          </div>
-        )}
 
         {lessonForm.content_type === "text" && (
           <div className="space-y-2">
-            <Label className="text-lg">Texto da aula *</Label>
+            <Label>Conteúdo do texto *</Label>
             <RichTextEditor
               value={lessonForm.body_markdown}
               onChange={(value) => setLessonForm(prev => ({ ...prev, body_markdown: value }))}
               placeholder="Escreva o conteúdo da aula..."
-              minHeight="200px"
+              minHeight="150px"
             />
           </div>
         )}
 
-        {/* Summary field for all content types */}
+        {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
+          <MediaUpload
+            currentUrl={lessonForm.media_url || null}
+            onUrlChange={(url) => setLessonForm(prev => ({ ...prev, media_url: url || "" }))}
+            onDurationChange={(seconds) => setLessonForm(prev => ({ 
+              ...prev, 
+              duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+            }))}
+            mediaType={lessonForm.content_type as "video" | "audio"}
+            label={`Arquivo de ${lessonForm.content_type === "video" ? "vídeo" : "áudio"} *`}
+          />
+        )}
+
         <div className="space-y-2">
-          <Label className="text-lg">Resumo (opcional)</Label>
-          <RichTextEditor
+          <Label>Resumo (opcional)</Label>
+          <Textarea
             value={lessonForm.summary}
-            onChange={(value) => setLessonForm(prev => ({ ...prev, summary: value }))}
-            placeholder="Breve descrição do que será abordado nesta aula..."
-            minHeight="100px"
+            onChange={(e) => setLessonForm(prev => ({ ...prev, summary: e.target.value }))}
+            placeholder="Breve descrição do conteúdo..."
+            className="min-h-[80px]"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label className="text-lg">Liberar a partir de (opcional)</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="lg" className="w-full text-lg h-14 justify-start">
-                <CalendarIcon className="w-5 h-5 mr-3" />
-                {lessonForm.released_at ? formatDateDisplay(lessonForm.released_at.toISOString()) : "Selecione uma data"}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Acesso</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={lessonForm.access_level === "basic" ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => setLessonForm(prev => ({ ...prev, access_level: "basic" }))}
+              >
+                Básico
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
-              <Calendar
-                mode="single"
-                selected={lessonForm.released_at || undefined}
-                onSelect={(date) => setLessonForm(prev => ({ ...prev, released_at: date || null }))}
-                locale={ptBR}
-              />
-            </PopoverContent>
-          </Popover>
-          {lessonForm.released_at && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLessonForm(prev => ({ ...prev, released_at: null }))}
-            >
-              Limpar data
-            </Button>
-          )}
+              <Button
+                type="button"
+                variant={lessonForm.access_level === "premium" ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => setLessonForm(prev => ({ ...prev, access_level: "premium" }))}
+              >
+                Premium
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Liberar em</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <CalendarIcon className="w-4 h-4 mr-2" />
+                  {lessonForm.released_at ? formatDateDisplay(lessonForm.released_at.toISOString()) : "Imediato"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={lessonForm.released_at || undefined}
+                  onSelect={(date) => setLessonForm(prev => ({ ...prev, released_at: date || null }))}
+                  locale={ptBR}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
-          <Label className="text-lg">Publicado</Label>
+        <div className="flex items-center justify-between bg-background rounded-lg p-3">
+          <Label>Publicar aula</Label>
           <Switch
             checked={lessonForm.is_published}
             onCheckedChange={(checked) => setLessonForm(prev => ({ ...prev, is_published: checked }))}
@@ -656,328 +615,490 @@ const AdminCursos = () => {
         </div>
       </div>
 
-      <Button 
-        size="lg" 
-        className="w-full text-xl h-16"
-        onClick={handleSaveLesson}
-        disabled={isSaving}
-      >
-        {isSaving ? "Salvando..." : "Salvar Aula"}
-      </Button>
+      <div className="flex gap-2 pt-2">
+        <Button variant="outline" className="flex-1" onClick={handleCancelLessonEdit}>
+          Cancelar
+        </Button>
+        <Button className="flex-1" onClick={handleSaveLesson} disabled={isSaving}>
+          {isSaving ? "Salvando..." : "Salvar Aula"}
+        </Button>
+      </div>
     </div>
   );
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto space-y-6 pb-12">
-        {/* Header */}
-        <header className="space-y-2">
-          {step !== "courses" && (
-            <Button 
-              variant="ghost" 
-              size="lg" 
-              className="text-lg -ml-2"
-              onClick={step === "modules" ? handleBackToCourses : handleBackToModules}
-            >
-              <ChevronLeft className="w-5 h-5 mr-1" />
-              {step === "modules" ? "Voltar para Cursos" : "Voltar para Módulos"}
-            </Button>
-          )}
-          <h1 className="text-3xl font-display font-semibold text-foreground">
-            {step === "courses" && "Cursos"}
-            {step === "modules" && `Módulos: ${selectedCourse?.title || ""}`}
-            {step === "lessons" && `Aulas: ${selectedModule?.title || ""}`}
-          </h1>
-        </header>
-
-        {/* Step 1: Courses */}
-        {step === "courses" && (
+      <div className="max-w-3xl mx-auto space-y-6 pb-12">
+        {/* List View */}
+        {viewMode === "list" && (
           <>
-            {(editMode === "new-course" || editMode === "edit-course") ? (
-              renderCourseForm()
-            ) : (
-              <>
-                {coursesLoading ? (
-                  <LoadingState message="Carregando cursos..." />
-                ) : (
-                  <div className="space-y-4">
-                    <Button
-                      size="lg"
-                      className="w-full text-xl h-16"
-                      onClick={handleNewCourse}
-                    >
-                      <Plus className="w-5 h-5 mr-2" /> Criar novo curso
-                    </Button>
+            <header className="space-y-2">
+              <h1 className="text-3xl font-display font-semibold text-foreground">
+                Gerenciar Cursos
+              </h1>
+              <p className="text-muted-foreground">
+                Crie e edite cursos, módulos e aulas
+              </p>
+            </header>
 
-                    {courses.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground text-lg">
-                        Nenhum curso criado ainda.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {courses.map((course) => (
-                          <div
-                            key={course.id}
-                            className="bg-card border rounded-2xl p-5 space-y-4"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <h3 className="text-xl font-semibold">{course.title}</h3>
-                                <div className="flex gap-2 mt-2">
-                                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    course.type === "aparte" 
-                                      ? "bg-primary/20 text-primary" 
-                                      : "bg-muted text-muted-foreground"
-                                  }`}>
-                                    {typeLabels[course.type] || course.type}
-                                  </span>
-                                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                    course.is_published
-                                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                      : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                                  }`}>
-                                    {course.is_published ? "Publicado" : "Rascunho"}
-                                  </span>
-                                </div>
-                              </div>
+            {coursesLoading ? (
+              <LoadingState message="Carregando cursos..." />
+            ) : (
+              <div className="space-y-4">
+                <Button
+                  size="lg"
+                  className="w-full text-lg h-14"
+                  onClick={handleNewCourse}
+                >
+                  <Plus className="w-5 h-5 mr-2" /> Criar novo curso
+                </Button>
+
+                {courses.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    Nenhum curso criado ainda.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {courses.map((course) => (
+                      <button
+                        key={course.id}
+                        onClick={() => handleSelectCourse(course)}
+                        className="w-full text-left bg-card border rounded-2xl p-5 hover:border-primary/50 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h3 className="text-xl font-semibold">{course.title}</h3>
+                            <div className="flex gap-2 mt-2">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                course.type === "aparte" 
+                                  ? "bg-primary/20 text-primary" 
+                                  : "bg-muted text-muted-foreground"
+                              }`}>
+                                {typeLabels[course.type] || course.type}
+                              </span>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                course.is_published
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                              }`}>
+                                {course.is_published ? "Publicado" : "Rascunho"}
+                              </span>
                             </div>
-                            
-                            <div className="flex flex-col sm:flex-row gap-3">
-                              <Button
-                                variant="outline"
-                                size="lg"
-                                className="flex-1 text-lg h-14"
-                                onClick={() => handleEditCourse(course)}
-                              >
-                                Editar curso
-                              </Button>
-                              <Button
-                                variant={course.is_published ? "destructive" : "default"}
-                                size="lg"
-                                className="flex-1 text-lg h-14"
-                                onClick={() => toggleCoursePublished(course.id, !course.is_published)}
-                              >
-                                {course.is_published ? "Despublicar" : "Publicar"}
-                              </Button>
-                              <Button
-                                size="lg"
-                                className="flex-1 text-lg h-14"
-                                onClick={() => handleSelectCourse(course.id)}
-                              >
-                                Ver módulos
-                              </Button>
-                            </div>
+                            {course.description_short && (
+                              <p className="text-muted-foreground mt-2 line-clamp-2">
+                                {course.description_short}
+                              </p>
+                            )}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          <Pencil className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
-              </>
+              </div>
             )}
           </>
         )}
 
-        {/* Step 2: Modules */}
-        {step === "modules" && (
+        {/* Edit Course View */}
+        {viewMode === "edit-course" && (
           <>
-            {(editMode === "new-module" || editMode === "edit-module") ? (
-              renderModuleForm()
-            ) : (
-              <>
+            <header className="space-y-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="-ml-2"
+                onClick={handleBackToList}
+              >
+                <ChevronLeft className="w-4 h-4 mr-1" />
+                Voltar para cursos
+              </Button>
+              <h1 className="text-2xl font-display font-semibold text-foreground">
+                {selectedCourseId ? courseForm.title || "Editar Curso" : "Novo Curso"}
+              </h1>
+            </header>
+
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full grid grid-cols-3">
+                <TabsTrigger value="info">Informações</TabsTrigger>
+                <TabsTrigger value="modules" disabled={!selectedCourseId}>
+                  Módulos
+                </TabsTrigger>
+                <TabsTrigger value="content" disabled={!selectedCourseId}>
+                  Conteúdo
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab: Course Info */}
+              <TabsContent value="info" className="space-y-6 mt-6">
+                <div className="bg-card border rounded-2xl p-6 space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-base">Nome do curso *</Label>
+                    <Input
+                      value={courseForm.title}
+                      onChange={(e) => {
+                        setCourseForm(prev => ({
+                          ...prev,
+                          title: e.target.value,
+                          route_slug: prev.route_slug || generateSlug(e.target.value),
+                        }));
+                      }}
+                      placeholder="Ex: Despertar Interior"
+                      className="text-lg h-12"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base">Tipo *</Label>
+                    <div className="flex gap-2">
+                      {[
+                        { value: "basic", label: "Gratuito" },
+                        { value: "regular", label: "Básico" },
+                        { value: "aparte", label: "Premium" },
+                      ].map((type) => (
+                        <Button
+                          key={type.value}
+                          type="button"
+                          variant={courseForm.type === type.value ? "default" : "outline"}
+                          className="flex-1"
+                          onClick={() => setCourseForm(prev => ({ ...prev, type: type.value }))}
+                        >
+                          {type.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base">Descrição curta</Label>
+                    <Textarea
+                      value={courseForm.description_short}
+                      onChange={(e) => setCourseForm(prev => ({ ...prev, description_short: e.target.value }))}
+                      placeholder="Breve descrição do curso..."
+                      className="min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base">URL da capa</Label>
+                    <Input
+                      value={courseForm.cover_image_url}
+                      onChange={(e) => setCourseForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-base">Slug (endereço) *</Label>
+                    <Input
+                      value={courseForm.route_slug}
+                      onChange={(e) => setCourseForm(prev => ({ ...prev, route_slug: e.target.value }))}
+                      placeholder="despertar-interior"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Endereço: /aulas/{courseForm.route_slug || "exemplo"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
+                    <Label className="text-base">Publicar curso</Label>
+                    <Switch
+                      checked={courseForm.is_published}
+                      onCheckedChange={(checked) => setCourseForm(prev => ({ ...prev, is_published: checked }))}
+                    />
+                  </div>
+
+                  <Button 
+                    size="lg" 
+                    className="w-full"
+                    onClick={handleSaveCourse}
+                    disabled={isSaving}
+                  >
+                    {isSaving ? "Salvando..." : selectedCourseId ? "Salvar alterações" : "Criar curso"}
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* Tab: Modules */}
+              <TabsContent value="modules" className="space-y-4 mt-6">
                 {modulesLoading ? (
                   <LoadingState message="Carregando módulos..." />
                 ) : (
-                  <div className="space-y-4">
-                    <Button
-                      size="lg"
-                      className="w-full text-xl h-16"
-                      onClick={handleNewModule}
-                    >
-                      <Plus className="w-5 h-5 mr-2" /> Adicionar módulo
-                    </Button>
+                  <>
+                    {/* New module form */}
+                    {isCreatingModule ? (
+                      <div className="bg-card border rounded-xl p-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label>Nome do módulo *</Label>
+                          <Input
+                            value={moduleForm.title}
+                            onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
+                            placeholder="Ex: Introdução"
+                            autoFocus
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Label>Publicar</Label>
+                          <Switch
+                            checked={moduleForm.is_published}
+                            onCheckedChange={(checked) => setModuleForm(prev => ({ ...prev, is_published: checked }))}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" className="flex-1" onClick={handleCancelModuleEdit}>
+                            Cancelar
+                          </Button>
+                          <Button className="flex-1" onClick={handleSaveModule} disabled={isSaving}>
+                            {isSaving ? "Salvando..." : "Criar módulo"}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={handleStartCreateModule}
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Adicionar módulo
+                      </Button>
+                    )}
 
-                    {modules.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground text-lg">
+                    {modules.length === 0 && !isCreatingModule ? (
+                      <div className="text-center py-8 text-muted-foreground">
                         Nenhum módulo criado ainda.
                       </div>
                     ) : (
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {modules.map((module, index) => (
                           <div
                             key={module.id}
-                            className="bg-card border rounded-2xl p-5 space-y-4"
+                            className="bg-card border rounded-xl p-4"
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h3 className="text-xl font-semibold">{module.title}</h3>
-                                <span className={`inline-block mt-1 px-3 py-1 rounded-full text-sm font-medium ${
-                                  module.is_published
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                                }`}>
-                                  {module.is_published ? "Publicado" : "Rascunho"}
-                                </span>
+                            {editingModuleId === module.id ? (
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <Label>Nome do módulo *</Label>
+                                  <Input
+                                    value={moduleForm.title}
+                                    onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <Label>Publicar</Label>
+                                  <Switch
+                                    checked={moduleForm.is_published}
+                                    onCheckedChange={(checked) => setModuleForm(prev => ({ ...prev, is_published: checked }))}
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button variant="outline" className="flex-1" onClick={handleCancelModuleEdit}>
+                                    Cancelar
+                                  </Button>
+                                  <Button className="flex-1" onClick={handleSaveModule} disabled={isSaving}>
+                                    Salvar
+                                  </Button>
+                                </div>
                               </div>
-                              <div className="flex flex-col gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-10 w-10"
-                                  disabled={index === 0}
-                                  onClick={() => moveModule(module.id, "up")}
-                                  aria-label="Mover para cima"
-                                >
-                                  <ChevronUp className="w-5 h-5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-10 w-10"
-                                  disabled={index === modules.length - 1}
-                                  onClick={() => moveModule(module.id, "down")}
-                                  aria-label="Mover para baixo"
-                                >
-                                  <ChevronDown className="w-5 h-5" />
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col gap-0.5">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      disabled={index === 0}
+                                      onClick={() => moveModule(module.id, "up")}
+                                    >
+                                      <ChevronUp className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-6 w-6"
+                                      disabled={index === modules.length - 1}
+                                      onClick={() => moveModule(module.id, "down")}
+                                    >
+                                      <ChevronDown className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">{module.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {(allLessons[module.id] || []).length} aulas • {module.is_published ? "Publicado" : "Rascunho"}
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button variant="ghost" size="sm" onClick={() => handleEditModule(module)}>
+                                  <Pencil className="w-4 h-4" />
                                 </Button>
                               </div>
-                            </div>
-                            
-                            <div className="flex flex-col sm:flex-row gap-3">
-                              <Button
-                                variant="outline"
-                                size="lg"
-                                className="flex-1 text-lg h-14"
-                                onClick={() => handleEditModule(module)}
-                              >
-                                Editar módulo
-                              </Button>
-                              <Button
-                                size="lg"
-                                className="flex-1 text-lg h-14"
-                                onClick={() => handleSelectModule(module.id)}
-                              >
-                                Ver aulas
-                              </Button>
-                            </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
-              </>
-            )}
-          </>
-        )}
+              </TabsContent>
 
-        {/* Step 3: Lessons */}
-        {step === "lessons" && (
-          <>
-            {(editMode === "new-lesson" || editMode === "edit-lesson") ? (
-              renderLessonForm()
-            ) : (
-              <>
-                {lessonsLoading ? (
-                  <LoadingState message="Carregando aulas..." />
-                ) : (
-                  <div className="space-y-4">
-                    <Button
-                      size="lg"
-                      className="w-full text-xl h-16"
-                      onClick={handleNewLesson}
-                    >
-                      <Plus className="w-5 h-5 mr-2" /> Adicionar aula
+              {/* Tab: Content (Modules + Lessons) */}
+              <TabsContent value="content" className="space-y-4 mt-6">
+                {modulesLoading || lessonsLoading ? (
+                  <LoadingState message="Carregando conteúdo..." />
+                ) : modules.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Crie módulos primeiro na aba "Módulos".</p>
+                    <Button onClick={() => setActiveTab("modules")}>
+                      Ir para Módulos
                     </Button>
-
-                    {lessons.length === 0 ? (
-                      <div className="text-center py-12 text-muted-foreground text-lg">
-                        Nenhuma aula criada ainda.
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {lessons.map((lesson, index) => {
-                          const status = getLessonStatus(lesson);
-                          return (
-                            <div
-                              key={lesson.id}
-                              className="bg-card border rounded-2xl p-5 space-y-4"
-                            >
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <h3 className="text-xl font-semibold">{lesson.title}</h3>
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-muted text-muted-foreground">
-                                      {contentTypeLabels[lesson.content_type] || lesson.content_type}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                      lesson.access_level === "premium" 
-                                        ? "bg-primary/20 text-primary" 
-                                        : "bg-muted text-muted-foreground"
-                                    }`}>
-                                      {accessLabels[lesson.access_level] || lesson.access_level}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${status.color}`}>
-                                      {status.label}
-                                    </span>
-                                  </div>
-                                  {lesson.released_at && (
-                                    <p className="text-sm text-muted-foreground mt-2">
-                                      Liberar em: {formatDateDisplay(lesson.released_at)}
-                                    </p>
-                                  )}
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10"
-                                    disabled={index === 0}
-                                    onClick={() => moveLesson(lesson.id, "up")}
-                                    aria-label="Mover para cima"
-                                  >
-                                    <ChevronUp className="w-5 h-5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-10 w-10"
-                                    disabled={index === lessons.length - 1}
-                                    onClick={() => moveLesson(lesson.id, "down")}
-                                    aria-label="Mover para baixo"
-                                  >
-                                    <ChevronDown className="w-5 h-5" />
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              <div className="flex flex-col sm:flex-row gap-3">
-                                <Button
-                                  variant="outline"
-                                  size="lg"
-                                  className="flex-1 text-lg h-14"
-                                  onClick={() => handleEditLesson(lesson)}
-                                >
-                                  Editar aula
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="lg"
-                                  className="flex-1 text-lg h-14"
-                                  onClick={() => handleDuplicateLesson(lesson)}
-                                >
-                                  <Copy className="w-5 h-5 mr-2" /> Duplicar aula
-                                </Button>
+                  </div>
+                ) : (
+                  <Accordion 
+                    type="multiple" 
+                    value={expandedModules}
+                    onValueChange={setExpandedModules}
+                    className="space-y-3"
+                  >
+                    {modules.map((module) => {
+                      const moduleLessons = allLessons[module.id] || [];
+                      return (
+                        <AccordionItem 
+                          key={module.id} 
+                          value={module.id}
+                          className="bg-card border rounded-xl overflow-hidden"
+                        >
+                          <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                            <div className="flex items-center gap-3 text-left">
+                              <div>
+                                <p className="font-semibold">{module.title}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {moduleLessons.length} {moduleLessons.length === 1 ? "aula" : "aulas"}
+                                </p>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            {/* Lessons list */}
+                            {moduleLessons.length > 0 && (
+                              <div className="space-y-2 mb-4">
+                                {moduleLessons.map((lesson, lessonIndex) => {
+                                  const status = getLessonStatus(lesson);
+                                  const config = contentTypeConfig[lesson.content_type as keyof typeof contentTypeConfig];
+                                  const Icon = config?.icon || FileText;
+                                  
+                                  if (editingLessonId === lesson.id) {
+                                    return (
+                                      <div key={lesson.id}>
+                                        {renderLessonForm(module.id)}
+                                      </div>
+                                    );
+                                  }
+                                  
+                                  return (
+                                    <div
+                                      key={lesson.id}
+                                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg group"
+                                    >
+                                      <div className="flex flex-col gap-0.5">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                                          disabled={lessonIndex === 0}
+                                          onClick={() => handleMoveLesson(lesson, "up")}
+                                        >
+                                          <ChevronUp className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                                          disabled={lessonIndex === moduleLessons.length - 1}
+                                          onClick={() => handleMoveLesson(lesson, "down")}
+                                        >
+                                          <ChevronDown className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                      
+                                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config?.color || "bg-muted"}`}>
+                                        <Icon className="w-4 h-4" />
+                                      </div>
+                                      
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium truncate">{lesson.title}</p>
+                                        <div className="flex gap-2 mt-1">
+                                          <span className={`px-2 py-0.5 rounded text-xs ${status.color}`}>
+                                            {status.label}
+                                          </span>
+                                          {lesson.access_level === "premium" && (
+                                            <span className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary">
+                                              Premium
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => handleEditLesson(lesson)}
+                                        >
+                                          <Pencil className="w-4 h-4" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8"
+                                          onClick={() => handleDuplicateLesson(lesson)}
+                                        >
+                                          <Copy className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            {/* Creating lesson form */}
+                            {isCreatingLesson && creatingLessonForModule === module.id && (
+                              renderLessonForm(module.id)
+                            )}
+
+                            {/* Add lesson buttons */}
+                            {!isCreatingLesson && !editingLessonId && (
+                              <div className="grid grid-cols-3 gap-2">
+                                {(["text", "video", "audio"] as const).map((type) => {
+                                  const config = contentTypeConfig[type];
+                                  const Icon = config.icon;
+                                  return (
+                                    <Button
+                                      key={type}
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex flex-col gap-1 h-auto py-3"
+                                      onClick={() => handleStartCreateLesson(module.id, type)}
+                                    >
+                                      <Icon className="w-5 h-5" />
+                                      <span className="text-xs">+ {config.label}</span>
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 )}
-              </>
-            )}
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </div>
