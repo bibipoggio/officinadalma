@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
+import { MediaUpload } from "@/components/admin/MediaUpload";
 import { useState } from "react";
 import { 
   useAdminCourses, 
@@ -564,16 +566,17 @@ const AdminCursos = () => {
         </div>
 
         {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
-          <>
-            <div className="space-y-2">
-              <Label className="text-lg">Link do {lessonForm.content_type === "video" ? "vídeo" : "áudio"} *</Label>
-              <Input
-                value={lessonForm.media_url}
-                onChange={(e) => setLessonForm(prev => ({ ...prev, media_url: e.target.value }))}
-                placeholder="https://..."
-                className="text-lg h-14"
-              />
-            </div>
+          <div className="space-y-5">
+            <MediaUpload
+              currentUrl={lessonForm.media_url || null}
+              onUrlChange={(url) => setLessonForm(prev => ({ ...prev, media_url: url || "" }))}
+              onDurationChange={(seconds) => setLessonForm(prev => ({ 
+                ...prev, 
+                duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+              }))}
+              mediaType={lessonForm.content_type as "video" | "audio"}
+              label={`${lessonForm.content_type === "video" ? "Vídeo" : "Áudio"} da Aula *`}
+            />
 
             <div className="space-y-2">
               <Label className="text-lg">Duração em minutos (opcional)</Label>
@@ -585,21 +588,35 @@ const AdminCursos = () => {
                 placeholder="Ex: 15"
                 className="text-lg h-14 w-32"
               />
+              <p className="text-sm text-muted-foreground">
+                A duração é detectada automaticamente no upload
+              </p>
             </div>
-          </>
+          </div>
         )}
 
         {lessonForm.content_type === "text" && (
           <div className="space-y-2">
             <Label className="text-lg">Texto da aula *</Label>
-            <Textarea
+            <RichTextEditor
               value={lessonForm.body_markdown}
-              onChange={(e) => setLessonForm(prev => ({ ...prev, body_markdown: e.target.value }))}
+              onChange={(value) => setLessonForm(prev => ({ ...prev, body_markdown: value }))}
               placeholder="Escreva o conteúdo da aula..."
-              className="text-lg min-h-[200px]"
+              minHeight="200px"
             />
           </div>
         )}
+
+        {/* Summary field for all content types */}
+        <div className="space-y-2">
+          <Label className="text-lg">Resumo (opcional)</Label>
+          <RichTextEditor
+            value={lessonForm.summary}
+            onChange={(value) => setLessonForm(prev => ({ ...prev, summary: value }))}
+            placeholder="Breve descrição do que será abordado nesta aula..."
+            minHeight="100px"
+          />
+        </div>
 
         <div className="space-y-2">
           <Label className="text-lg">Liberar a partir de (opcional)</Label>
