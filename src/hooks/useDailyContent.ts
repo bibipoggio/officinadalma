@@ -10,6 +10,7 @@ export interface DailyContentData {
   tonica_short: string;
   tonica_full: string;
   tonica_practice: string;
+  meditation_title: string | null;
   meditation_audio_url: string | null;
   meditation_duration_seconds: number | null;
   spotify_episode_url: string | null;
@@ -24,6 +25,7 @@ const emptyContent = (date: string): DailyContentData => ({
   tonica_short: "",
   tonica_full: "",
   tonica_practice: "",
+  meditation_title: null,
   meditation_audio_url: null,
   meditation_duration_seconds: null,
   spotify_episode_url: null,
@@ -126,6 +128,7 @@ export function useDailyContent(selectedDate: string) {
         tonica_short: content.tonica_short.trim(),
         tonica_full: content.tonica_full.trim(),
         tonica_practice: content.tonica_practice.trim(),
+        meditation_title: content.meditation_title?.trim() || null,
         meditation_audio_url: content.meditation_audio_url?.trim() || null,
         meditation_duration_seconds: content.meditation_duration_seconds,
         spotify_episode_url: content.spotify_episode_url?.trim() || null,

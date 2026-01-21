@@ -291,6 +291,7 @@ export type Database = {
           id: string
           meditation_audio_url: string | null
           meditation_duration_seconds: number | null
+          meditation_title: string | null
           published: boolean
           spotify_episode_url: string | null
           tonica_full: string
@@ -307,6 +308,7 @@ export type Database = {
           id?: string
           meditation_audio_url?: string | null
           meditation_duration_seconds?: number | null
+          meditation_title?: string | null
           published?: boolean
           spotify_episode_url?: string | null
           tonica_full: string
@@ -323,6 +325,7 @@ export type Database = {
           id?: string
           meditation_audio_url?: string | null
           meditation_duration_seconds?: number | null
+          meditation_title?: string | null
           published?: boolean
           spotify_episode_url?: string | null
           tonica_full?: string
