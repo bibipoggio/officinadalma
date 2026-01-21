@@ -2,8 +2,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useState } from "react";
 import { useDailyContent } from "@/hooks/useDailyContent";
 import { format, addDays } from "date-fns";
@@ -178,29 +178,26 @@ const AdminConteudoDiario = () => {
                   <Label htmlFor="tonica_short" className="text-lg font-medium">
                     Resumo curto (aparece na Home) *
                   </Label>
-                  <Textarea
+                  <RichTextEditor
                     id="tonica_short"
                     value={content.tonica_short}
-                    onChange={(e) => updateField("tonica_short", e.target.value)}
+                    onChange={(value) => updateField("tonica_short", value)}
                     placeholder="Escreva um resumo curto..."
-                    className="text-lg min-h-[100px]"
-                    maxLength={400}
+                    minHeight="100px"
+                    maxLength={280}
                   />
-                  <p className="text-right text-muted-foreground">
-                    {content.tonica_short.length}/280 recomendado
-                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="tonica_full" className="text-lg font-medium">
                     Texto completo *
                   </Label>
-                  <Textarea
+                  <RichTextEditor
                     id="tonica_full"
                     value={content.tonica_full}
-                    onChange={(e) => updateField("tonica_full", e.target.value)}
+                    onChange={(value) => updateField("tonica_full", value)}
                     placeholder="Escreva o texto completo da tônica..."
-                    className="text-lg min-h-[200px]"
+                    minHeight="200px"
                   />
                 </div>
 
@@ -208,12 +205,12 @@ const AdminConteudoDiario = () => {
                   <Label htmlFor="tonica_practice" className="text-lg font-medium">
                     Prática do dia *
                   </Label>
-                  <Textarea
+                  <RichTextEditor
                     id="tonica_practice"
                     value={content.tonica_practice}
-                    onChange={(e) => updateField("tonica_practice", e.target.value)}
+                    onChange={(value) => updateField("tonica_practice", value)}
                     placeholder="Descreva a prática do dia..."
-                    className="text-lg min-h-[120px]"
+                    minHeight="120px"
                   />
                 </div>
               </div>
@@ -222,13 +219,26 @@ const AdminConteudoDiario = () => {
             {/* Section B - Meditação */}
             <section className="bg-card border rounded-2xl p-6 space-y-6">
               <h2 className="text-2xl font-display font-semibold text-foreground border-b pb-3">
-                Seção B — Meditação (Áudio)
+                Seção B — Meditação (Áudio/Vídeo)
               </h2>
               <p className="text-muted-foreground text-lg">
                 Campos opcionais
               </p>
               
               <div className="space-y-5">
+                <div className="space-y-2">
+                  <Label htmlFor="meditation_title" className="text-lg font-medium">
+                    Título da Meditação
+                  </Label>
+                  <Input
+                    id="meditation_title"
+                    value={content.meditation_title || ""}
+                    onChange={(e) => updateField("meditation_title", e.target.value || null)}
+                    placeholder="Ex: Meditação para Aterramento"
+                    className="text-lg h-14"
+                  />
+                </div>
+
                 <AudioUpload
                   currentUrl={content.meditation_audio_url}
                   onUrlChange={(url) => updateField("meditation_audio_url", url)}
