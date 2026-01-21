@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Sparkles,
   BookOpen,
+  CheckCircle,
+  Pencil,
 } from "lucide-react";
 
 const formatDateDisplay = (dateStr: string) => {
@@ -62,6 +64,7 @@ const Home = () => {
   const [energy, setEnergy] = useState(5);
   const [feelingText, setFeelingText] = useState("");
   const [shareMode, setShareMode] = useState<ShareMode>("private");
+  const [isEditing, setIsEditing] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   // Sync form with existing checkin
@@ -437,17 +440,33 @@ const Home = () => {
         <Card>
           <CardContent className="p-5 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-rose-500/10 flex items-center justify-center">
-                <Heart className="w-5 h-5 text-rose-500" />
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                checkin ? "bg-green-500/10" : "bg-rose-500/10"
+              }`}>
+                {checkin ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Heart className="w-5 h-5 text-rose-500" />
+                )}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Check-in do Dia
                 </p>
                 <h3 className="font-display text-lg font-semibold text-foreground">
-                  Como você está hoje?
+                  {checkin ? "Check-in realizado" : "Como você está hoje?"}
                 </h3>
               </div>
+              {checkin && !isEditing && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Pencil className="w-4 h-4 mr-1" />
+                  Editar
+                </Button>
+              )}
             </div>
 
             {checkinLoading ? (
@@ -455,7 +474,33 @@ const Home = () => {
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-24 w-full" />
               </div>
+            ) : checkin && !isEditing ? (
+              /* Completed check-in view */
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Energia:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary">{checkin.energy}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">/10</span>
+                  </div>
+                </div>
+                
+                {checkin.feeling_text && (
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{checkin.feeling_text}</p>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {checkin.share_mode === "private" && <span>🔒 Privado</span>}
+                  {checkin.share_mode === "community" && <span>👥 Compartilhado com a comunidade</span>}
+                  {checkin.share_mode === "anonymous" && <span>🎭 Compartilhado anonimamente</span>}
+                </div>
+              </div>
             ) : (
+              /* Edit/Create form */
               <>
                 {/* Energy Slider */}
                 <SliderEnergia
@@ -521,22 +566,44 @@ const Home = () => {
                   </p>
                 </div>
 
-                {/* Save Button */}
-                <Button
-                  className="w-full"
-                  size="lg"
-                  onClick={handleSaveClick}
-                  disabled={isSaving || !feelingText.trim()}
-                >
-                  {isSaving 
-                    ? "Salvando..." 
-                    : shareMode === "private"
-                      ? (checkin ? "Salvar alterações" : "Salvar check-in")
-                      : shareMode === "community"
-                        ? "Compartilhar com a comunidade"
-                        : "Compartilhar anonimamente"
-                  }
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  {isEditing && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsEditing(false);
+                        // Reset form to original values
+                        if (checkin) {
+                          setEnergy(checkin.energy);
+                          setFeelingText(checkin.feeling_text);
+                          setShareMode(checkin.share_mode);
+                        }
+                      }}
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button
+                    className={isEditing ? "flex-1" : "w-full"}
+                    size="lg"
+                    onClick={handleSaveClick}
+                    disabled={isSaving || !feelingText.trim()}
+                  >
+                    {isSaving 
+                      ? "Salvando..." 
+                      : isEditing
+                        ? "Salvar alterações"
+                        : shareMode === "private"
+                          ? "Salvar check-in"
+                          : shareMode === "community"
+                            ? "Compartilhar com a comunidade"
+                            : "Compartilhar anonimamente"
+                    }
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>
