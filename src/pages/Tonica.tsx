@@ -129,16 +129,18 @@ const Tonica = () => {
             {/* Daily Message */}
             <Card variant="elevated">
               <CardContent className="p-6 space-y-4">
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                  {content.tonica_full}
-                </p>
+                <div 
+                  className="text-muted-foreground leading-relaxed prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
+                  dangerouslySetInnerHTML={{ __html: content.tonica_full }}
+                />
                 
                 {/* Practice */}
                 <div className="pt-4 border-t border-border">
                   <p className="text-sm text-muted-foreground mb-2">Prática do dia:</p>
-                  <p className="font-medium text-foreground whitespace-pre-wrap">
-                    {content.tonica_practice}
-                  </p>
+                  <div 
+                    className="font-medium text-foreground prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
+                    dangerouslySetInnerHTML={{ __html: content.tonica_practice }}
+                  />
                 </div>
               </CardContent>
             </Card>

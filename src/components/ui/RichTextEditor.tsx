@@ -29,19 +29,37 @@ export const RichTextEditor = ({
     editorRef.current?.focus();
   }, []);
 
+  // Handle keydown to use <br> instead of <div> for Enter
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      document.execCommand("insertLineBreak", false);
+    }
+  }, []);
+
   const handleInput = useCallback(() => {
     if (editorRef.current) {
-      const html = editorRef.current.innerHTML;
+      let html = editorRef.current.innerHTML;
       // Convert empty div/br to empty string
-      const cleanHtml = html === "<br>" || html === "<div><br></div>" ? "" : html;
-      onChange(cleanHtml);
+      if (html === "<br>" || html === "<div><br></div>") {
+        html = "";
+      }
+      // Clean up any remaining div tags and convert to br
+      html = html.replace(/<div><br><\/div>/g, "<br>");
+      html = html.replace(/<div>/g, "<br>");
+      html = html.replace(/<\/div>/g, "");
+      // Clean up double br at start
+      html = html.replace(/^<br>/, "");
+      onChange(html);
     }
   }, [onChange]);
 
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     e.preventDefault();
     const text = e.clipboardData.getData("text/plain");
-    document.execCommand("insertText", false, text);
+    // Replace newlines with <br> for paste
+    const htmlText = text.replace(/\n/g, "<br>");
+    document.execCommand("insertHTML", false, htmlText);
   }, []);
 
   // Sync value to editor when it changes externally
@@ -101,6 +119,7 @@ export const RichTextEditor = ({
         )}
         style={{ minHeight }}
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         onFocus={handleFocus}
         dangerouslySetInnerHTML={{ __html: value || "" }}
