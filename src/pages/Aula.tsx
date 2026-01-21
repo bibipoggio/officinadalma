@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Slider } from "@/components/ui/slider";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Play,
@@ -35,6 +35,8 @@ const Aula = () => {
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showContinue, setShowContinue] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const {
     lesson,
@@ -117,6 +119,26 @@ const Aula = () => {
       const time = (value[0] / 100) * duration;
       seek(time);
     }
+  };
+
+  const handlePlaybackRateChange = () => {
+    const rates = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+    const currentIndex = rates.indexOf(playbackRate);
+    const nextIndex = (currentIndex + 1) % rates.length;
+    const newRate = rates[nextIndex];
+    setPlaybackRate(newRate);
+    
+    if (videoRef.current) {
+      videoRef.current.playbackRate = newRate;
+    }
+  };
+
+  const handleVideoRef = (element: HTMLVideoElement | null) => {
+    videoRef.current = element;
+    if (element) {
+      element.playbackRate = playbackRate;
+    }
+    setRef(element);
   };
 
   const isCompleted = !!progress?.completed_at;
@@ -255,7 +277,7 @@ const Aula = () => {
           <CardContent className="p-0">
             {/* Video Player */}
             {lesson.content_type === "video" && lesson.media_url && (
-              <div className="relative bg-foreground/5">
+              <div className="relative bg-foreground/5 group">
                 {mediaError ? (
                   <div className="aspect-video flex flex-col items-center justify-center gap-4 p-8">
                     <AlertCircle className="w-10 h-10 text-destructive" />
@@ -268,7 +290,7 @@ const Aula = () => {
                 ) : (
                   <>
                     <video
-                      ref={setRef as React.RefCallback<HTMLVideoElement>}
+                      ref={handleVideoRef as React.RefCallback<HTMLVideoElement>}
                       src={lesson.media_url}
                       className="w-full aspect-video"
                       playsInline
@@ -276,14 +298,20 @@ const Aula = () => {
                     />
 
                     {/* Custom Controls Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div 
+                      className={cn(
+                        "absolute inset-0 flex items-center justify-center bg-black/20 transition-opacity",
+                        isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+                      )}
+                      onClick={togglePlay}
+                    >
                       <Button
                         size="lg"
-                        className={cn(
-                          "w-16 h-16 rounded-full transition-opacity",
-                          isPlaying ? "opacity-0 hover:opacity-100" : "opacity-100"
-                        )}
-                        onClick={togglePlay}
+                        className="w-16 h-16 rounded-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          togglePlay();
+                        }}
                         aria-label={isPlaying ? "Pausar vídeo" : "Reproduzir vídeo"}
                       >
                         {isPlaying ? (
@@ -294,9 +322,64 @@ const Aula = () => {
                       </Button>
                     </div>
 
+                    {/* Bottom Controls Bar */}
+                    <div 
+                      className={cn(
+                        "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 transition-opacity",
+                        isPlaying ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+                      )}
+                    >
+                      {/* Progress Slider */}
+                      <div className="mb-3">
+                        <Slider
+                          value={[mediaProgress]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={handleSeek}
+                          aria-label="Progresso do vídeo"
+                          className="cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-white">
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-white hover:text-white hover:bg-white/20 h-8 w-8 p-0"
+                            onClick={togglePlay}
+                          >
+                            {isPlaying ? (
+                              <Pause className="w-4 h-4" />
+                            ) : (
+                              <Play className="w-4 h-4 ml-0.5" />
+                            )}
+                          </Button>
+                          <span className="text-sm font-medium">
+                            {formatTime(currentTime)} / {formatTime(duration)}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {/* Playback Speed */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-white hover:text-white hover:bg-white/20 h-8 px-2 text-xs font-medium"
+                            onClick={handlePlaybackRateChange}
+                          >
+                            {playbackRate}x
+                          </Button>
+                          
+                          {/* Volume indicator */}
+                          <Volume2 className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Continue from where you left */}
                     {showContinue && !isPlaying && progress?.last_position_seconds && (
-                      <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 mt-16">
                         <Button
                           variant="secondary"
                           onClick={() => {
@@ -388,8 +471,8 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Video/Audio Progress Bar */}
-            {hasMediaContent && !mediaError && (
+            {/* Audio Progress Bar (video has it built-in now) */}
+            {lesson.content_type === "audio" && !mediaError && (
               <div className="px-5 pt-3">
                 <Progress value={mediaProgress} className="h-1" aria-label="Progresso da mídia" />
               </div>
@@ -423,15 +506,20 @@ const Aula = () => {
 
               {/* Summary */}
               {lesson.summary && (
-                <p className="text-muted-foreground">{lesson.summary}</p>
+                <div 
+                  className="text-muted-foreground prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
+                  dangerouslySetInnerHTML={{ __html: lesson.summary }}
+                />
               )}
 
               {/* Text Content (Markdown) */}
+
+              {/* Text Content */}
               {lesson.content_type === "text" && lesson.body_markdown && (
-                <div className="prose prose-sm dark:prose-invert max-w-none">
-                  {/* Simple markdown rendering - for production, use react-markdown */}
-                  <div className="whitespace-pre-wrap">{lesson.body_markdown}</div>
-                </div>
+                <div 
+                  className="prose prose-sm dark:prose-invert max-w-none [&_br]:block [&_br]:my-2"
+                  dangerouslySetInnerHTML={{ __html: lesson.body_markdown }}
+                />
               )}
 
               {/* Complete Button */}
