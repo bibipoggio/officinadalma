@@ -14,6 +14,7 @@ import {
   hasAcceptedPrivacyDisclaimer 
 } from "@/components/ui/PrivacyDisclaimerModal";
 import { useToast } from "@/hooks/use-toast";
+import { createSafeHtml } from "@/lib/sanitize";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -200,7 +201,7 @@ const Tonica = () => {
               <CardContent className="p-6 space-y-4">
                 <div 
                   className="text-muted-foreground leading-relaxed prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
-                  dangerouslySetInnerHTML={{ __html: content.tonica_full }}
+                  dangerouslySetInnerHTML={createSafeHtml(content.tonica_full)}
                 />
                 
                 {/* Practice */}
@@ -208,7 +209,7 @@ const Tonica = () => {
                   <p className="text-sm text-muted-foreground mb-2">Prática do dia:</p>
                   <div 
                     className="font-medium text-foreground prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
-                    dangerouslySetInnerHTML={{ __html: content.tonica_practice }}
+                    dangerouslySetInnerHTML={createSafeHtml(content.tonica_practice)}
                   />
                 </div>
               </CardContent>

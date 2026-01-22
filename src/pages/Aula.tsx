@@ -28,6 +28,7 @@ import {
   getCourseTypeLabel,
 } from "@/hooks/useLessonDetails";
 import { useMediaProgress, formatTime } from "@/hooks/useMediaProgress";
+import { createSafeHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 
 const Aula = () => {
@@ -508,7 +509,7 @@ const Aula = () => {
               {lesson.summary && (
                 <div 
                   className="text-muted-foreground prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
-                  dangerouslySetInnerHTML={{ __html: lesson.summary }}
+                  dangerouslySetInnerHTML={createSafeHtml(lesson.summary)}
                 />
               )}
 
@@ -518,7 +519,7 @@ const Aula = () => {
               {lesson.content_type === "text" && lesson.body_markdown && (
                 <div 
                   className="prose prose-sm dark:prose-invert max-w-none [&_br]:block [&_br]:my-2"
-                  dangerouslySetInnerHTML={{ __html: lesson.body_markdown }}
+                  dangerouslySetInnerHTML={createSafeHtml(lesson.body_markdown)}
                 />
               )}
 
