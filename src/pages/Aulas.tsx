@@ -3,10 +3,13 @@ import { LoadingState, EmptyState, ErrorState } from "@/components/layout/PageSt
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { GraduationCap, BookOpen, Lock, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAulasHub, getCourseTypeLabel } from "@/hooks/useAulasHub";
 import { useCourseEnrollment } from "@/hooks/useCourseEnrollment";
+import { useCourseProgress } from "@/hooks/useCourseProgress";
+import { NotificationToggleButton } from "@/components/notifications/NotificationSettings";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +25,10 @@ const Aulas = () => {
   const { toast } = useToast();
   const { enrollments, availableCourses, isPremium, isLoading, error, refetch } = useAulasHub();
   const { enrollInCourse, isEnrolling } = useCourseEnrollment();
+  
+  // Get course IDs for progress tracking
+  const enrolledCourseIds = enrollments.map(e => e.course_id);
+  const { getProgress } = useCourseProgress(enrolledCourseIds);
 
   const handleEnroll = async (courseId: string, courseTitle: string) => {
     const result = await enrollInCourse(courseId);
@@ -89,11 +96,14 @@ const Aulas = () => {
   return (
     <AppLayout>
       <div className="space-y-8">
-        <header>
-          <h1 className="text-2xl font-display font-semibold text-foreground">Aulas</h1>
-          <p className="text-muted-foreground mt-1">
-            Cursos e conteúdos para sua transformação
-          </p>
+        <header className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-display font-semibold text-foreground">Aulas</h1>
+            <p className="text-muted-foreground mt-1">
+              Cursos e conteúdos para sua transformação
+            </p>
+          </div>
+          <NotificationToggleButton />
         </header>
 
         {/* Meus Cursos Section */}
@@ -105,54 +115,71 @@ const Aulas = () => {
 
           {hasEnrollments ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {enrollments.map((enrollment) => (
-                <Card
-                  key={enrollment.id}
-                  className="overflow-hidden transition-shadow hover:shadow-card group"
-                >
-                  {/* Thumbnail */}
-                  <div className="aspect-video bg-amethyst-light relative">
-                    {enrollment.courses.cover_image_url ? (
-                      <img
-                        src={enrollment.courses.cover_image_url}
-                        alt={enrollment.courses.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Play className="w-10 h-10 text-primary group-hover:scale-110 transition-transform" />
-                      </div>
-                    )}
-                  </div>
-
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-display font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
-                        {enrollment.courses.title}
-                      </h3>
-                      <Badge
-                        variant={getCourseTypeBadgeVariant(enrollment.courses.type)}
-                        className="shrink-0 text-xs"
-                      >
-                        {getCourseTypeLabel(enrollment.courses.type)}
-                      </Badge>
+              {enrollments.map((enrollment) => {
+                const progress = getProgress(enrollment.course_id);
+                
+                return (
+                  <Card
+                    key={enrollment.id}
+                    className="overflow-hidden transition-shadow hover:shadow-card group"
+                  >
+                    {/* Thumbnail */}
+                    <div className="aspect-video bg-amethyst-light relative">
+                      {enrollment.courses.cover_image_url ? (
+                        <img
+                          src={enrollment.courses.cover_image_url}
+                          alt={enrollment.courses.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Play className="w-10 h-10 text-primary group-hover:scale-110 transition-transform" />
+                        </div>
+                      )}
                     </div>
 
-                    {enrollment.courses.description_short && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                        {enrollment.courses.description_short}
-                      </p>
-                    )}
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-display font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                          {enrollment.courses.title}
+                        </h3>
+                        <Badge
+                          variant={getCourseTypeBadgeVariant(enrollment.courses.type)}
+                          className="shrink-0 text-xs"
+                        >
+                          {getCourseTypeLabel(enrollment.courses.type)}
+                        </Badge>
+                      </div>
 
-                    <Button
-                      className="w-full"
-                      onClick={() => navigate(`/aulas/${enrollment.courses.route_slug}`)}
-                    >
-                      Acessar
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      {enrollment.courses.description_short && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                          {enrollment.courses.description_short}
+                        </p>
+                      )}
+
+                      {/* Progress Bar */}
+                      {progress && progress.totalLessons > 0 && (
+                        <div className="mb-3 space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Progresso</span>
+                            <span className="font-medium text-foreground">
+                              {progress.completedLessons}/{progress.totalLessons}
+                            </span>
+                          </div>
+                          <Progress value={progress.progressPercent} className="h-1.5" />
+                        </div>
+                      )}
+
+                      <Button
+                        className="w-full"
+                        onClick={() => navigate(`/aulas/${enrollment.courses.route_slug}`)}
+                      >
+                        {progress && progress.progressPercent > 0 ? "Continuar" : "Acessar"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           ) : (
             <Card className="border-dashed">
