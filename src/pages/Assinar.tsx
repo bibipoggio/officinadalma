@@ -1,11 +1,10 @@
 import { AppLayout } from "@/components/layout/AppLayout";
-import { PaywallShell } from "@/components/ui/PaywallShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/Chip";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Lock } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Plan = "mensal" | "trimestral" | "semestral" | "anual";
 
@@ -27,12 +26,45 @@ const features = [
 
 const Assinar = () => {
   const [selectedPlan, setSelectedPlan] = useState<Plan>("trimestral");
-  const navigate = useNavigate();
+  const { hasAdminAccess } = useAuth();
 
   const handleSubscribe = () => {
     // Navigate to Mercado Pago checkout (placeholder)
     console.log("Subscribe to:", selectedPlan);
   };
+
+  // Show locked state for non-admin users
+  if (!hasAdminAccess) {
+    return (
+      <AppLayout>
+        <div className="max-w-md mx-auto py-12">
+          <Card className="border-dashed border-2 border-muted-foreground/30">
+            <CardContent className="p-8 text-center space-y-6">
+              <div className="w-20 h-20 mx-auto rounded-full bg-muted flex items-center justify-center">
+                <Lock className="w-10 h-10 text-muted-foreground" />
+              </div>
+              
+              <div className="space-y-2">
+                <h1 className="text-2xl font-display font-semibold text-foreground">
+                  Em Breve
+                </h1>
+                <p className="text-muted-foreground">
+                  A área de assinaturas estará disponível em breve. 
+                  Continue aproveitando o conteúdo gratuito!
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-border">
+                <p className="text-sm text-muted-foreground">
+                  Estamos preparando algo especial para você. Fique atento às novidades!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -47,6 +79,9 @@ const Assinar = () => {
           <p className="text-muted-foreground mt-2">
             Acesse todo o conteúdo premium com 7 dias grátis
           </p>
+          <Chip variant="muted" size="sm" className="mt-2">
+            Visível apenas para admins
+          </Chip>
         </header>
 
         {/* Plans */}
