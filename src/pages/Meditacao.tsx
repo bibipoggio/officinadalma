@@ -5,14 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useParams, Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import { useSubscription, useDailyContentForDate } from "@/hooks/useSubscription";
+import { useDailyContentForDate } from "@/hooks/useSubscription";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   Play, 
   Pause, 
   Headphones, 
-  Lock, 
   ArrowLeft, 
   RefreshCw,
   WifiOff,
@@ -35,7 +34,6 @@ const Meditacao = () => {
   const { date } = useParams<{ date: string }>();
   const audioRef = useRef<HTMLAudioElement>(null);
   
-  const { isPremium, isLoading: subscriptionLoading } = useSubscription();
   const { content, isLoading: contentLoading, error: contentError, refetch } = useDailyContentForDate(date || "");
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -110,7 +108,7 @@ const Meditacao = () => {
     }
   };
 
-  const isLoading = subscriptionLoading || contentLoading;
+  const isLoading = contentLoading;
   const displayDate = date ? formatDateDisplay(date) : "";
   const mediationDurationMinutes = content?.meditation_duration_seconds 
     ? Math.round(content.meditation_duration_seconds / 60) 
@@ -158,33 +156,8 @@ const Meditacao = () => {
 
         {isLoading && <LoadingState message="Carregando meditação..." />}
 
-        {/* Premium Gating */}
-        {!isLoading && !isPremium && (
-          <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-            <CardContent className="p-8 text-center space-y-6">
-              <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-                <Lock className="w-10 h-10 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-                  Conteúdo Premium
-                </h2>
-                <p className="text-muted-foreground max-w-md mx-auto">
-                  As meditações guiadas são exclusivas para assinantes Premium.
-                  Desbloqueie para acessar meditações diárias e muito mais.
-                </p>
-              </div>
-              <Link to="/assinar">
-                <Button size="lg" className="text-lg px-8">
-                  Assinar Premium
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Content Error */}
-        {!isLoading && isPremium && contentError && (
+        {!isLoading && contentError && (
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-8 text-center space-y-4">
               <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
@@ -200,7 +173,7 @@ const Meditacao = () => {
         )}
 
         {/* No content for date */}
-        {!isLoading && isPremium && !contentError && !content && (
+        {!isLoading && !contentError && !content && (
           <Card>
             <CardContent className="p-8 text-center space-y-4">
               <Headphones className="w-12 h-12 mx-auto text-muted-foreground opacity-50" />
@@ -218,7 +191,7 @@ const Meditacao = () => {
         )}
 
         {/* No meditation audio */}
-        {!isLoading && isPremium && content && !content.meditation_audio_url && (
+        {!isLoading && content && !content.meditation_audio_url && (
           <Card>
             <CardContent className="p-8 text-center space-y-4">
               <Clock className="w-12 h-12 mx-auto text-primary opacity-60" />
@@ -236,7 +209,7 @@ const Meditacao = () => {
         )}
 
         {/* Audio Error */}
-        {!isLoading && isPremium && content?.meditation_audio_url && audioError && (
+        {!isLoading && content?.meditation_audio_url && audioError && (
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-8 text-center space-y-4">
               <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
@@ -259,7 +232,7 @@ const Meditacao = () => {
         )}
 
         {/* Audio Player */}
-        {!isLoading && isPremium && content?.meditation_audio_url && !audioError && (
+        {!isLoading && content?.meditation_audio_url && !audioError && (
           <Card variant="elevated">
             <CardContent className="p-6 space-y-6">
               {/* Cover */}

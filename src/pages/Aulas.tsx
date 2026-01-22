@@ -3,9 +3,11 @@ import { LoadingState, EmptyState, ErrorState } from "@/components/layout/PageSt
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, BookOpen, Lock, Play } from "lucide-react";
+import { GraduationCap, BookOpen, Lock, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAulasHub, getCourseTypeLabel } from "@/hooks/useAulasHub";
+import { useCourseEnrollment } from "@/hooks/useCourseEnrollment";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 // Get badge variant based on course type
@@ -17,7 +19,33 @@ function getCourseTypeBadgeVariant(type: string): "default" | "secondary" | "out
 
 const Aulas = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { enrollments, availableCourses, isPremium, isLoading, error, refetch } = useAulasHub();
+  const { enrollInCourse, isEnrolling } = useCourseEnrollment();
+
+  const handleEnroll = async (courseId: string, courseTitle: string) => {
+    const result = await enrollInCourse(courseId);
+    if (result.success) {
+      if (result.alreadyEnrolled) {
+        toast({
+          title: "Já inscrito",
+          description: `Você já está inscrito em "${courseTitle}".`,
+        });
+      } else {
+        toast({
+          title: "Inscrição realizada!",
+          description: `Você agora tem acesso a "${courseTitle}".`,
+        });
+        refetch();
+      }
+    } else {
+      toast({
+        title: "Erro ao inscrever",
+        description: "Não foi possível realizar a inscrição. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -226,9 +254,11 @@ const Aulas = () => {
                       ) : (
                         <Button
                           className="w-full"
-                          onClick={() => navigate(`/aulas/${course.route_slug}`)}
+                          onClick={() => handleEnroll(course.id, course.title)}
+                          disabled={isEnrolling}
                         >
-                          Ver Curso
+                          <Plus className="w-4 h-4 mr-2" />
+                          {isEnrolling ? "Inscrevendo..." : "Inscrever-se"}
                         </Button>
                       )}
                     </CardContent>
