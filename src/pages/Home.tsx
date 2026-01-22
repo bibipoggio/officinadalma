@@ -30,7 +30,6 @@ import {
   Heart, 
   Flame, 
   ArrowRight,
-  Lock,
   RefreshCw,
   Sparkles,
   BookOpen,
@@ -267,63 +266,47 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* Meditação do Dia (Premium) */}
-        <Card className={!isPremium ? "bg-muted/30" : ""}>
-          <CardContent className="p-5">
-            {contentLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isPremium ? "bg-primary/10" : "bg-muted"}`}>
-                    <Moon className={`w-5 h-5 ${isPremium ? "text-primary" : "text-muted-foreground"}`} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                      Meditação do Dia
-                    </p>
-                    <h3 className="font-display text-lg font-semibold text-foreground">
-                      {dailyContent?.meditation_audio_url ? "Meditação Disponível" : "Sem meditação hoje"}
-                    </h3>
-                  </div>
-                  {!isPremium && (
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full">
-                      <Lock className="w-3.5 h-3.5 text-primary" />
-                      <span className="text-xs font-medium text-primary">Premium</span>
-                    </div>
-                  )}
+        {/* Meditação do Dia - Gratuita para todos */}
+        {dailyContent?.meditation_audio_url && (
+          <Card>
+            <CardContent className="p-5">
+              {contentLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="h-4 w-32" />
                 </div>
+              ) : (
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Moon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                        Meditação do Dia
+                      </p>
+                      <h3 className="font-display text-lg font-semibold text-foreground">
+                        Meditação Disponível
+                      </h3>
+                    </div>
+                  </div>
 
-                {dailyContent?.meditation_duration_seconds && isPremium && (
-                  <p className="text-sm text-muted-foreground">
-                    Duração: {Math.round(dailyContent.meditation_duration_seconds / 60)} minutos
-                  </p>
-                )}
+                  {dailyContent.meditation_duration_seconds && (
+                    <p className="text-sm text-muted-foreground">
+                      Duração: {Math.round(dailyContent.meditation_duration_seconds / 60)} minutos
+                    </p>
+                  )}
 
-                {isPremium ? (
-                  dailyContent?.meditation_audio_url ? (
-                    <Link to={`/meditacao/${today}`}>
-                      <Button className="w-full sm:w-auto">
-                        Ouvir agora <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">Nenhuma meditação disponível para hoje.</p>
-                  )
-                ) : (
-                  <Link to="/assinar">
-                    <Button variant="outline" className="w-full sm:w-auto">
-                      Desbloquear Premium <ArrowRight className="w-4 h-4 ml-2" />
+                  <Link to={`/meditacao/${today}`}>
+                    <Button className="w-full sm:w-auto">
+                      Ouvir agora <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Astrowake (Spotify Podcast) */}
         <Card>
