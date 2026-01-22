@@ -548,29 +548,7 @@ export type Database = {
           reason: string | null
           status: Database["public"]["Enums"]["report_status"] | null
         }
-        Insert: {
-          checkin_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          reason?: string | null
-          status?: Database["public"]["Enums"]["report_status"] | null
-        }
-        Update: {
-          checkin_id?: string | null
-          created_at?: string | null
-          id?: string | null
-          reason?: string | null
-          status?: Database["public"]["Enums"]["report_status"] | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reports_checkin_id_fkey"
-            columns: ["checkin_id"]
-            isOneToOne: false
-            referencedRelation: "checkins"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       public_profiles: {
         Row: {
@@ -591,35 +569,7 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
         }
-        Insert: {
-          created_at?: string | null
-          current_period_end?: string | null
-          id?: string | null
-          provider?: Database["public"]["Enums"]["subscription_provider"] | null
-          status?: never
-          trial_ends_at?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          current_period_end?: string | null
-          id?: string | null
-          provider?: Database["public"]["Enums"]["subscription_provider"] | null
-          status?: never
-          trial_ends_at?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
@@ -647,6 +597,19 @@ export type Database = {
           avatar_url: string
           display_name: string
           id: string
+        }[]
+      }
+      get_user_subscription: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_period_end: string
+          id: string
+          provider: Database["public"]["Enums"]["subscription_provider"]
+          status: string
+          trial_ends_at: string
+          updated_at: string
+          user_id: string
         }[]
       }
       has_role: {
