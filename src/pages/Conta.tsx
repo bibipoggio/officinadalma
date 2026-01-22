@@ -2,9 +2,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Bell, Lock, CreditCard, LogOut, Shield } from "lucide-react";
+import { User, Mail, Lock, CreditCard, LogOut, Shield } from "lucide-react";
 
 const Conta = () => {
   const { user, profile, role, isLoading, signOut, hasAdminAccess } = useAuth();
@@ -14,7 +15,6 @@ const Conta = () => {
     { icon: User, label: "Editar Perfil", onClick: () => navigate("/conta/editar") },
     { icon: Mail, label: "Alterar Email", onClick: () => {} },
     { icon: Lock, label: "Alterar Senha", onClick: () => navigate("/conta/alterar-senha") },
-    { icon: Bell, label: "Notificações", onClick: () => {} },
     { icon: CreditCard, label: "Assinatura", onClick: () => navigate("/assinar") },
   ];
 
@@ -93,6 +93,9 @@ const Conta = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Notification Settings */}
+            <NotificationSettings />
 
             {/* Menu */}
             <Card>
