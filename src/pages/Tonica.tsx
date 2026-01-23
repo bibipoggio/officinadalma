@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState, ErrorState } from "@/components/layout/PageState";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { Textarea } from "@/components/ui/textarea";
 import { useState, useRef, useEffect } from "react";
-import { Sun, Play, Pause, Heart, Music, CheckCircle, Pencil } from "lucide-react";
+import { Sun, Play, Pause, Heart, Music, CheckCircle, Pencil, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { useDailyContentForDate, formatDuration } from "@/hooks/useDailyContentForDate";
 import { useCheckin, type ShareMode } from "@/hooks/useSubscription";
 import { 
@@ -15,17 +15,46 @@ import {
 } from "@/components/ui/PrivacyDisclaimerModal";
 import { useToast } from "@/hooks/use-toast";
 import { createSafeHtml } from "@/lib/sanitize";
-import { format } from "date-fns";
+import { format, subDays, addDays, isSameDay, parseISO, isAfter } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const Tonica = () => {
   const { date } = useParams<{ date: string }>();
+  const navigate = useNavigate();
   const { toast } = useToast();
+  
+  // Today's date for comparison
+  const today = new Date();
+  const todayStr = format(today, "yyyy-MM-dd");
   
   // Determine the actual date to fetch
   const targetDate = date === "hoje" 
-    ? format(new Date(), "yyyy-MM-dd")
-    : date || format(new Date(), "yyyy-MM-dd");
+    ? todayStr
+    : date || todayStr;
+  
+  // Parse target date for navigation
+  const targetDateObj = parseISO(targetDate + "T12:00:00");
+  const isToday = isSameDay(targetDateObj, today);
+  const canGoForward = !isToday && !isAfter(addDays(targetDateObj, 1), today);
+  
+  // Navigate to previous/next day
+  const goToPreviousDay = () => {
+    const prevDate = format(subDays(targetDateObj, 1), "yyyy-MM-dd");
+    navigate(`/tonica/${prevDate}`);
+  };
+  
+  const goToNextDay = () => {
+    if (canGoForward) {
+      const nextDate = format(addDays(targetDateObj, 1), "yyyy-MM-dd");
+      navigate(`/tonica/${nextDate}`);
+    } else if (!isToday) {
+      navigate("/tonica/hoje");
+    }
+  };
+  
+  const goToToday = () => {
+    navigate("/tonica/hoje");
+  };
 
   const { content, isLoading, error } = useDailyContentForDate(targetDate);
   const { checkin, isLoading: checkinLoading, isSaving, saveCheckin } = useCheckin(targetDate);
@@ -147,9 +176,42 @@ const Tonica = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Date Navigation */}
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToPreviousDay}
+            aria-label="Dia anterior"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+          
+          <button
+            onClick={goToToday}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-muted transition-colors"
+            disabled={isToday}
+          >
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-medium">
+              {isToday ? "Hoje" : displayDate}
+            </span>
+          </button>
+          
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={goToNextDay}
+            disabled={isToday}
+            aria-label="Próximo dia"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        </div>
+
         {/* Header with optional cover image */}
         {content?.cover_image_url ? (
-          <div className="relative -mx-4 -mt-4 sm:-mx-6 sm:-mt-6">
+          <div className="relative -mx-4 sm:-mx-6">
             <div className="relative h-48 sm:h-64 overflow-hidden">
               <img 
                 src={content.cover_image_url} 
