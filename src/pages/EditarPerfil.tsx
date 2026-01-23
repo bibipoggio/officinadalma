@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/ui/ImageCropper";
 import { AlertCircle, Loader2, ArrowLeft, Camera } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,7 +34,7 @@ interface ProfileData {
   avatar_url: string | null;
 }
 
-const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_AVATAR_SIZE = 10 * 1024 * 1024; // 10MB for original before crop
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const EditarPerfil = () => {
@@ -45,6 +46,10 @@ const EditarPerfil = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // Crop modal state
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
 
   // Form fields
   const [displayName, setDisplayName] = useState("");
@@ -71,10 +76,10 @@ const EditarPerfil = () => {
     if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
   };
 
-  // Avatar upload handler
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection - opens crop modal
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     // Validate file
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -83,22 +88,38 @@ const EditarPerfil = () => {
     }
 
     if (file.size > MAX_AVATAR_SIZE) {
-      setErrors(prev => ({ ...prev, avatar: "Imagem muito grande. Máximo 5MB." }));
+      setErrors(prev => ({ ...prev, avatar: "Imagem muito grande. Máximo 10MB." }));
       return;
     }
 
     setErrors(prev => ({ ...prev, avatar: undefined }));
+
+    // Create URL for cropping
+    const imageUrl = URL.createObjectURL(file);
+    setImageToCrop(imageUrl);
+    setShowCropModal(true);
+
+    // Reset input so same file can be selected again
+    e.target.value = "";
+  };
+
+  // Handle cropped image upload
+  const handleCroppedImage = async (croppedBlob: Blob) => {
+    if (!user) return;
+
     setIsUploadingAvatar(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.jpg`;
       const filePath = `${user.id}/${fileName}`;
 
       // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file, { upsert: true });
+        .upload(filePath, croppedBlob, { 
+          upsert: true,
+          contentType: "image/jpeg"
+        });
 
       if (uploadError) throw uploadError;
 
@@ -123,7 +144,21 @@ const EditarPerfil = () => {
       toast.error("Erro ao enviar foto. Tente novamente.");
     } finally {
       setIsUploadingAvatar(false);
+      // Clean up object URL
+      if (imageToCrop) {
+        URL.revokeObjectURL(imageToCrop);
+        setImageToCrop(null);
+      }
     }
+  };
+
+  // Clean up object URL when modal closes
+  const handleCropModalClose = (open: boolean) => {
+    if (!open && imageToCrop) {
+      URL.revokeObjectURL(imageToCrop);
+      setImageToCrop(null);
+    }
+    setShowCropModal(open);
   };
 
   // Load profile data
@@ -300,7 +335,7 @@ const EditarPerfil = () => {
                       ref={fileInputRef}
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
-                      onChange={handleAvatarChange}
+                      onChange={handleFileSelect}
                       className="hidden"
                     />
                   </div>
@@ -485,6 +520,18 @@ const EditarPerfil = () => {
               </form>
             </CardContent>
           </Card>
+        )}
+
+        {/* Image Crop Modal */}
+        {imageToCrop && (
+          <ImageCropper
+            open={showCropModal}
+            onOpenChange={handleCropModalClose}
+            imageSrc={imageToCrop}
+            onCropComplete={handleCroppedImage}
+            aspectRatio={1}
+            circularCrop={true}
+          />
         )}
       </div>
     </AppLayout>
