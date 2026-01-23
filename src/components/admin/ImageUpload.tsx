@@ -32,10 +32,10 @@ export function ImageUpload({
       return;
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // Validate file size (max 25MB)
+    const maxSize = 25 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error("A imagem deve ter no máximo 10MB");
+      toast.error("A imagem deve ter no máximo 25MB");
       return;
     }
 
@@ -167,7 +167,7 @@ export function ImageUpload({
                     Clique ou arraste a imagem
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    JPG, PNG, WebP (máx. 10MB)
+                    JPG, PNG, WebP (máx. 25MB)
                   </p>
                 </div>
               </div>

@@ -19,7 +19,9 @@ interface Lesson {
   body_markdown: string | null;
   content_type: string;
   media_url: string | null;
+  audio_url: string | null;
   duration_seconds: number | null;
+  audio_duration_seconds: number | null;
   access_level: string;
   position: number;
   is_published: boolean;

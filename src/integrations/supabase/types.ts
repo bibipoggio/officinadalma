@@ -139,6 +139,8 @@ export type Database = {
       course_lessons: {
         Row: {
           access_level: string
+          audio_duration_seconds: number | null
+          audio_url: string | null
           body_markdown: string | null
           content_type: string
           course_id: string
@@ -156,6 +158,8 @@ export type Database = {
         }
         Insert: {
           access_level: string
+          audio_duration_seconds?: number | null
+          audio_url?: string | null
           body_markdown?: string | null
           content_type?: string
           course_id: string
@@ -173,6 +177,8 @@ export type Database = {
         }
         Update: {
           access_level?: string
+          audio_duration_seconds?: number | null
+          audio_url?: string | null
           body_markdown?: string | null
           content_type?: string
           course_id?: string

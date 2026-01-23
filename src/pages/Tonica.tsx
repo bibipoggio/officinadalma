@@ -212,17 +212,17 @@ const Tonica = () => {
         {/* Header with optional cover image */}
         {content?.cover_image_url ? (
           <div className="relative -mx-4 sm:-mx-6">
-            <div className="relative h-48 sm:h-64 overflow-hidden">
+            <div className="relative w-full overflow-hidden bg-muted/30">
               <img 
                 src={content.cover_image_url} 
                 alt={content.tonica_title}
-                className="w-full h-full object-cover"
+                className="w-full h-auto max-h-[60vh] object-contain mx-auto"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent pointer-events-none" />
             </div>
-            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 text-center">
-              <p className="text-sm text-muted-foreground">{displayDate}</p>
-              <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mt-1">
+            <div className="relative -mt-16 p-4 sm:p-6 text-center z-10">
+              <p className="text-sm text-muted-foreground drop-shadow-sm">{displayDate}</p>
+              <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mt-1 drop-shadow-sm">
                 {content.tonica_title}
               </h1>
             </div>
