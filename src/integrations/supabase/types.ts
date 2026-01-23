@@ -150,6 +150,7 @@ export type Database = {
           is_published: boolean
           media_url: string | null
           module_id: string
+          pdf_url: string | null
           position: number
           released_at: string | null
           summary: string | null
@@ -169,6 +170,7 @@ export type Database = {
           is_published?: boolean
           media_url?: string | null
           module_id: string
+          pdf_url?: string | null
           position: number
           released_at?: string | null
           summary?: string | null
@@ -188,6 +190,7 @@ export type Database = {
           is_published?: boolean
           media_url?: string | null
           module_id?: string
+          pdf_url?: string | null
           position?: number
           released_at?: string | null
           summary?: string | null

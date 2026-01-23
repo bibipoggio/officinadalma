@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
+import { PdfUpload } from "@/components/admin/PdfUpload";
 import { useState, useEffect } from "react";
 import { 
   useAdminCourses, 
@@ -109,6 +110,7 @@ const AdminCursos = () => {
     content_type: string;
     media_url: string;
     audio_url: string;
+    pdf_url: string;
     body_markdown: string;
     duration_minutes: string;
     audio_duration_minutes: string;
@@ -122,6 +124,7 @@ const AdminCursos = () => {
     content_type: "text",
     media_url: "",
     audio_url: "",
+    pdf_url: "",
     body_markdown: "",
     duration_minutes: "",
     audio_duration_minutes: "",
@@ -309,6 +312,7 @@ const AdminCursos = () => {
       content_type: contentType,
       media_url: "",
       audio_url: "",
+      pdf_url: "",
       body_markdown: "",
       duration_minutes: "",
       audio_duration_minutes: "",
@@ -329,6 +333,7 @@ const AdminCursos = () => {
       content_type: lesson.content_type,
       media_url: lesson.media_url || "",
       audio_url: (lesson as any).audio_url || "",
+      pdf_url: (lesson as any).pdf_url || "",
       body_markdown: lesson.body_markdown || "",
       duration_minutes: lesson.duration_seconds ? String(Math.round(lesson.duration_seconds / 60)) : "",
       audio_duration_minutes: (lesson as any).audio_duration_seconds ? String(Math.round((lesson as any).audio_duration_seconds / 60)) : "",
@@ -380,6 +385,7 @@ const AdminCursos = () => {
         content_type: lessonForm.content_type,
         media_url: lessonForm.media_url.trim() || null,
         audio_url: lessonForm.audio_url.trim() || null,
+        pdf_url: lessonForm.pdf_url.trim() || null,
         body_markdown: lessonForm.body_markdown.trim() || null,
         duration_seconds: durationSeconds,
         audio_duration_seconds: audioDurationSeconds,
@@ -591,6 +597,18 @@ const AdminCursos = () => {
             placeholder="Breve descrição do conteúdo..."
             className="min-h-[80px]"
           />
+        </div>
+
+        {/* PDF Attachment */}
+        <div className="border-t pt-4">
+          <PdfUpload
+            currentUrl={lessonForm.pdf_url || null}
+            onUrlChange={(url) => setLessonForm(prev => ({ ...prev, pdf_url: url || "" }))}
+            label="Material complementar em PDF (opcional)"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Adicione um PDF que os usuários podem baixar junto com a aula.
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

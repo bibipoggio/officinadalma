@@ -21,6 +21,7 @@ import {
   Volume2,
   Video,
   Headphones,
+  FileDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -660,6 +661,23 @@ const Aula = () => {
                   className="prose prose-sm dark:prose-invert max-w-none [&_br]:block [&_br]:my-2"
                   dangerouslySetInnerHTML={createSafeHtml(lesson.body_markdown)}
                 />
+              )}
+
+              {/* PDF Download */}
+              {lesson.pdf_url && (
+                <div className="pt-2">
+                  <a
+                    href={lesson.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download
+                  >
+                    <Button variant="outline" className="w-full">
+                      <FileDown className="w-5 h-5 mr-2" />
+                      Baixar Material Complementar (PDF)
+                    </Button>
+                  </a>
+                </div>
               )}
 
               {/* Complete Button */}
