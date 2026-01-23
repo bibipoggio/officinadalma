@@ -30,6 +30,7 @@ import {
 import { useMediaProgress, formatTime } from "@/hooks/useMediaProgress";
 import { createSafeHtml } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
+import { LessonComments } from "@/components/lessons/LessonComments";
 
 const Aula = () => {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>();
@@ -545,6 +546,9 @@ const Aula = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Comments Section */}
+        <LessonComments lessonId={lessonId || ""} />
 
         {/* Navigation */}
         {(prevLesson || nextLesson) && (
