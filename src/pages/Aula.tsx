@@ -19,6 +19,8 @@ import {
   AlertCircle,
   RotateCcw,
   Volume2,
+  Video,
+  Headphones,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -38,7 +40,9 @@ const Aula = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showContinue, setShowContinue] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [mediaMode, setMediaMode] = useState<"video" | "audio">("video");
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const {
     lesson,
@@ -133,6 +137,9 @@ const Aula = () => {
     if (videoRef.current) {
       videoRef.current.playbackRate = newRate;
     }
+    if (audioRef.current) {
+      audioRef.current.playbackRate = newRate;
+    }
   };
 
   const handleVideoRef = (element: HTMLVideoElement | null) => {
@@ -142,6 +149,17 @@ const Aula = () => {
     }
     setRef(element);
   };
+
+  const handleAudioRef = (element: HTMLAudioElement | null) => {
+    audioRef.current = element;
+    if (element) {
+      element.playbackRate = playbackRate;
+    }
+    setRef(element);
+  };
+
+  // Check if lesson has both video and audio
+  const hasVideoAndAudio = lesson?.content_type === "video" && lesson?.media_url && lesson?.audio_url;
 
   const isCompleted = !!progress?.completed_at;
   const hasMediaContent = lesson?.content_type === "video" || lesson?.content_type === "audio";
@@ -277,8 +295,38 @@ const Aula = () => {
         {/* Media Player or Text Content */}
         <Card className="overflow-hidden">
           <CardContent className="p-0">
+            {/* Media Mode Toggle (when both video and audio available) */}
+            {hasVideoAndAudio && (
+              <div className="flex border-b">
+                <button
+                  onClick={() => setMediaMode("video")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors",
+                    mediaMode === "video"
+                      ? "bg-primary/10 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Video className="w-4 h-4" />
+                  Assistir Vídeo
+                </button>
+                <button
+                  onClick={() => setMediaMode("audio")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 py-3 px-4 text-sm font-medium transition-colors",
+                    mediaMode === "audio"
+                      ? "bg-primary/10 text-primary border-b-2 border-primary"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Headphones className="w-4 h-4" />
+                  Ouvir Podcast
+                </button>
+              </div>
+            )}
+
             {/* Video Player */}
-            {lesson.content_type === "video" && lesson.media_url && (
+            {lesson.content_type === "video" && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
               <div className="relative bg-foreground/5 group">
                 {mediaError ? (
                   <div className="aspect-video flex flex-col items-center justify-center gap-4 p-8">
@@ -398,7 +446,97 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Audio Player */}
+            {/* Alternative Audio Mode (Podcast) for lessons with both video and audio */}
+            {hasVideoAndAudio && mediaMode === "audio" && lesson.audio_url && (
+              <div className="p-6 bg-primary/5">
+                {mediaError ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <AlertCircle className="w-10 h-10 text-destructive" />
+                    <p className="text-muted-foreground text-center">{mediaError}</p>
+                    <Button onClick={() => window.location.reload()}>
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Tentar novamente
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <audio
+                      ref={handleAudioRef as React.RefCallback<HTMLAudioElement>}
+                      src={lesson.audio_url}
+                      className="hidden"
+                      aria-label={`Podcast: ${lesson.title}`}
+                    />
+
+                    <div className="flex flex-col items-center gap-6">
+                      <div className="flex items-center gap-3 text-primary">
+                        <Headphones className="w-6 h-6" />
+                        <span className="font-medium">Modo Podcast</span>
+                      </div>
+                      
+                      {/* Play Button */}
+                      <Button
+                        size="lg"
+                        className="w-20 h-20 rounded-full"
+                        onClick={togglePlay}
+                        aria-label={isPlaying ? "Pausar áudio" : "Reproduzir áudio"}
+                      >
+                        {isPlaying ? (
+                          <Pause className="w-8 h-8" />
+                        ) : (
+                          <Play className="w-8 h-8 ml-1" />
+                        )}
+                      </Button>
+
+                      {/* Continue from where you left */}
+                      {showContinue && !isPlaying && progress?.last_position_seconds && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            seek(progress.last_position_seconds);
+                            setShowContinue(false);
+                          }}
+                        >
+                          Continuar de {formatTime(progress.last_position_seconds)}
+                        </Button>
+                      )}
+
+                      {/* Progress Slider */}
+                      <div className="w-full max-w-md space-y-2">
+                        <Slider
+                          value={[mediaProgress]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={handleSeek}
+                          aria-label="Progresso do áudio"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{formatTime(currentTime)}</span>
+                          <span>{formatTime(duration)}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handlePlaybackRateChange}
+                          className="text-muted-foreground"
+                        >
+                          {playbackRate}x
+                        </Button>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Volume2 className="w-4 h-4" />
+                          <span className="text-sm">{lesson.title}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Audio Player (for audio-only lessons) */}
             {lesson.content_type === "audio" && lesson.media_url && (
               <div className="p-6 bg-amethyst-light/30">
                 {mediaError ? (
@@ -473,7 +611,7 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Audio Progress Bar (video has it built-in now) */}
+            {/* Audio Progress Bar (audio-only lessons) */}
             {lesson.content_type === "audio" && !mediaError && (
               <div className="px-5 pt-3">
                 <Progress value={mediaProgress} className="h-1" aria-label="Progresso da mídia" />

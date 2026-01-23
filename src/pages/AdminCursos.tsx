@@ -108,8 +108,10 @@ const AdminCursos = () => {
     access_level: string;
     content_type: string;
     media_url: string;
+    audio_url: string;
     body_markdown: string;
     duration_minutes: string;
+    audio_duration_minutes: string;
     released_at: Date | null;
     is_published: boolean;
     summary: string;
@@ -119,8 +121,10 @@ const AdminCursos = () => {
     access_level: "basic",
     content_type: "text",
     media_url: "",
+    audio_url: "",
     body_markdown: "",
     duration_minutes: "",
+    audio_duration_minutes: "",
     released_at: null,
     is_published: false,
     summary: "",
@@ -304,8 +308,10 @@ const AdminCursos = () => {
       access_level: "basic",
       content_type: contentType,
       media_url: "",
+      audio_url: "",
       body_markdown: "",
       duration_minutes: "",
+      audio_duration_minutes: "",
       released_at: null,
       is_published: false,
       summary: "",
@@ -322,8 +328,10 @@ const AdminCursos = () => {
       access_level: lesson.access_level,
       content_type: lesson.content_type,
       media_url: lesson.media_url || "",
+      audio_url: (lesson as any).audio_url || "",
       body_markdown: lesson.body_markdown || "",
       duration_minutes: lesson.duration_seconds ? String(Math.round(lesson.duration_seconds / 60)) : "",
+      audio_duration_minutes: (lesson as any).audio_duration_seconds ? String(Math.round((lesson as any).audio_duration_seconds / 60)) : "",
       released_at: lesson.released_at ? new Date(lesson.released_at) : null,
       is_published: lesson.is_published,
       summary: lesson.summary || "",
@@ -362,13 +370,19 @@ const AdminCursos = () => {
     try {
       const { supabase } = await import("@/integrations/supabase/client");
       
+      const audioDurationSeconds = lessonForm.audio_duration_minutes 
+        ? parseInt(lessonForm.audio_duration_minutes) * 60 
+        : null;
+
       const lessonData = {
         title: lessonForm.title.trim(),
         access_level: lessonForm.access_level,
         content_type: lessonForm.content_type,
         media_url: lessonForm.media_url.trim() || null,
+        audio_url: lessonForm.audio_url.trim() || null,
         body_markdown: lessonForm.body_markdown.trim() || null,
         duration_seconds: durationSeconds,
+        audio_duration_seconds: audioDurationSeconds,
         released_at: lessonForm.released_at?.toISOString() || null,
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
@@ -548,6 +562,25 @@ const AdminCursos = () => {
             mediaType={lessonForm.content_type as "video" | "audio"}
             label={`Arquivo de ${lessonForm.content_type === "video" ? "vídeo" : "áudio"} *`}
           />
+        )}
+
+        {/* Alternative Audio for Video Lessons (Podcast mode) */}
+        {lessonForm.content_type === "video" && (
+          <div className="border-t pt-4">
+            <MediaUpload
+              currentUrl={lessonForm.audio_url || null}
+              onUrlChange={(url) => setLessonForm(prev => ({ ...prev, audio_url: url || "" }))}
+              onDurationChange={(seconds) => setLessonForm(prev => ({ 
+                ...prev, 
+                audio_duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+              }))}
+              mediaType="audio"
+              label="Áudio alternativo (modo podcast - opcional)"
+            />
+            <p className="text-xs text-muted-foreground mt-2">
+              Adicione uma versão somente em áudio para que os usuários possam ouvir como podcast.
+            </p>
+          </div>
         )}
 
         <div className="space-y-2">
