@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { BirthDateInput } from "@/components/ui/BirthDateInput";
 import { AlertCircle, Eye, EyeOff, Loader2, CheckCircle } from "lucide-react";
 import loginBg from "@/assets/login-bg.jpg";
 import logoOfficina from "@/assets/logo_officina.jpg";
@@ -354,57 +355,16 @@ const Cadastro = () => {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="birthDate">Data de nascimento</Label>
-                <Input
+                <BirthDateInput
                   ref={birthDateRef}
-                  id="birthDate"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="DD/MM/AAAA"
-                  value={birthDate ? birthDate.split("-").reverse().join("/") : ""}
-                  onChange={(e) => {
-                    // Allow typing and format as DD/MM/AAAA
-                    let value = e.target.value.replace(/\D/g, "");
-                    if (value.length >= 2) value = value.slice(0, 2) + "/" + value.slice(2);
-                    if (value.length >= 5) value = value.slice(0, 5) + "/" + value.slice(5, 9);
-                    
-                    // Convert to ISO format when complete (YYYY-MM-DD)
-                    const parts = value.split("/");
-                    if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
-                      const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                      setBirthDate(isoDate);
-                    } else if (value.length < 10) {
-                      // Keep the displayed value for partial input
-                      setBirthDate("");
-                    }
-                    
+                  value={birthDate}
+                  onChange={(value) => {
+                    setBirthDate(value);
                     if (errors.birthDate) setErrors((prev) => ({ ...prev, birthDate: undefined }));
                   }}
-                  onBlur={(e) => {
-                    // Validate and convert on blur
-                    const value = e.target.value.replace(/\D/g, "");
-                    if (value.length === 8) {
-                      const day = value.slice(0, 2);
-                      const month = value.slice(2, 4);
-                      const year = value.slice(4, 8);
-                      const isoDate = `${year}-${month}-${day}`;
-                      // Validate date
-                      const date = new Date(isoDate);
-                      if (!isNaN(date.getTime()) && date.getFullYear() > 1900) {
-                        setBirthDate(isoDate);
-                      }
-                    }
-                  }}
-                  aria-invalid={!!errors.birthDate}
-                  aria-describedby={errors.birthDate ? "birthDate-error" : undefined}
-                  autoComplete="bday"
                   disabled={isSubmitting}
-                  maxLength={10}
+                  error={errors.birthDate}
                 />
-                {errors.birthDate && (
-                  <p id="birthDate-error" className="text-sm text-destructive" role="alert">
-                    {errors.birthDate}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="birthTime">Hora (opcional)</Label>
