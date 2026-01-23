@@ -15,6 +15,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Users, Flag, Zap, RefreshCw } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const formatDateDisplay = (dateStr: string) => {
   const date = new Date(dateStr + "T12:00:00");
@@ -103,11 +104,12 @@ const Comunidade = () => {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <span className="text-lg font-medium text-primary">
+              <Avatar className="w-10 h-10">
+                <AvatarImage src={checkin.avatar_url || undefined} alt={authorName} />
+                <AvatarFallback className="text-lg font-medium bg-primary/10 text-primary">
                   {authorName.charAt(0).toUpperCase()}
-                </span>
-              </div>
+                </AvatarFallback>
+              </Avatar>
               <div>
                 <p className="font-medium text-foreground">{authorName}</p>
                 <p className="text-xs text-muted-foreground">
