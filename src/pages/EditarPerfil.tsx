@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,8 +6,9 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Loader2, CheckCircle, ArrowLeft } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertCircle, Loader2, ArrowLeft, Camera } from "lucide-react";
 import { toast } from "sonner";
 
 interface FormErrors {
@@ -17,6 +18,7 @@ interface FormErrors {
   birthState?: string;
   birthCountry?: string;
   phone?: string;
+  avatar?: string;
   general?: string;
 }
 
@@ -28,14 +30,20 @@ interface ProfileData {
   birth_state: string | null;
   birth_country: string | null;
   phone: string | null;
+  avatar_url: string | null;
 }
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024; // 5MB
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const EditarPerfil = () => {
   const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
 
   // Form fields
@@ -46,6 +54,7 @@ const EditarPerfil = () => {
   const [birthState, setBirthState] = useState("");
   const [birthCountry, setBirthCountry] = useState("");
   const [phone, setPhone] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Format phone number as user types
   const formatPhone = (value: string) => {
@@ -62,6 +71,61 @@ const EditarPerfil = () => {
     if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
   };
 
+  // Avatar upload handler
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setErrors(prev => ({ ...prev, avatar: "Formato inválido. Use JPG, PNG ou WebP." }));
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      setErrors(prev => ({ ...prev, avatar: "Imagem muito grande. Máximo 5MB." }));
+      return;
+    }
+
+    setErrors(prev => ({ ...prev, avatar: undefined }));
+    setIsUploadingAvatar(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: publicUrl })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(publicUrl);
+      await refreshProfile();
+      toast.success("Foto atualizada!");
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast.error("Erro ao enviar foto. Tente novamente.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
   // Load profile data
   useEffect(() => {
     const fetchProfile = async () => {
@@ -70,7 +134,7 @@ const EditarPerfil = () => {
       try {
         const { data, error } = await supabase
           .from("profiles")
-          .select("display_name, birth_date, birth_time, birth_city, birth_state, birth_country, phone")
+          .select("display_name, birth_date, birth_time, birth_city, birth_state, birth_country, phone, avatar_url")
           .eq("id", user.id)
           .single();
 
@@ -84,6 +148,7 @@ const EditarPerfil = () => {
           setBirthState(data.birth_state || "");
           setBirthCountry(data.birth_country || "Brasil");
           setPhone(data.phone ? formatPhone(data.phone) : "");
+          setAvatarUrl(data.avatar_url);
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -209,6 +274,43 @@ const EditarPerfil = () => {
                     <span>{errors.general}</span>
                   </div>
                 )}
+
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center gap-3 pb-4 border-b">
+                  <div className="relative">
+                    <Avatar className="w-24 h-24">
+                      <AvatarImage src={avatarUrl || undefined} alt="Sua foto" />
+                      <AvatarFallback className="text-2xl">
+                        {displayName ? displayName.charAt(0).toUpperCase() : "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingAvatar || isSubmitting}
+                      className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Clique no ícone para alterar sua foto
+                  </p>
+                  {errors.avatar && (
+                    <p className="text-sm text-destructive">{errors.avatar}</p>
+                  )}
+                </div>
 
                 {/* Display Name */}
                 <div className="space-y-2">

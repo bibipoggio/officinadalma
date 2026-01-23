@@ -12,6 +12,7 @@ export interface CommunityCheckin {
   share_mode: "community" | "anonymous";
   created_at: string;
   display_name: string | null;
+  avatar_url: string | null;
   reactions: ReactionCount[];
   userReactions: string[]; // emojis the current user has reacted with
 }
@@ -68,11 +69,11 @@ export function useCommunityFeed() {
         .filter(c => c.share_mode === "community")
         .map(c => c.user_id);
 
-      let profilesMap: Record<string, string | null> = {};
+      let profilesMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
       if (communityUserIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from("public_profiles")
-          .select("id, display_name")
+          .select("id, display_name, avatar_url")
           .in("id", communityUserIds);
 
         if (profilesError) {
@@ -82,10 +83,10 @@ export function useCommunityFeed() {
         if (profiles) {
           profilesMap = profiles.reduce((acc, p) => {
             if (p.id) {
-              acc[p.id] = p.display_name;
+              acc[p.id] = { display_name: p.display_name, avatar_url: p.avatar_url };
             }
             return acc;
-          }, {} as Record<string, string | null>);
+          }, {} as Record<string, { display_name: string | null; avatar_url: string | null }>);
         }
       }
 
@@ -124,7 +125,8 @@ export function useCommunityFeed() {
         feeling_text: c.feeling_text,
         share_mode: c.share_mode as "community" | "anonymous",
         created_at: c.created_at,
-        display_name: c.share_mode === "community" ? profilesMap[c.user_id] || null : null,
+        display_name: c.share_mode === "community" ? profilesMap[c.user_id]?.display_name || null : null,
+        avatar_url: c.share_mode === "community" ? profilesMap[c.user_id]?.avatar_url || null : null,
         reactions: Object.entries(reactionsMap[c.id].counts).map(([emoji, count]) => ({
           emoji,
           count,
