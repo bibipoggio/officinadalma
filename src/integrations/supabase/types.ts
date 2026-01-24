@@ -621,7 +621,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          notification_enabled: boolean | null
           phone: string | null
+          reminder_time: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -633,7 +635,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          notification_enabled?: boolean | null
           phone?: string | null
+          reminder_time?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -645,7 +649,39 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          notification_enabled?: boolean | null
           phone?: string | null
+          reminder_time?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
