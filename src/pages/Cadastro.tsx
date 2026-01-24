@@ -47,7 +47,7 @@ const Cadastro = () => {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
-  const birthDateRef = useRef<HTMLInputElement>(null);
+  const birthDateRef = useRef<HTMLButtonElement>(null);
   const birthCityRef = useRef<HTMLInputElement>(null);
   const birthStateRef = useRef<HTMLInputElement>(null);
   const birthCountryRef = useRef<HTMLInputElement>(null);

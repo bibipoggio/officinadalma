@@ -1,8 +1,7 @@
-import { forwardRef, useState, useEffect, useCallback } from "react";
+import { forwardRef, useState, useEffect } from "react";
 import { format, parse, isValid, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -11,6 +10,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface BirthDateInputProps {
   value: string; // ISO format YYYY-MM-DD or empty
@@ -20,178 +26,172 @@ interface BirthDateInputProps {
   className?: string;
 }
 
-export const BirthDateInput = forwardRef<HTMLInputElement, BirthDateInputProps>(
-  ({ value, onChange, disabled, error, className }, ref) => {
-    const [displayValue, setDisplayValue] = useState("");
-    const [internalError, setInternalError] = useState<string | null>(null);
-    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-    const [calendarMonth, setCalendarMonth] = useState<Date>(subYears(new Date(), 30));
+const MONTHS = [
+  "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+  "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+];
 
-    // Sync display value when ISO value changes externally
+const currentYear = new Date().getFullYear();
+const years = Array.from({ length: currentYear - 1900 + 1 }, (_, i) => currentYear - i);
+
+export const BirthDateInput = forwardRef<HTMLButtonElement, BirthDateInputProps>(
+  ({ value, onChange, disabled, error, className }, ref) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [calendarMonth, setCalendarMonth] = useState<Date>(() => {
+      if (value) {
+        const date = parse(value, "yyyy-MM-dd", new Date());
+        if (isValid(date)) return date;
+      }
+      return subYears(new Date(), 30);
+    });
+
+    // Sync calendar month when value changes externally
     useEffect(() => {
       if (value) {
-        const parts = value.split("-");
-        if (parts.length === 3) {
-          setDisplayValue(`${parts[2]}/${parts[1]}/${parts[0]}`);
-          setInternalError(null);
-          // Update calendar month to show the selected date's year
-          const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-          if (isValid(date)) {
-            setCalendarMonth(date);
-          }
+        const date = parse(value, "yyyy-MM-dd", new Date());
+        if (isValid(date)) {
+          setCalendarMonth(date);
         }
       }
     }, [value]);
 
-    const validateDate = useCallback((day: string, month: string, year: string): { valid: boolean; error?: string } => {
-      const dayNum = parseInt(day, 10);
-      const monthNum = parseInt(month, 10);
-      const yearNum = parseInt(year, 10);
-
-      if (yearNum < 1900 || yearNum > new Date().getFullYear()) {
-        return { valid: false, error: "Ano inválido" };
-      }
-
-      if (monthNum < 1 || monthNum > 12) {
-        return { valid: false, error: "Mês inválido (01-12)" };
-      }
-
-      const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-      if (dayNum < 1 || dayNum > daysInMonth) {
-        return { valid: false, error: `Dia inválido (máx: ${daysInMonth})` };
-      }
-
-      const date = new Date(yearNum, monthNum - 1, dayNum);
-      if (date > new Date()) {
-        return { valid: false, error: "Data não pode ser no futuro" };
-      }
-
-      return { valid: true };
-    }, []);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const rawValue = e.target.value;
-      let digits = rawValue.replace(/\D/g, "");
-      digits = digits.slice(0, 8);
-      
-      let formatted = "";
-      if (digits.length > 0) {
-        formatted = digits.slice(0, 2);
-      }
-      if (digits.length > 2) {
-        formatted += "/" + digits.slice(2, 4);
-      }
-      if (digits.length > 4) {
-        formatted += "/" + digits.slice(4, 8);
-      }
-      
-      setDisplayValue(formatted);
-      
-      if (digits.length < 8) {
-        setInternalError(null);
-        onChange("");
-        return;
-      }
-      
-      const day = digits.slice(0, 2);
-      const month = digits.slice(2, 4);
-      const year = digits.slice(4, 8);
-      
-      const validation = validateDate(day, month, year);
-      
-      if (validation.valid) {
-        const isoDate = `${year}-${month}-${day}`;
-        setInternalError(null);
-        onChange(isoDate);
-      } else {
-        setInternalError(validation.error || "Data inválida");
-        onChange("");
-      }
-    };
-
-    const handleBlur = () => {
-      if (displayValue && displayValue.length < 10) {
-        setInternalError("Complete a data (DD/MM/AAAA)");
-      }
-    };
-
-    const handleCalendarSelect = (date: Date | undefined) => {
+    const handleSelect = (date: Date | undefined) => {
       if (date) {
         const isoDate = format(date, "yyyy-MM-dd");
-        const displayFormatted = format(date, "dd/MM/yyyy");
-        setDisplayValue(displayFormatted);
-        setInternalError(null);
         onChange(isoDate);
-        setIsCalendarOpen(false);
+        setIsOpen(false);
+      }
+    };
+
+    const handleMonthChange = (monthIndex: string) => {
+      const newDate = new Date(calendarMonth);
+      newDate.setMonth(parseInt(monthIndex));
+      setCalendarMonth(newDate);
+    };
+
+    const handleYearChange = (year: string) => {
+      const newDate = new Date(calendarMonth);
+      newDate.setFullYear(parseInt(year));
+      setCalendarMonth(newDate);
+    };
+
+    const navigateMonth = (direction: 'prev' | 'next') => {
+      const newDate = new Date(calendarMonth);
+      newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+      if (newDate <= new Date() && newDate >= new Date(1900, 0, 1)) {
+        setCalendarMonth(newDate);
       }
     };
 
     const selectedDate = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
-    const displayError = error || internalError;
+    const displayValue = selectedDate && isValid(selectedDate) 
+      ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
+      : null;
 
     return (
       <div className="space-y-1">
-        <div className="flex gap-2">
-          <Input
-            ref={ref}
-            id="birthDate"
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            placeholder="DD/MM/AAAA"
-            value={displayValue}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            aria-invalid={!!displayError}
-            aria-describedby={displayError ? "birthDate-error" : undefined}
-            autoComplete="bday"
-            disabled={disabled}
-            maxLength={10}
-            className={cn(
-              "flex-1",
-              displayError && "border-destructive focus-visible:ring-destructive",
-              className
-            )}
-          />
-          <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                disabled={disabled}
-                className="shrink-0"
-                aria-label="Abrir calendário"
-              >
-                <CalendarIcon className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              ref={ref}
+              type="button"
+              variant="outline"
+              disabled={disabled}
+              className={cn(
+                "w-full justify-start text-left font-normal h-10",
+                !displayValue && "text-muted-foreground",
+                error && "border-destructive focus-visible:ring-destructive",
+                className
+              )}
+              aria-invalid={!!error}
+              aria-describedby={error ? "birthDate-error" : undefined}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+              {displayValue || "Selecione sua data de nascimento"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start" sideOffset={4}>
+            <div className="p-3 space-y-3">
+              {/* Month/Year Navigation Header */}
+              <div className="flex items-center justify-between gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => navigateMonth('prev')}
+                  disabled={calendarMonth <= new Date(1900, 0, 1)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                
+                <div className="flex gap-2 flex-1">
+                  <Select
+                    value={calendarMonth.getMonth().toString()}
+                    onValueChange={handleMonthChange}
+                  >
+                    <SelectTrigger className="h-8 flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MONTHS.map((month, index) => (
+                        <SelectItem key={index} value={index.toString()}>
+                          {month}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  <Select
+                    value={calendarMonth.getFullYear().toString()}
+                    onValueChange={handleYearChange}
+                  >
+                    <SelectTrigger className="h-8 w-24">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => navigateMonth('next')}
+                  disabled={calendarMonth >= new Date()}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {/* Calendar Grid */}
               <Calendar
                 mode="single"
                 selected={selectedDate && isValid(selectedDate) ? selectedDate : undefined}
-                onSelect={handleCalendarSelect}
+                onSelect={handleSelect}
                 month={calendarMonth}
                 onMonthChange={setCalendarMonth}
                 disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                 locale={ptBR}
-                captionLayout="dropdown-buttons"
-                fromYear={1900}
-                toYear={new Date().getFullYear()}
-                className="pointer-events-auto"
+                className="pointer-events-auto p-0"
                 classNames={{
-                  caption_dropdowns: "flex gap-2",
-                  dropdown_month: "flex-1",
-                  dropdown_year: "flex-1",
-                  dropdown: "px-2 py-1 rounded-md bg-background border border-input text-sm",
+                  caption: "hidden",
+                  nav: "hidden",
                 }}
               />
-            </PopoverContent>
-          </Popover>
-        </div>
-        {displayError && (
+            </div>
+          </PopoverContent>
+        </Popover>
+        {error && (
           <p id="birthDate-error" className="text-sm text-destructive" role="alert">
-            {displayError}
+            {error}
           </p>
         )}
       </div>
