@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null | undefined>(undefined); // undefined = not loaded
   const [role, setRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const sessionTrackedRef = useRef<string | null>(null); // Track which user session we've recorded
 
   const fetchUserData = async (userId: string) => {
     try {
@@ -101,6 +102,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setProfile(undefined); // Reset to undefined so next login waits for profile
     setRole(null);
+    sessionTrackedRef.current = null; // Reset session tracking
+  };
+
+  // Track user session for analytics
+  const trackUserSession = async (userId: string) => {
+    // Only track once per login session
+    if (sessionTrackedRef.current === userId) return;
+    
+    try {
+      const deviceType = /mobile|android|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        navigator.userAgent.toLowerCase()
+      ) ? "mobile" : "web";
+      
+      await supabase.from("user_sessions").insert({
+        user_id: userId,
+        device_type: deviceType,
+      });
+      
+      sessionTrackedRef.current = userId;
+    } catch (err) {
+      console.error("Session tracking error:", err);
+    }
   };
 
   useEffect(() => {
@@ -114,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Defer data fetch to avoid blocking
           setTimeout(() => {
             fetchUserData(currentSession.user.id);
+            trackUserSession(currentSession.user.id);
           }, 0);
         } else {
           clearUserData();
@@ -134,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (initialSession?.user) {
         fetchUserData(initialSession.user.id);
+        trackUserSession(initialSession.user.id);
       }
       setIsLoading(false);
     });

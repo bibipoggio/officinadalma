@@ -31,6 +31,7 @@ import AdminConteudoDiario from "./pages/AdminConteudoDiario";
 import AdminCursos from "./pages/AdminCursos";
 import AdminModeracao from "./pages/AdminModeracao";
 import AdminArquivos from "./pages/AdminArquivos";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/admin/cursos" element={<ProtectedRoute requireAdmin><AdminCursos /></ProtectedRoute>} />
             <Route path="/admin/moderacao" element={<ProtectedRoute requireAdmin><AdminModeracao /></ProtectedRoute>} />
             <Route path="/admin/arquivos" element={<ProtectedRoute requireAdmin><AdminArquivos /></ProtectedRoute>} />
+            <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalytics /></ProtectedRoute>} />
             
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
