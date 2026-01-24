@@ -840,7 +840,29 @@ export type Database = {
           reason: string | null
           status: Database["public"]["Enums"]["report_status"] | null
         }
-        Relationships: []
+        Insert: {
+          checkin_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          reason?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+        }
+        Update: {
+          checkin_id?: string | null
+          created_at?: string | null
+          id?: string | null
+          reason?: string | null
+          status?: Database["public"]["Enums"]["report_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_checkin_id_fkey"
+            columns: ["checkin_id"]
+            isOneToOne: false
+            referencedRelation: "checkins"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       public_profiles: {
         Row: {
