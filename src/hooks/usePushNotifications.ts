@@ -29,22 +29,37 @@ export function usePushNotifications() {
     setIsLoading(false);
   }, []);
 
-  // Check current subscription status
+  // Check current subscription status from database
   useEffect(() => {
     const checkSubscription = async () => {
-      if (!isSupported) return;
+      if (!isSupported || !user) {
+        setIsSubscribed(false);
+        return;
+      }
 
       try {
-        const registration = await navigator.serviceWorker.ready;
-        const subscription = await registration.pushManager.getSubscription();
-        setIsSubscribed(!!subscription);
+        // Check if user has subscription in database
+        const { data, error } = await supabase
+          .from("push_subscriptions")
+          .select("id")
+          .eq("user_id", user.id)
+          .limit(1);
+
+        if (error) {
+          console.error("Error checking subscription:", error);
+          setIsSubscribed(false);
+          return;
+        }
+
+        setIsSubscribed(data && data.length > 0);
       } catch (err) {
         console.error("Error checking push subscription:", err);
+        setIsSubscribed(false);
       }
     };
 
     checkSubscription();
-  }, [isSupported]);
+  }, [isSupported, user]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isSupported) return false;
@@ -63,13 +78,18 @@ export function usePushNotifications() {
     if (!isSupported || !user) return false;
 
     try {
+      setIsLoading(true);
+
       // Request permission first
       const granted = await requestPermission();
-      if (!granted) return false;
+      if (!granted) {
+        setIsLoading(false);
+        return false;
+      }
 
       const registration = await navigator.serviceWorker.ready;
       
-      // Check if already subscribed
+      // Check if already subscribed locally
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
@@ -87,25 +107,45 @@ export function usePushNotifications() {
       // Save subscription to database
       const subscriptionData = subscription.toJSON() as PushSubscriptionData;
       
-      // Store in localStorage for now (in production, save to database)
-      localStorage.setItem("pushSubscription", JSON.stringify({
-        userId: user.id,
-        subscription: subscriptionData,
-        createdAt: new Date().toISOString(),
-      }));
+      const { error } = await supabase
+        .from("push_subscriptions")
+        .upsert({
+          user_id: user.id,
+          endpoint: subscriptionData.endpoint,
+          p256dh: subscriptionData.keys.p256dh,
+          auth: subscriptionData.keys.auth,
+        }, {
+          onConflict: "user_id,endpoint"
+        });
+
+      if (error) {
+        console.error("Error saving subscription:", error);
+        setIsLoading(false);
+        return false;
+      }
+
+      // Update profile notification preference
+      await supabase
+        .from("profiles")
+        .update({ notification_enabled: true })
+        .eq("id", user.id);
 
       setIsSubscribed(true);
+      setIsLoading(false);
       return true;
     } catch (err) {
       console.error("Error subscribing to push notifications:", err);
+      setIsLoading(false);
       return false;
     }
   }, [isSupported, user, requestPermission]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
-    if (!isSupported) return false;
+    if (!isSupported || !user) return false;
 
     try {
+      setIsLoading(true);
+
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       
@@ -113,14 +153,27 @@ export function usePushNotifications() {
         await subscription.unsubscribe();
       }
 
-      localStorage.removeItem("pushSubscription");
+      // Remove from database
+      await supabase
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", user.id);
+
+      // Update profile notification preference
+      await supabase
+        .from("profiles")
+        .update({ notification_enabled: false })
+        .eq("id", user.id);
+
       setIsSubscribed(false);
+      setIsLoading(false);
       return true;
     } catch (err) {
       console.error("Error unsubscribing from push notifications:", err);
+      setIsLoading(false);
       return false;
     }
-  }, [isSupported]);
+  }, [isSupported, user]);
 
   // Show a local notification (for testing/demo)
   const showNotification = useCallback(async (title: string, options?: NotificationOptions) => {
