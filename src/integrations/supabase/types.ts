@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_daily_cache: {
+        Row: {
+          active_users: number | null
+          date: string
+          diary_entries: number | null
+          forum_posts: number | null
+          forum_replies: number | null
+          new_users: number | null
+          total_users: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          active_users?: number | null
+          date: string
+          diary_entries?: number | null
+          forum_posts?: number | null
+          forum_replies?: number | null
+          new_users?: number | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          active_users?: number | null
+          date?: string
+          diary_entries?: number | null
+          forum_posts?: number | null
+          forum_replies?: number | null
+          new_users?: number | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       checkin_reactions: {
         Row: {
           checkin_id: string
@@ -723,6 +756,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          device_type: string | null
+          id: string
+          page_views: number | null
+          session_date: string
+          session_end: string | null
+          session_start: string
+          user_id: string
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          page_views?: number | null
+          session_date?: string
+          session_end?: string | null
+          session_start?: string
+          user_id: string
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          page_views?: number | null
+          session_date?: string
+          session_end?: string | null
+          session_start?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       anonymous_reports: {
@@ -758,6 +829,7 @@ export type Database = {
       }
     }
     Functions: {
+      get_admin_analytics: { Args: never; Returns: Json }
       get_all_public_profiles: {
         Args: never
         Returns: {
@@ -774,6 +846,14 @@ export type Database = {
           id: string
           reason: string
           status: Database["public"]["Enums"]["report_status"]
+        }[]
+      }
+      get_daily_access_history: {
+        Args: { days_back?: number }
+        Returns: {
+          access_date: string
+          active_users: number
+          new_users: number
         }[]
       }
       get_public_profile: {
