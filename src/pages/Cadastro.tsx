@@ -363,7 +363,6 @@ const Cadastro = () => {
                     if (errors.birthDate) setErrors((prev) => ({ ...prev, birthDate: undefined }));
                   }}
                   disabled={isSubmitting}
-                  error={errors.birthDate}
                 />
               </div>
               <div className="space-y-2">
