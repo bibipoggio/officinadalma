@@ -11,6 +11,9 @@ import Home from "./pages/Home";
 import Tonica from "./pages/Tonica";
 import Diario from "./pages/Diario";
 import Comunidade from "./pages/Comunidade";
+import Forum from "./pages/Forum";
+import ForumTopic from "./pages/ForumTopic";
+import ForumNewTopic from "./pages/ForumNewTopic";
 import Meditacao from "./pages/Meditacao";
 import Aulas from "./pages/Aulas";
 import Curso from "./pages/Curso";
@@ -54,6 +57,9 @@ const App = () => (
             <Route path="/tonica/:date" element={<ProtectedRoute><Tonica /></ProtectedRoute>} />
             <Route path="/diario" element={<ProtectedRoute><Diario /></ProtectedRoute>} />
             <Route path="/comunidade" element={<ProtectedRoute><Comunidade /></ProtectedRoute>} />
+            <Route path="/comunidade/forum" element={<ProtectedRoute><Forum /></ProtectedRoute>} />
+            <Route path="/comunidade/forum/novo" element={<ProtectedRoute><ForumNewTopic /></ProtectedRoute>} />
+            <Route path="/comunidade/forum/:topicId" element={<ProtectedRoute><ForumTopic /></ProtectedRoute>} />
             <Route path="/meditacao/:date" element={<ProtectedRoute><Meditacao /></ProtectedRoute>} />
             <Route path="/aulas" element={<ProtectedRoute><Aulas /></ProtectedRoute>} />
             <Route path="/aulas/:slug" element={<ProtectedRoute><Curso /></ProtectedRoute>} />
