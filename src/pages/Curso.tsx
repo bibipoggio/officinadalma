@@ -117,10 +117,10 @@ const Curso = () => {
         </Link>
 
         {/* Course Header */}
-        <header className="space-y-4">
+        <header className="space-y-5">
           {/* Cover Image */}
           {course.cover_image_url && (
-            <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+            <div className="aspect-video rounded-xl overflow-hidden bg-muted shadow-sm">
               <img
                 src={course.cover_image_url}
                 alt={course.title}
@@ -129,7 +129,7 @@ const Curso = () => {
             </div>
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge variant={isPremiumCourse ? "default" : "secondary"}>
               {getCourseTypeLabel(course.type)}
             </Badge>
@@ -141,12 +141,14 @@ const Curso = () => {
             )}
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-display font-semibold text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground leading-tight">
             {course.title}
           </h1>
 
           {course.description_short && (
-            <p className="text-muted-foreground">{course.description_short}</p>
+            <p className="text-muted-foreground font-body text-base leading-relaxed">
+              {course.description_short}
+            </p>
           )}
 
           {/* Progress */}
@@ -183,10 +185,10 @@ const Curso = () => {
         </header>
 
         {/* Modules & Lessons */}
-        <section className="space-y-4">
+        <section className="space-y-5">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-display font-semibold text-foreground">
+            <h2 className="text-xl font-display font-semibold text-foreground">
               Conteúdo do Curso
             </h2>
           </div>
@@ -194,7 +196,7 @@ const Curso = () => {
           {modules.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="p-6 text-center">
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground font-body">
                   Nenhuma aula disponível ainda.
                 </p>
               </CardContent>
@@ -209,19 +211,19 @@ const Curso = () => {
                 <AccordionItem
                   key={module.id}
                   value={module.id}
-                  className="border rounded-lg overflow-hidden"
+                  className="border rounded-xl overflow-hidden bg-card"
                 >
-                  <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50">
+                  <AccordionTrigger className="px-4 sm:px-5 py-4 hover:no-underline hover:bg-muted/50">
                     <div className="flex items-center gap-3 text-left">
-                      <span className="text-sm font-medium text-muted-foreground">
+                      <span className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
                         {moduleIndex + 1}
                       </span>
                       <div>
-                        <h3 className="font-medium text-foreground">
+                        <h3 className="font-display font-semibold text-foreground">
                           {module.title}
                         </h3>
                         {module.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-1">
+                          <p className="text-sm text-muted-foreground font-body line-clamp-1 mt-0.5">
                             {module.description}
                           </p>
                         )}
@@ -279,10 +281,10 @@ const Curso = () => {
                             {/* Lesson Info */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">
+                                <span className="text-xs text-muted-foreground font-medium">
                                   {globalIndex}.
                                 </span>
-                                <h4 className="font-medium text-foreground truncate">
+                                <h4 className="font-body font-medium text-foreground truncate">
                                   {lesson.title}
                                 </h4>
                               </div>
