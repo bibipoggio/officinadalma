@@ -48,10 +48,10 @@ export function MediaUpload({
       return;
     }
 
-    // Validate file size (max 100MB for video, 50MB for audio)
-    const maxSize = mediaType === "video" ? 100 * 1024 * 1024 : 50 * 1024 * 1024;
+    // Validate file size (max 3GB for video, 50MB for audio)
+    const maxSize = mediaType === "video" ? 3 * 1024 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error(`O arquivo deve ter no máximo ${mediaType === "video" ? "100MB" : "50MB"}`);
+      toast.error(`O arquivo deve ter no máximo ${mediaType === "video" ? "3GB" : "50MB"}`);
       return;
     }
 
@@ -260,7 +260,7 @@ export function MediaUpload({
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     {mediaType === "video" 
-                      ? "MP4, WebM (máx. 100MB)" 
+                      ? "MP4, WebM (máx. 3GB)" 
                       : "MP3, WAV, OGG (máx. 50MB)"}
                   </p>
                 </div>
