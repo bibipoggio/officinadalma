@@ -12,6 +12,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
 import { PdfUpload } from "@/components/admin/PdfUpload";
+import { TextFilesUpload } from "@/components/admin/TextFilesUpload";
 import { useState, useEffect } from "react";
 import { 
   useAdminCourses, 
@@ -118,6 +119,7 @@ const AdminCursos = () => {
     is_published: boolean;
     summary: string;
     module_id: string;
+    text_files: { url: string; name: string }[];
   }>({
     title: "",
     access_level: "basic",
@@ -132,6 +134,7 @@ const AdminCursos = () => {
     is_published: false,
     summary: "",
     module_id: "",
+    text_files: [],
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -320,6 +323,7 @@ const AdminCursos = () => {
       is_published: false,
       summary: "",
       module_id: moduleId,
+      text_files: [],
     });
     setCreatingLessonForModule(moduleId);
     setIsCreatingLesson(true);
@@ -327,6 +331,9 @@ const AdminCursos = () => {
   };
 
   const handleEditLesson = (lesson: CourseLesson) => {
+    // Parse text_files from the lesson data
+    const textFiles = (lesson as any).text_files_urls || [];
+    
     setLessonForm({
       title: lesson.title,
       access_level: lesson.access_level,
@@ -341,6 +348,7 @@ const AdminCursos = () => {
       is_published: lesson.is_published,
       summary: lesson.summary || "",
       module_id: lesson.module_id,
+      text_files: Array.isArray(textFiles) ? textFiles : [],
     });
     setEditingLessonId(lesson.id);
     setIsCreatingLesson(false);
@@ -392,6 +400,7 @@ const AdminCursos = () => {
         released_at: lessonForm.released_at?.toISOString() || null,
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
+        text_files_urls: lessonForm.text_files,
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
@@ -608,6 +617,19 @@ const AdminCursos = () => {
           />
           <p className="text-xs text-muted-foreground mt-2">
             Adicione um PDF que os usuários podem baixar junto com a aula.
+          </p>
+        </div>
+
+        {/* Text Files Attachment */}
+        <div className="border-t pt-4">
+          <TextFilesUpload
+            files={lessonForm.text_files}
+            onFilesChange={(files) => setLessonForm(prev => ({ ...prev, text_files: files }))}
+            label="Arquivos de texto complementares (opcional)"
+            maxFiles={10}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Adicione arquivos de texto (.txt, .md, .csv, .json, etc.) como material complementar.
           </p>
         </div>
 
