@@ -71,6 +71,12 @@ export default {
           dark: "hsl(var(--crystal-violet-dark))",
           glow: "hsl(var(--crystal-glow))",
         },
+        // Legacy amethyst alias for backward compatibility
+        amethyst: {
+          DEFAULT: "hsl(var(--crystal-violet))",
+          light: "hsl(var(--crystal-violet-light))",
+          dark: "hsl(var(--crystal-violet-dark))",
+        },
         amber: {
           DEFAULT: "hsl(var(--amber))",
           light: "hsl(var(--amber-light))",

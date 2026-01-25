@@ -126,7 +126,7 @@ const Aulas = () => {
                     className="overflow-hidden transition-shadow hover:shadow-card group"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-amethyst-light relative">
+                    <div className="aspect-video bg-primary/5 relative">
                       {enrollment.courses.cover_image_url ? (
                         <img
                           src={enrollment.courses.cover_image_url}
@@ -222,7 +222,7 @@ const Aulas = () => {
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-amethyst-light relative">
+                    <div className="aspect-video bg-primary/5 relative">
                       {course.cover_image_url ? (
                         <img
                           src={course.cover_image_url}

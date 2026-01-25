@@ -246,21 +246,21 @@ const Curso = () => {
                             key={lesson.id}
                             onClick={() => handleLessonClick(lesson)}
                             className={cn(
-                              "w-full px-4 py-3 flex items-center gap-4 text-left transition-colors",
+                              "w-full px-4 py-4 flex items-center gap-3 sm:gap-4 text-left transition-colors",
                               lesson.isLocked
                                 ? "opacity-60 cursor-not-allowed"
-                                : "hover:bg-muted/50"
+                                : "hover:bg-muted/50 active:bg-muted/70"
                             )}
                             disabled={lesson.isLocked}
                           >
                             {/* Status Icon */}
                             <div
                               className={cn(
-                                "w-9 h-9 rounded-full flex items-center justify-center shrink-0",
+                                "w-10 h-10 sm:w-9 sm:h-9 rounded-full flex items-center justify-center shrink-0",
                                 status === "completed" &&
                                   "bg-success/10 text-success",
                                 status === "in_progress" &&
-                                  "bg-amethyst-light text-primary",
+                                  "bg-primary/10 text-primary",
                                 status === "not_started" &&
                                   !lesson.isLocked &&
                                   "bg-muted text-muted-foreground",
@@ -280,16 +280,16 @@ const Curso = () => {
 
                             {/* Lesson Info */}
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground font-medium">
+                              <div className="flex items-start gap-2">
+                                <span className="text-xs text-muted-foreground font-medium mt-0.5 shrink-0">
                                   {globalIndex}.
                                 </span>
-                                <h4 className="font-body font-medium text-foreground truncate">
+                                <h4 className="font-body font-medium text-foreground text-sm sm:text-base leading-snug line-clamp-2 sm:line-clamp-1">
                                   {lesson.title}
                                 </h4>
                               </div>
 
-                              <div className="flex items-center gap-3 mt-1">
+                              <div className="flex items-center gap-3 mt-1.5 ml-5">
                                 {lesson.duration_seconds && (
                                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                                     <Clock className="w-3 h-3" />
@@ -299,7 +299,7 @@ const Curso = () => {
 
                                 {/* Progress bar for in-progress lessons */}
                                 {status === "in_progress" && lesson.progress && (
-                                  <div className="flex items-center gap-2 flex-1 max-w-32">
+                                  <div className="flex items-center gap-2 flex-1 max-w-24 sm:max-w-32">
                                     <Progress
                                       value={lesson.progress.progress_percent}
                                       className="h-1.5"
@@ -311,16 +311,16 @@ const Curso = () => {
                                 )}
 
                                 {status === "completed" && (
-                                  <span className="text-xs text-success">
+                                  <span className="text-xs text-success font-medium">
                                     Concluída
                                   </span>
                                 )}
                               </div>
                             </div>
 
-                            {/* Locked badge */}
+                            {/* Locked badge - hidden on small mobile */}
                             {lesson.isLocked && (
-                              <Badge variant="outline" className="shrink-0 text-xs">
+                              <Badge variant="outline" className="shrink-0 text-xs hidden sm:flex">
                                 Premium
                               </Badge>
                             )}
