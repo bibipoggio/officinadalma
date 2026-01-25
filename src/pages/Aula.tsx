@@ -621,9 +621,9 @@ const Aula = () => {
             )}
 
             {/* Lesson Info */}
-            <div className="p-5 space-y-4">
-              <header className="space-y-2">
-                <div className="flex items-center gap-2">
+            <div className="p-5 sm:p-6 space-y-5">
+              <header className="space-y-3">
+                <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant={course.type === "aparte" ? "default" : "secondary"}>
                     {getCourseTypeLabel(course.type)}
                   </Badge>
@@ -635,31 +635,42 @@ const Aula = () => {
                   )}
                 </div>
 
-                <h1 className="text-xl font-display font-semibold text-foreground">
+                <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground leading-tight">
                   {lesson.title}
                 </h1>
 
                 {lesson.duration_seconds && (
-                  <p className="text-sm text-muted-foreground">
-                    {formatDuration(lesson.duration_seconds)}
+                  <p className="text-sm text-muted-foreground font-body">
+                    Duração: {formatDuration(lesson.duration_seconds)}
                   </p>
                 )}
               </header>
 
               {/* Summary */}
               {lesson.summary && (
-                <div 
-                  className="text-muted-foreground prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
-                  dangerouslySetInnerHTML={createSafeHtml(lesson.summary)}
-                />
+                <div className="rounded-xl bg-muted/50 border border-border/50 p-4">
+                  <p 
+                    className="text-muted-foreground font-body text-sm leading-relaxed"
+                    dangerouslySetInnerHTML={createSafeHtml(lesson.summary)}
+                  />
+                </div>
               )}
 
               {/* Text/Markdown Content - visible for ALL content types if present */}
               {lesson.body_markdown && (
-                <div 
-                  className="prose prose-sm dark:prose-invert max-w-none [&_br]:block [&_br]:my-2"
-                  dangerouslySetInnerHTML={createSafeHtml(lesson.body_markdown)}
-                />
+                <div className="rounded-xl bg-card border border-border p-5 sm:p-6 shadow-sm">
+                  <div 
+                    className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
+                      font-body text-foreground leading-relaxed
+                      prose-headings:font-display prose-headings:text-foreground prose-headings:font-semibold
+                      prose-p:text-foreground/90 prose-p:leading-relaxed
+                      prose-strong:text-foreground prose-strong:font-semibold
+                      prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                      prose-li:text-foreground/90
+                      [&_br]:block [&_br]:my-2"
+                    dangerouslySetInnerHTML={createSafeHtml(lesson.body_markdown)}
+                  />
+                </div>
               )}
 
               {/* Attachments Section */}
