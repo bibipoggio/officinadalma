@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { Upload, X, Video, Music, Loader2, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
@@ -26,9 +27,11 @@ export function MediaUpload({
   folder = "courses",
 }: MediaUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const acceptTypes = mediaType === "video" 
     ? "video/mp4,video/webm,video/quicktime" 
@@ -56,6 +59,7 @@ export function MediaUpload({
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       // Get duration from file
@@ -65,15 +69,50 @@ export function MediaUpload({
       const fileExt = file.name.split(".").pop();
       const fileName = `${folder}/${mediaType}-${Date.now()}.${fileExt}`;
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          upsert: true,
+      // Get upload URL from Supabase
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error("Sessão expirada. Faça login novamente.");
+      }
+
+      // Use XMLHttpRequest for progress tracking
+      const uploadUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/${bucket}/${fileName}`;
+      
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhrRef.current = xhr;
+        
+        xhr.upload.addEventListener("progress", (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(progress);
+          }
         });
 
-      if (error) throw error;
+        xhr.addEventListener("load", () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(new Error(xhr.responseText || "Erro no upload"));
+          }
+        });
+
+        xhr.addEventListener("error", () => {
+          reject(new Error("Erro de conexão durante o upload"));
+        });
+
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Upload cancelado"));
+        });
+
+        xhr.open("POST", uploadUrl);
+        xhr.setRequestHeader("Authorization", `Bearer ${accessToken}`);
+        xhr.setRequestHeader("x-upsert", "true");
+        xhr.setRequestHeader("cache-control", "3600");
+        xhr.send(file);
+      });
 
       // Get public URL
       const { data: publicUrlData } = supabase.storage
@@ -92,6 +131,8 @@ export function MediaUpload({
       toast.error(error.message || "Erro ao enviar o arquivo");
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
+      xhrRef.current = null;
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -247,9 +288,17 @@ export function MediaUpload({
             />
 
             {isUploading ? (
-              <div className="space-y-3">
-                <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-                <p className="text-lg text-muted-foreground">Enviando...</p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-3">
+                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                  <p className="text-lg font-medium text-foreground">
+                    Enviando... {uploadProgress}%
+                  </p>
+                </div>
+                <Progress value={uploadProgress} className="h-3" />
+                <p className="text-sm text-muted-foreground text-center">
+                  {mediaType === "video" ? "Vídeos grandes podem levar alguns minutos" : "Aguarde o upload completar"}
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
