@@ -126,14 +126,14 @@ const Aulas = () => {
                     className="overflow-hidden transition-shadow hover:shadow-card group"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-primary/5 relative overflow-hidden">
+                    <div className="aspect-video bg-muted relative overflow-hidden rounded-t-lg">
                       {enrollment.courses.cover_image_url ? (
                         <img
                           src={enrollment.courses.cover_image_url}
                           alt={enrollment.courses.title}
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-contain"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -224,7 +224,7 @@ const Aulas = () => {
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-primary/5 relative overflow-hidden">
+                    <div className="aspect-video bg-muted relative overflow-hidden rounded-t-lg">
                       {course.cover_image_url ? (
                         <img
                           src={course.cover_image_url}
@@ -232,7 +232,7 @@ const Aulas = () => {
                           loading="lazy"
                           decoding="async"
                           className={cn(
-                            "w-full h-full object-cover",
+                            "w-full h-full object-contain",
                             isLocked && "grayscale-[30%]"
                           )}
                         />
