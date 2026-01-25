@@ -133,9 +133,7 @@ const Aulas = () => {
                           alt={enrollment.courses.title}
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-cover transition-opacity duration-300"
-                          onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
-                          style={{ opacity: 0 }}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -234,11 +232,9 @@ const Aulas = () => {
                           loading="lazy"
                           decoding="async"
                           className={cn(
-                            "w-full h-full object-cover transition-opacity duration-300",
+                            "w-full h-full object-cover",
                             isLocked && "grayscale-[30%]"
                           )}
-                          onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
-                          style={{ opacity: 0 }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
