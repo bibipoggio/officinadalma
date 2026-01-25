@@ -2,7 +2,9 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
+import { useAdminLessonAnalytics } from "@/hooks/useLessonAnalytics";
 import { useAuth } from "@/contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import {
@@ -14,6 +16,10 @@ import {
   RefreshCw,
   TrendingUp,
   Calendar,
+  Eye,
+  CheckCircle,
+  PlayCircle,
+  GraduationCap,
 } from "lucide-react";
 import {
   ChartContainer,
@@ -73,6 +79,13 @@ const chartConfig = {
 export default function AdminAnalytics() {
   const { hasAdminAccess, isLoading: authLoading } = useAuth();
   const { analytics, history, isLoading, error, refetch } = useAdminAnalytics();
+  const { 
+    analytics: lessonAnalytics, 
+    topLessons, 
+    courseEngagement, 
+    isLoading: lessonLoading, 
+    refetch: refetchLessons 
+  } = useAdminLessonAnalytics();
 
   if (authLoading) {
     return (
@@ -86,7 +99,7 @@ export default function AdminAnalytics() {
     return <Navigate to="/" replace />;
   }
 
-  if (isLoading) {
+  if (isLoading || lessonLoading) {
     return (
       <AppLayout>
         <LoadingState message="Carregando métricas..." />
@@ -94,12 +107,17 @@ export default function AdminAnalytics() {
     );
   }
 
+  const handleRefreshAll = () => {
+    refetch();
+    refetchLessons();
+  };
+
   if (error) {
     return (
       <AppLayout>
         <div className="p-4 text-center">
           <p className="text-destructive mb-4">Erro ao carregar analytics</p>
-          <Button onClick={() => refetch()}>Tentar novamente</Button>
+          <Button onClick={handleRefreshAll}>Tentar novamente</Button>
         </div>
       </AppLayout>
     );
@@ -125,13 +143,110 @@ export default function AdminAnalytics() {
               Métricas da Oficina da Alma
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size="sm" onClick={handleRefreshAll}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
         </div>
 
-        {/* Main Metrics */}
+        {/* Lesson Analytics Cards */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <PlayCircle className="w-5 h-5" />
+            Analytics de Aulas
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              title="Total de Visualizações"
+              value={lessonAnalytics?.total_views || 0}
+              icon={<Eye className="w-5 h-5" />}
+            />
+            <MetricCard
+              title="Aulas Concluídas"
+              value={lessonAnalytics?.total_completions || 0}
+              icon={<CheckCircle className="w-5 h-5" />}
+            />
+            <MetricCard
+              title="Usuários Engajados"
+              value={lessonAnalytics?.unique_users || 0}
+              icon={<GraduationCap className="w-5 h-5" />}
+            />
+            <MetricCard
+              title="Taxa de Conclusão"
+              value={lessonAnalytics?.completion_rate || 0}
+              subtitle="%"
+              icon={<TrendingUp className="w-5 h-5" />}
+            />
+          </div>
+        </div>
+
+        {/* Top Lessons */}
+        {topLessons.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <PlayCircle className="w-5 h-5" />
+                Aulas Mais Acessadas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {topLessons.slice(0, 5).map((lesson, index) => (
+                  <div key={lesson.lesson_id} className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-muted-foreground w-6">
+                      #{index + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{lesson.lesson_title}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {lesson.course_title}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{lesson.view_count} views</p>
+                      <p className="text-xs text-muted-foreground">
+                        {lesson.completion_count} concluídas
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Course Engagement */}
+        {courseEngagement.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <GraduationCap className="w-5 h-5" />
+                Progresso por Curso
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {courseEngagement.map((course) => (
+                  <div key={course.course_id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium truncate flex-1">{course.course_title}</p>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        {Math.round(course.avg_progress)}%
+                      </span>
+                    </div>
+                    <Progress value={course.avg_progress} className="h-2" />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>{course.enrolled_users} alunos</span>
+                      <span>{course.total_lessons} aulas</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Main User Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Total de Usuários"

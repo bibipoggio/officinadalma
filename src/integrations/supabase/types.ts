@@ -520,6 +520,45 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_analytics: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          lesson_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          lesson_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_analytics_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_comments: {
         Row: {
           content: string
@@ -909,6 +948,16 @@ export type Database = {
           status: Database["public"]["Enums"]["report_status"]
         }[]
       }
+      get_course_engagement: {
+        Args: never
+        Returns: {
+          avg_progress: number
+          course_id: string
+          course_title: string
+          enrolled_users: number
+          total_lessons: number
+        }[]
+      }
       get_daily_access_history: {
         Args: { days_back?: number }
         Returns: {
@@ -917,12 +966,23 @@ export type Database = {
           new_users: number
         }[]
       }
+      get_lesson_analytics: { Args: never; Returns: Json }
       get_public_profile: {
         Args: { profile_id: string }
         Returns: {
           avatar_url: string
           display_name: string
           id: string
+        }[]
+      }
+      get_top_lessons: {
+        Args: { limit_count?: number }
+        Returns: {
+          completion_count: number
+          course_title: string
+          lesson_id: string
+          lesson_title: string
+          view_count: number
         }[]
       }
       get_user_subscription: {
