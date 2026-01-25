@@ -457,22 +457,38 @@ const AdminCursos = () => {
         module_id: lessonForm.module_id,
       };
 
+      let saveError = null;
+      
       if (editingLessonId) {
-        await supabase
+        const { error } = await supabase
           .from("course_lessons")
           .update(lessonData)
           .eq("id", editingLessonId);
-        setEditingLessonId(null);
+        saveError = error;
+        if (!error) setEditingLessonId(null);
       } else {
         // Get next position
         const moduleLessons = allLessons[lessonForm.module_id] || [];
         const nextPosition = moduleLessons.length + 1;
         
-        await supabase
+        const { error } = await supabase
           .from("course_lessons")
           .insert({ ...lessonData, position: nextPosition });
-        setIsCreatingLesson(false);
-        setCreatingLessonForModule(null);
+        saveError = error;
+        if (!error) {
+          setIsCreatingLesson(false);
+          setCreatingLessonForModule(null);
+        }
+      }
+      
+      if (saveError) {
+        console.error("Error saving lesson:", saveError);
+        toast({ 
+          title: "Erro ao salvar aula", 
+          description: saveError.message || "Verifique os dados e tente novamente.",
+          variant: "destructive" 
+        });
+        return;
       }
       
       // Refresh lessons
@@ -489,7 +505,19 @@ const AdminCursos = () => {
       
       // Clear draft after successful save
       clearDraft();
-      toast({ title: "Aula salva com sucesso!" });
+      toast({ 
+        title: "✓ Aula salva com sucesso!", 
+        description: lessonForm.is_published 
+          ? "A aula está publicada e visível para alunos." 
+          : "A aula foi salva como rascunho."
+      });
+    } catch (err) {
+      console.error("Error saving lesson:", err);
+      toast({ 
+        title: "Erro ao salvar aula", 
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+        variant: "destructive" 
+      });
     } finally {
       setIsSaving(false);
     }

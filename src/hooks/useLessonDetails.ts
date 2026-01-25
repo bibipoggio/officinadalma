@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "./useSubscription";
 
+// Check if user is moderator or admin
+async function checkIsModeratorOrAdmin(userId: string): Promise<boolean> {
+  const { data } = await supabase.rpc("is_moderator_or_admin", { _user_id: userId });
+  return !!data;
+}
+
 interface Course {
   id: string;
   title: string;
@@ -73,15 +79,24 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
 
     try {
       const now = new Date().toISOString();
+      
+      // Check if user is admin/moderator (they can see unpublished lessons)
+      const isAdmin = await checkIsModeratorOrAdmin(user.id);
 
-      // Fetch lesson
-      const { data: lessonData, error: lessonError } = await supabase
+      // Fetch lesson - admins can see all, regular users only published
+      let query = supabase
         .from("course_lessons")
         .select("*")
-        .eq("id", lessonId)
-        .eq("is_published", true)
-        .or(`released_at.is.null,released_at.lte.${now}`)
-        .maybeSingle();
+        .eq("id", lessonId);
+      
+      // Only apply publish filters for non-admin users
+      if (!isAdmin) {
+        query = query
+          .eq("is_published", true)
+          .or(`released_at.is.null,released_at.lte.${now}`);
+      }
+      
+      const { data: lessonData, error: lessonError } = await query.maybeSingle();
 
       if (lessonError) throw lessonError;
       if (!lessonData) {
