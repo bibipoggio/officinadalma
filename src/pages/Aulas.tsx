@@ -98,8 +98,10 @@ const Aulas = () => {
       <div className="space-y-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-semibold text-foreground">Aulas</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">
+              Aulas
+            </h1>
+            <p className="text-muted-foreground font-body mt-1">
               Cursos e conteúdos para sua transformação
             </p>
           </div>
@@ -138,9 +140,9 @@ const Aulas = () => {
                       )}
                     </div>
 
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-display font-medium text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                        <h3 className="font-display font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                           {enrollment.courses.title}
                         </h3>
                         <Badge
@@ -152,7 +154,7 @@ const Aulas = () => {
                       </div>
 
                       {enrollment.courses.description_short && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        <p className="text-sm text-muted-foreground font-body leading-relaxed line-clamp-2 mb-3">
                           {enrollment.courses.description_short}
                         </p>
                       )}
@@ -250,9 +252,9 @@ const Aulas = () => {
                       )}
                     </div>
 
-                    <CardContent className="p-4">
+                    <CardContent className="p-4 sm:p-5">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-display font-medium text-foreground line-clamp-1">
+                        <h3 className="font-display font-semibold text-foreground line-clamp-1">
                           {course.title}
                         </h3>
                         <Badge
@@ -264,7 +266,7 @@ const Aulas = () => {
                       </div>
 
                       {course.description_short && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                        <p className="text-sm text-muted-foreground font-body leading-relaxed line-clamp-2 mb-4">
                           {course.description_short}
                         </p>
                       )}
