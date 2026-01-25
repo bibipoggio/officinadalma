@@ -682,6 +682,22 @@ const AdminCursos = () => {
           </div>
         )}
 
+        {/* Text Content for Video/Audio Lessons */}
+        {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
+          <div className="border-t pt-4 space-y-2">
+            <Label>Conteúdo de texto complementar (opcional)</Label>
+            <RichTextEditor
+              value={lessonForm.body_markdown}
+              onChange={(value) => setLessonForm(prev => ({ ...prev, body_markdown: value }))}
+              placeholder="Adicione texto complementar, transcrição ou notas..."
+              minHeight="120px"
+            />
+            <p className="text-xs text-muted-foreground">
+              Este texto será exibido junto com o vídeo/áudio.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-2">
           <Label>Resumo (opcional)</Label>
           <Textarea
@@ -1227,26 +1243,17 @@ const AdminCursos = () => {
                               renderLessonForm(module.id)
                             )}
 
-                            {/* Add lesson buttons */}
+                            {/* Add lesson button - simplified */}
                             {!isCreatingLesson && !editingLessonId && (
-                              <div className="grid grid-cols-3 gap-2">
-                                {(["text", "video", "audio"] as const).map((type) => {
-                                  const config = contentTypeConfig[type];
-                                  const Icon = config.icon;
-                                  return (
-                                    <Button
-                                      key={type}
-                                      variant="outline"
-                                      size="sm"
-                                      className="flex flex-col gap-1 h-auto py-3"
-                                      onClick={() => handleStartCreateLesson(module.id, type)}
-                                    >
-                                      <Icon className="w-5 h-5" />
-                                      <span className="text-xs">+ {config.label}</span>
-                                    </Button>
-                                  );
-                                })}
-                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={() => handleStartCreateLesson(module.id)}
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Nova aula
+                              </Button>
                             )}
                           </AccordionContent>
                         </AccordionItem>
