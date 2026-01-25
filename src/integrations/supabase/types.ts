@@ -187,6 +187,7 @@ export type Database = {
           position: number
           released_at: string | null
           summary: string | null
+          text_files_urls: Json | null
           title: string
           updated_at: string
         }
@@ -207,6 +208,7 @@ export type Database = {
           position: number
           released_at?: string | null
           summary?: string | null
+          text_files_urls?: Json | null
           title: string
           updated_at?: string
         }
@@ -227,6 +229,7 @@ export type Database = {
           position?: number
           released_at?: string | null
           summary?: string | null
+          text_files_urls?: Json | null
           title?: string
           updated_at?: string
         }
