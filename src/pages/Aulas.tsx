@@ -126,12 +126,16 @@ const Aulas = () => {
                     className="overflow-hidden transition-shadow hover:shadow-card group"
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-primary/5 relative">
+                    <div className="aspect-video bg-primary/5 relative overflow-hidden">
                       {enrollment.courses.cover_image_url ? (
                         <img
                           src={enrollment.courses.cover_image_url}
                           alt={enrollment.courses.title}
-                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover transition-opacity duration-300"
+                          onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
+                          style={{ opacity: 0 }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
@@ -222,15 +226,19 @@ const Aulas = () => {
                     )}
                   >
                     {/* Thumbnail */}
-                    <div className="aspect-video bg-primary/5 relative">
+                    <div className="aspect-video bg-primary/5 relative overflow-hidden">
                       {course.cover_image_url ? (
                         <img
                           src={course.cover_image_url}
                           alt={course.title}
+                          loading="lazy"
+                          decoding="async"
                           className={cn(
-                            "w-full h-full object-cover",
+                            "w-full h-full object-cover transition-opacity duration-300",
                             isLocked && "grayscale-[30%]"
                           )}
+                          onLoad={(e) => e.currentTarget.classList.add('opacity-100')}
+                          style={{ opacity: 0 }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
