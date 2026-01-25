@@ -13,6 +13,7 @@ import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
 import { PdfUpload } from "@/components/admin/PdfUpload";
 import { TextFilesUpload } from "@/components/admin/TextFilesUpload";
+import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { useState, useEffect, useCallback } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
 import { 
@@ -1020,14 +1021,12 @@ const AdminCursos = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-base">URL da capa</Label>
-                    <Input
-                      value={courseForm.cover_image_url}
-                      onChange={(e) => setCourseForm(prev => ({ ...prev, cover_image_url: e.target.value }))}
-                      placeholder="https://..."
-                    />
-                  </div>
+                  <CourseImageUpload
+                    currentUrl={courseForm.cover_image_url || null}
+                    onUrlChange={(url) => setCourseForm(prev => ({ ...prev, cover_image_url: url || "" }))}
+                    courseSlug={courseForm.route_slug || "new"}
+                    label="Imagem de Capa"
+                  />
 
                   <div className="space-y-2">
                     <Label className="text-base">Slug (endereço) *</Label>
