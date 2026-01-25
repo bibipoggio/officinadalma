@@ -654,53 +654,55 @@ const Aula = () => {
                 />
               )}
 
-              {/* Text Content (Markdown) */}
-
-              {/* Text Content */}
-              {lesson.content_type === "text" && lesson.body_markdown && (
+              {/* Text/Markdown Content - visible for ALL content types if present */}
+              {lesson.body_markdown && (
                 <div 
                   className="prose prose-sm dark:prose-invert max-w-none [&_br]:block [&_br]:my-2"
                   dangerouslySetInnerHTML={createSafeHtml(lesson.body_markdown)}
                 />
               )}
 
-              {/* PDF Download */}
-              {lesson.pdf_url && (
-                <div className="pt-2">
-                  <a
-                    href={lesson.pdf_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                  >
-                    <Button variant="outline" className="w-full">
-                      <FileDown className="w-5 h-5 mr-2" />
-                      Baixar Material Complementar (PDF)
-                    </Button>
-                  </a>
-                </div>
-              )}
-
-              {/* Text Files Download */}
-              {lesson.text_files_urls && lesson.text_files_urls.length > 0 && (
-                <div className="pt-2 space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Materiais complementares
-                  </p>
-                  <div className="space-y-2">
-                    {lesson.text_files_urls.map((file, index) => (
+              {/* Attachments Section */}
+              {(lesson.pdf_url || (lesson.text_files_urls && lesson.text_files_urls.length > 0)) && (
+                <div className="space-y-3 pt-2 border-t">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <FileDown className="w-4 h-4" />
+                    Materiais para download
+                  </h3>
+                  <div className="grid gap-2">
+                    {lesson.pdf_url && (
+                      <a
+                        href={lesson.pdf_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors group"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-destructive/10 flex items-center justify-center shrink-0">
+                          <FileDown className="w-5 h-5 text-destructive" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">Material Complementar</p>
+                          <p className="text-xs text-muted-foreground">PDF</p>
+                        </div>
+                      </a>
+                    )}
+                    {lesson.text_files_urls?.map((file, index) => (
                       <a
                         key={index}
                         href={file.url}
                         target="_blank"
                         rel="noopener noreferrer"
                         download
-                        className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                        className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors group"
                       >
-                        <FileDown className="w-4 h-4 text-primary shrink-0" />
-                        <span className="text-sm font-medium truncate">
-                          {file.name}
-                        </span>
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <FileDown className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">Arquivo de texto</p>
+                        </div>
                       </a>
                     ))}
                   </div>
