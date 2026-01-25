@@ -10,6 +10,11 @@ interface Course {
   type: string;
 }
 
+export interface TextFile {
+  url: string;
+  name: string;
+}
+
 interface Lesson {
   id: string;
   course_id: string;
@@ -21,6 +26,7 @@ interface Lesson {
   media_url: string | null;
   audio_url: string | null;
   pdf_url: string | null;
+  text_files_urls: TextFile[] | null;
   duration_seconds: number | null;
   audio_duration_seconds: number | null;
   access_level: string;
@@ -84,7 +90,14 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
         return;
       }
 
-      setLesson(lessonData as Lesson);
+      // Parse text_files_urls from JSON
+      const parsedLesson: Lesson = {
+        ...lessonData,
+        text_files_urls: Array.isArray(lessonData.text_files_urls) 
+          ? lessonData.text_files_urls as unknown as TextFile[]
+          : null,
+      };
+      setLesson(parsedLesson);
 
       // Fetch course
       const { data: courseData, error: courseError } = await supabase

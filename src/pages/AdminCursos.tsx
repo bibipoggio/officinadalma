@@ -13,7 +13,8 @@ import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
 import { PdfUpload } from "@/components/admin/PdfUpload";
 import { TextFilesUpload } from "@/components/admin/TextFilesUpload";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
 import { 
   useAdminCourses, 
   useAdminModules, 
@@ -150,6 +151,20 @@ const AdminCursos = () => {
   const [lessonsLoading, setLessonsLoading] = useState(false);
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
+
+  // Auto-save hook for lesson drafts
+  const { saveDraft, loadDraft, clearDraft, hasDraft } = useAutoSaveLessonDraft(
+    {
+      ...lessonForm,
+      released_at: lessonForm.released_at?.toISOString() || null,
+    },
+    !!editingLessonId,
+    editingLessonId,
+    isCreatingLesson,
+    creatingLessonForModule
+  );
+  
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
 
   // Fetch lessons when modules change
   useEffect(() => {
@@ -308,8 +323,8 @@ const AdminCursos = () => {
   };
 
   // Lesson handlers
-  const handleStartCreateLesson = (moduleId: string, contentType: string = "text") => {
-    setLessonForm({
+  const handleStartCreateLesson = useCallback((moduleId: string, contentType: string = "text") => {
+    const defaultForm = {
       title: "",
       access_level: "basic",
       content_type: contentType,
@@ -323,14 +338,42 @@ const AdminCursos = () => {
       is_published: false,
       summary: "",
       module_id: moduleId,
-      text_files: [],
-    });
+      text_files: [] as { url: string; name: string }[],
+    };
+    
+    setLessonForm(defaultForm);
     setCreatingLessonForModule(moduleId);
     setIsCreatingLesson(true);
     setEditingLessonId(null);
-  };
+    
+    // Check for existing draft after state is set
+    setTimeout(() => {
+      const draftKey = `lesson_draft_new_${moduleId}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        setShowDraftPrompt(true);
+      }
+    }, 100);
+  }, []);
 
-  const handleEditLesson = (lesson: CourseLesson) => {
+  const handleLoadDraft = useCallback(() => {
+    const draft = loadDraft();
+    if (draft) {
+      setLessonForm({
+        ...draft,
+        released_at: draft.released_at ? new Date(draft.released_at) : null,
+      });
+      setShowDraftPrompt(false);
+      toast({ title: "Rascunho recuperado!" });
+    }
+  }, [loadDraft, toast]);
+
+  const handleDiscardDraft = useCallback(() => {
+    clearDraft();
+    setShowDraftPrompt(false);
+  }, [clearDraft]);
+
+  const handleEditLesson = useCallback((lesson: CourseLesson) => {
     // Parse text_files from the lesson data
     const textFiles = (lesson as any).text_files_urls || [];
     
@@ -353,7 +396,16 @@ const AdminCursos = () => {
     setEditingLessonId(lesson.id);
     setIsCreatingLesson(false);
     setCreatingLessonForModule(null);
-  };
+    
+    // Check for existing draft
+    setTimeout(() => {
+      const draftKey = `lesson_draft_edit_${lesson.id}`;
+      const savedDraft = localStorage.getItem(draftKey);
+      if (savedDraft) {
+        setShowDraftPrompt(true);
+      }
+    }, 100);
+  }, []);
 
   const handleSaveLesson = async () => {
     if (!lessonForm.title.trim()) {
@@ -435,17 +487,22 @@ const AdminCursos = () => {
         [lessonForm.module_id]: (refreshedLessons || []) as CourseLesson[],
       }));
       
+      // Clear draft after successful save
+      clearDraft();
       toast({ title: "Aula salva com sucesso!" });
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleCancelLessonEdit = () => {
+  const handleCancelLessonEdit = useCallback(() => {
+    // Ask if user wants to discard draft
+    clearDraft();
+    setShowDraftPrompt(false);
     setEditingLessonId(null);
     setIsCreatingLesson(false);
     setCreatingLessonForModule(null);
-  };
+  }, [clearDraft]);
 
   const handleDuplicateLesson = async (lesson: CourseLesson) => {
     const { supabase } = await import("@/integrations/supabase/client");
@@ -510,6 +567,33 @@ const AdminCursos = () => {
   // Render lesson form
   const renderLessonForm = (moduleId: string) => (
     <div className="bg-muted/30 border rounded-xl p-4 space-y-4 mt-3">
+      {/* Draft recovery prompt */}
+      {showDraftPrompt && (
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <FileUp className="w-5 h-5 text-warning" />
+            <span className="text-sm font-medium">
+              Rascunho encontrado. Deseja recuperar?
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDiscardDraft}
+            >
+              Descartar
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleLoadDraft}
+            >
+              Recuperar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <h4 className="font-semibold">
           {editingLessonId ? "Editar Aula" : "Nova Aula"}

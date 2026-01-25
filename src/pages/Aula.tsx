@@ -29,6 +29,7 @@ import {
   useLessonProgress,
   formatDuration,
   getCourseTypeLabel,
+  type TextFile,
 } from "@/hooks/useLessonDetails";
 import { useMediaProgress, formatTime } from "@/hooks/useMediaProgress";
 import { createSafeHtml } from "@/lib/sanitize";
@@ -677,6 +678,32 @@ const Aula = () => {
                       Baixar Material Complementar (PDF)
                     </Button>
                   </a>
+                </div>
+              )}
+
+              {/* Text Files Download */}
+              {lesson.text_files_urls && lesson.text_files_urls.length > 0 && (
+                <div className="pt-2 space-y-2">
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Materiais complementares
+                  </p>
+                  <div className="space-y-2">
+                    {lesson.text_files_urls.map((file, index) => (
+                      <a
+                        key={index}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download
+                        className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <FileDown className="w-4 h-4 text-primary shrink-0" />
+                        <span className="text-sm font-medium truncate">
+                          {file.name}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
                 </div>
               )}
 
