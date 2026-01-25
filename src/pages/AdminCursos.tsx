@@ -869,7 +869,7 @@ const AdminCursos = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto space-y-6 pb-12">
+      <div className="max-w-5xl mx-auto space-y-6 pb-16">
         {/* List View */}
         {viewMode === "list" && (
           <>

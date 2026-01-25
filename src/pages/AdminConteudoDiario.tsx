@@ -55,7 +55,7 @@ const AdminConteudoDiario = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto space-y-8 pb-12">
+      <div className="max-w-4xl mx-auto space-y-6 pb-16">
         {/* Header */}
         <header className="text-center space-y-4">
           <h1 className="text-3xl font-display font-semibold text-foreground">
