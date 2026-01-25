@@ -13,6 +13,82 @@ interface CourseImageUploadProps {
   label?: string;
 }
 
+// Target dimensions for course cover images (16:9 aspect ratio)
+const TARGET_WIDTH = 1280;
+const TARGET_HEIGHT = 720;
+const JPEG_QUALITY = 0.85;
+
+/**
+ * Compress and resize image to optimize storage and display
+ * Returns a Blob with the processed image
+ */
+async function compressAndResizeImage(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    img.onload = () => {
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+
+      // Calculate dimensions maintaining aspect ratio within target bounds
+      let { width, height } = img;
+      const aspectRatio = width / height;
+      const targetAspectRatio = TARGET_WIDTH / TARGET_HEIGHT;
+
+      // If image is smaller than target and already correct aspect ratio, use original size
+      if (width <= TARGET_WIDTH && height <= TARGET_HEIGHT) {
+        // Just ensure minimum quality compression
+        canvas.width = width;
+        canvas.height = height;
+      } else {
+        // Resize to fit within target dimensions
+        if (aspectRatio > targetAspectRatio) {
+          // Image is wider than target ratio
+          width = TARGET_WIDTH;
+          height = Math.round(TARGET_WIDTH / aspectRatio);
+        } else {
+          // Image is taller than target ratio
+          height = TARGET_HEIGHT;
+          width = Math.round(TARGET_HEIGHT * aspectRatio);
+        }
+        canvas.width = width;
+        canvas.height = height;
+      }
+
+      // Apply smoothing for better quality
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // Draw resized image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Convert to JPEG blob with compression
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error("Failed to create image blob"));
+          }
+        },
+        "image/jpeg",
+        JPEG_QUALITY
+      );
+    };
+
+    img.onerror = () => {
+      reject(new Error("Failed to load image"));
+    };
+
+    // Load image from file
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export function CourseImageUpload({ 
   currentUrl, 
   onUrlChange, 
@@ -20,6 +96,7 @@ export function CourseImageUpload({
   label = "Imagem de Capa"
 }: CourseImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +109,7 @@ export function CourseImageUpload({
       return;
     }
 
-    // Validate file size (max 50MB)
+    // Validate file size (max 50MB before compression)
     const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error("A imagem deve ter no máximo 50MB");
@@ -40,20 +117,33 @@ export function CourseImageUpload({
     }
 
     setIsUploading(true);
+    setUploadProgress("Comprimindo...");
 
     try {
-      // Create unique filename
-      const fileExt = file.name.split(".").pop();
+      // Compress and resize image
+      const compressedBlob = await compressAndResizeImage(file);
+      
+      // Show compression results
+      const originalSizeKB = Math.round(file.size / 1024);
+      const compressedSizeKB = Math.round(compressedBlob.size / 1024);
+      const savings = Math.round((1 - compressedBlob.size / file.size) * 100);
+      
+      console.log(`Image compressed: ${originalSizeKB}KB → ${compressedSizeKB}KB (${savings}% reduction)`);
+      
+      setUploadProgress("Enviando...");
+
+      // Create unique filename (always .jpg since we convert to JPEG)
       const sanitizedSlug = courseSlug.replace(/[^a-z0-9-]/gi, "_");
-      const fileName = `cover-${sanitizedSlug}-${Date.now()}.${fileExt}`;
+      const fileName = `cover-${sanitizedSlug}-${Date.now()}.jpg`;
       const filePath = `covers/${fileName}`;
 
-      // Upload to Supabase Storage
+      // Upload compressed image to Supabase Storage
       const { data, error } = await supabase.storage
         .from("course-images")
-        .upload(filePath, file, {
+        .upload(filePath, compressedBlob, {
           cacheControl: "3600",
           upsert: true,
+          contentType: "image/jpeg",
         });
 
       if (error) {
@@ -66,12 +156,13 @@ export function CourseImageUpload({
         .getPublicUrl(filePath);
 
       onUrlChange(publicUrlData.publicUrl);
-      toast.success("Imagem enviada com sucesso!");
+      toast.success(`Imagem enviada! (${compressedSizeKB}KB, ${savings}% menor)`);
     } catch (error: any) {
       console.error("Upload error:", error);
       toast.error(error.message || "Erro ao enviar a imagem");
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -102,12 +193,12 @@ export function CourseImageUpload({
       
       {currentUrl ? (
         <div className="space-y-3">
-          {/* Current image preview */}
-          <div className="relative rounded-xl overflow-hidden border bg-muted">
+          {/* Current image preview - aspect-video for 16:9 display */}
+          <div className="relative rounded-xl overflow-hidden border bg-muted aspect-video">
             <img 
               src={currentUrl} 
               alt="Preview da capa" 
-              className="w-full h-48 object-cover"
+              className="w-full h-full object-contain bg-muted"
             />
             <Button
               variant="destructive"
@@ -158,7 +249,7 @@ export function CourseImageUpload({
             {isUploading ? (
               <div className="space-y-3">
                 <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin" />
-                <p className="text-lg text-muted-foreground">Enviando...</p>
+                <p className="text-lg text-muted-foreground">{uploadProgress}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -169,6 +260,9 @@ export function CourseImageUpload({
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
                     JPG, PNG, WebP (máx. 50MB)
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Será redimensionada para 1280×720px e comprimida automaticamente
                   </p>
                 </div>
               </div>
