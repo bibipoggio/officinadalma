@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -26,6 +26,7 @@ import { LessonComments } from "@/components/lessons/LessonComments";
 import { VideoPlayer } from "@/components/lessons/VideoPlayer";
 import { AudioPlayer } from "@/components/lessons/AudioPlayer";
 import { LessonContent } from "@/components/lessons/LessonContent";
+import { useLessonTracking } from "@/hooks/useLessonAnalytics";
 
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
@@ -54,6 +55,17 @@ const Aula = () => {
     lesson?.duration_seconds || null
   );
 
+  const { trackView, trackComplete } = useLessonTracking();
+  const hasTrackedView = useRef(false);
+
+  // Track view once when lesson loads
+  useEffect(() => {
+    if (lesson && lessonId && !isLocked && !hasTrackedView.current) {
+      hasTrackedView.current = true;
+      trackView(lessonId);
+    }
+  }, [lesson, lessonId, isLocked, trackView]);
+
   // Online/offline detection
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -75,6 +87,9 @@ const Aula = () => {
       setProgress((prev) =>
         prev ? { ...prev, progress_percent: 100, completed_at: new Date().toISOString() } : prev
       );
+      if (lessonId) {
+        trackComplete(lessonId);
+      }
     } else {
       toast.error("Não foi possível marcar como concluída. Tente novamente.");
     }
@@ -93,6 +108,9 @@ const Aula = () => {
       setProgress((prev) =>
         prev ? { ...prev, progress_percent: 100, completed_at: new Date().toISOString() } : prev
       );
+      if (lessonId) {
+        trackComplete(lessonId);
+      }
     }
   };
 
