@@ -36,7 +36,7 @@ const menuItems = [
 
 const adminItems = [
   { href: "/admin/conteudo-diario", label: "Conteúdo Diário", icon: LayoutDashboard },
-  { href: "/admin/cursos", label: "Cursos", icon: Settings },
+  { href: "/admin/cursos", label: "Cursos e Aulas", icon: GraduationCap },
   { href: "/admin/moderacao", label: "Moderação", icon: Shield },
   { href: "/admin/arquivos", label: "Arquivos", icon: FolderOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },

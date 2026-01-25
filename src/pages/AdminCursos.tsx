@@ -70,14 +70,14 @@ const formatDateDisplay = (dateStr: string | null) => {
   return format(date, "dd/MM/yyyy", { locale: ptBR });
 };
 
-const getLessonStatus = (lesson: CourseLesson): { label: string; color: string } => {
+const getLessonStatus = (lesson: CourseLesson): { label: string; color: string; icon: string } => {
   if (!lesson.is_published) {
-    return { label: "Rascunho", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" };
+    return { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: "●" };
   }
   if (lesson.released_at && new Date(lesson.released_at) > new Date()) {
-    return { label: "Agendada", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" };
+    return { label: "Agendada", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400", icon: "⏱" };
   }
-  return { label: "Publicada", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" };
+  return { label: "Publicada", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "✓" };
 };
 
 const AdminCursos = () => {
@@ -592,6 +592,45 @@ const AdminCursos = () => {
     }));
   };
 
+  // Quick toggle lesson publish status
+  const handleToggleLessonPublish = async (lesson: CourseLesson) => {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const newStatus = !lesson.is_published;
+    
+    const { error } = await supabase
+      .from("course_lessons")
+      .update({ is_published: newStatus })
+      .eq("id", lesson.id);
+    
+    if (error) {
+      toast({ 
+        title: "Erro ao alterar status", 
+        description: error.message,
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    // Refresh lessons for this module
+    const { data: refreshedLessons } = await supabase
+      .from("course_lessons")
+      .select("*")
+      .eq("module_id", lesson.module_id)
+      .order("position", { ascending: true });
+    
+    setAllLessons(prev => ({
+      ...prev,
+      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
+    }));
+    
+    toast({ 
+      title: newStatus ? "✓ Aula publicada!" : "Aula despublicada",
+      description: newStatus 
+        ? "A aula agora está visível para os alunos."
+        : "A aula foi movida para rascunhos."
+    });
+  };
+
   // Render lesson form
   const renderLessonForm = (moduleId: string) => (
     <div className="bg-muted/30 border rounded-xl p-4 space-y-4 mt-3">
@@ -835,10 +874,10 @@ const AdminCursos = () => {
           <>
             <header className="space-y-2">
               <h1 className="text-3xl font-display font-semibold text-foreground">
-                Gerenciar Cursos
+                Cursos e Aulas
               </h1>
               <p className="text-muted-foreground">
-                Crie e edite cursos, módulos e aulas
+                Gerencie cursos, módulos e aulas
               </p>
             </header>
 
@@ -922,12 +961,12 @@ const AdminCursos = () => {
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="info">Informações</TabsTrigger>
+                <TabsTrigger value="info">Curso</TabsTrigger>
                 <TabsTrigger value="modules" disabled={!selectedCourseId}>
                   Módulos
                 </TabsTrigger>
                 <TabsTrigger value="content" disabled={!selectedCourseId}>
-                  Conteúdo
+                  Aulas
                 </TabsTrigger>
               </TabsList>
 
@@ -1145,10 +1184,10 @@ const AdminCursos = () => {
                 )}
               </TabsContent>
 
-              {/* Tab: Content (Modules + Lessons) */}
+              {/* Tab: Aulas (Modules + Lessons) */}
               <TabsContent value="content" className="space-y-4 mt-6">
                 {modulesLoading || lessonsLoading ? (
-                  <LoadingState message="Carregando conteúdo..." />
+                  <LoadingState message="Carregando aulas..." />
                 ) : modules.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">Crie módulos primeiro na aba "Módulos".</p>
@@ -1201,7 +1240,7 @@ const AdminCursos = () => {
                                   return (
                                     <div
                                       key={lesson.id}
-                                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg group"
+                                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors"
                                     >
                                       <div className="flex flex-col gap-0.5">
                                         <Button
@@ -1230,10 +1269,15 @@ const AdminCursos = () => {
                                       
                                       <div className="flex-1 min-w-0">
                                         <p className="font-medium truncate">{lesson.title}</p>
-                                        <div className="flex gap-2 mt-1">
-                                          <span className={`px-2 py-0.5 rounded text-xs ${status.color}`}>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <button
+                                            onClick={() => handleToggleLessonPublish(lesson)}
+                                            className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity ${status.color}`}
+                                            title={lesson.is_published ? "Clique para despublicar" : "Clique para publicar"}
+                                          >
+                                            <span>{status.icon}</span>
                                             {status.label}
-                                          </span>
+                                          </button>
                                           {lesson.access_level === "premium" && (
                                             <span className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary">
                                               Premium
@@ -1248,6 +1292,7 @@ const AdminCursos = () => {
                                           size="icon"
                                           className="h-8 w-8"
                                           onClick={() => handleEditLesson(lesson)}
+                                          title="Editar"
                                         >
                                           <Pencil className="w-4 h-4" />
                                         </Button>
@@ -1256,6 +1301,7 @@ const AdminCursos = () => {
                                           size="icon"
                                           className="h-8 w-8"
                                           onClick={() => handleDuplicateLesson(lesson)}
+                                          title="Duplicar"
                                         >
                                           <Copy className="w-4 h-4" />
                                         </Button>
