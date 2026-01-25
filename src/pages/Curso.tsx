@@ -124,7 +124,9 @@ const Curso = () => {
               <img
                 src={course.cover_image_url}
                 alt={course.title}
-                className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+                className="w-full h-full object-contain"
               />
             </div>
           )}
