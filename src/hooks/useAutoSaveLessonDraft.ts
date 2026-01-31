@@ -1,12 +1,11 @@
 import { useEffect, useRef, useCallback } from "react";
 
-interface LessonDraft {
+export interface LessonDraft {
   title: string;
   access_level: string;
   content_type: string;
   media_url: string;
   audio_url: string;
-  pdf_url: string;
   body_markdown: string;
   duration_minutes: string;
   audio_duration_minutes: string;
@@ -14,7 +13,10 @@ interface LessonDraft {
   is_published: boolean;
   summary: string;
   module_id: string;
-  text_files: { url: string; name: string }[];
+  files: { url: string; name: string }[];
+  // Legacy fields for backward compatibility
+  pdf_url?: string;
+  text_files?: { url: string; name: string }[];
 }
 
 const STORAGE_KEY_PREFIX = "lesson_draft_";
