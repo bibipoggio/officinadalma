@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Video, Music, Loader2, Play, Pause, RotateCcw } from "lucide-react";
+import { X, Video, Music, Loader2, Play, Pause, RotateCcw, Link, Upload } from "lucide-react";
 import { toast } from "sonner";
 import * as tus from "tus-js-client";
 
@@ -43,6 +44,7 @@ export function MediaUpload({
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [canResume, setCanResume] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [externalUrl, setExternalUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
   const tusUploadRef = useRef<tus.Upload | null>(null);
@@ -111,7 +113,6 @@ export function MediaUpload({
         },
         onError: (error) => {
           console.error("TUS upload error:", error);
-          // Save state for resume
           setUploadState({
             file,
             fileName,
@@ -133,7 +134,6 @@ export function MediaUpload({
           } : null);
         },
         onSuccess: () => {
-          // Get public URL
           const { data: publicUrlData } = supabase.storage
             .from(bucket)
             .getPublicUrl(fileName);
@@ -144,7 +144,6 @@ export function MediaUpload({
 
       tusUploadRef.current = upload;
 
-      // Check for previous uploads to resume
       upload.findPreviousUploads().then((previousUploads) => {
         if (previousUploads.length > 0 && shouldResume) {
           upload.resumeFromPreviousUpload(previousUploads[0]);
@@ -158,7 +157,6 @@ export function MediaUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
     const isValidType = mediaType === "video" 
       ? file.type.startsWith("video/")
       : file.type.startsWith("audio/");
@@ -168,7 +166,6 @@ export function MediaUpload({
       return;
     }
 
-    // Validate file size (max 3GB for video, 50MB for audio)
     const maxSize = mediaType === "video" ? 3 * 1024 * 1024 * 1024 : 50 * 1024 * 1024;
     if (file.size > maxSize) {
       toast.error(`O arquivo deve ter no máximo ${mediaType === "video" ? "3GB" : "50MB"}`);
@@ -180,14 +177,10 @@ export function MediaUpload({
     setCanResume(false);
 
     try {
-      // Get duration from file
       const duration = await getMediaDuration(file);
-      
-      // Create unique filename
       const fileExt = file.name.split(".").pop();
       const fileName = `${folder}/${mediaType}-${Date.now()}.${fileExt}`;
 
-      // Initialize upload state
       setUploadState({
         file,
         fileName,
@@ -196,16 +189,14 @@ export function MediaUpload({
         bytesTotal: file.size,
       });
 
-      // Start TUS upload
       const publicUrl = await startTusUpload(file, fileName, duration, false);
-
       onUrlChange(publicUrl);
       
       if (onDurationChange && duration) {
         onDurationChange(Math.round(duration));
       }
       
-      toast.success(`${mediaType === "video" ? "Vídeo" : "Áudio"} enviado com sucesso!`);
+      toast.success(`${mediaType === "video" ? "Vídeo" : "Áudio"} enviado!`);
       setUploadState(null);
     } catch (error: unknown) {
       console.error("Upload error:", error);
@@ -243,7 +234,7 @@ export function MediaUpload({
         onDurationChange(Math.round(uploadState.duration));
       }
       
-      toast.success(`${mediaType === "video" ? "Vídeo" : "Áudio"} enviado com sucesso!`);
+      toast.success(`${mediaType === "video" ? "Vídeo" : "Áudio"} enviado!`);
       setUploadState(null);
     } catch (error: unknown) {
       console.error("Resume upload error:", error);
@@ -269,7 +260,6 @@ export function MediaUpload({
     if (!currentUrl) return;
 
     try {
-      // Extract file path from URL
       const urlParts = currentUrl.split(`/${bucket}/`);
       if (urlParts.length > 1) {
         const filePath = urlParts[1];
@@ -284,6 +274,13 @@ export function MediaUpload({
       console.error("Remove error:", error);
       toast.error("Erro ao remover o arquivo");
     }
+  };
+
+  const handleAddExternalUrl = () => {
+    if (!externalUrl.trim()) return;
+    onUrlChange(externalUrl.trim());
+    setExternalUrl("");
+    toast.success("Link adicionado!");
   };
 
   const togglePlay = () => {
@@ -308,84 +305,81 @@ export function MediaUpload({
   };
 
   const Icon = mediaType === "video" ? Video : Music;
-  const defaultLabel = mediaType === "video" ? "Vídeo da Aula" : "Áudio da Aula";
+  const defaultLabel = mediaType === "video" ? "Vídeo" : "Áudio";
 
-  return (
-    <div className="space-y-4">
-      <Label className="text-lg font-medium">{label || defaultLabel}</Label>
-
-      {currentUrl ? (
-        <div className="space-y-3">
-          {/* Media preview */}
-          <div className="relative rounded-xl overflow-hidden border bg-muted">
-            {mediaType === "video" ? (
-              <video
-                ref={mediaRef as React.RefObject<HTMLVideoElement>}
-                src={currentUrl}
-                className="w-full h-48 object-cover"
-                onEnded={handleEnded}
-                controls
-              />
-            ) : (
-              <div className="flex items-center gap-4 p-6">
-                <button
-                  onClick={togglePlay}
-                  className="w-14 h-14 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-6 h-6 text-primary-foreground" />
-                  ) : (
-                    <Play className="w-6 h-6 text-primary-foreground ml-1" />
-                  )}
-                </button>
-                <div className="flex-1">
-                  <p className="font-medium text-foreground flex items-center gap-2">
-                    <Music className="w-4 h-4" />
-                    Áudio carregado
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Clique para reproduzir
-                  </p>
-                </div>
-                <audio
-                  ref={mediaRef as React.RefObject<HTMLAudioElement>}
-                  src={currentUrl}
-                  onEnded={handleEnded}
-                  className="hidden"
-                />
-              </div>
-            )}
-            <Button
-              variant="destructive"
-              size="icon"
-              onClick={handleRemove}
-              className="absolute top-2 right-2"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-
-          {/* URL input for manual editing */}
-          <div className="space-y-2">
-            <Label htmlFor="media_url_manual" className="text-sm text-muted-foreground">
-              Ou insira um link externo
-            </Label>
-            <Input
-              id="media_url_manual"
-              type="url"
-              value={currentUrl}
-              onChange={(e) => onUrlChange(e.target.value || null)}
-              placeholder="https://..."
-              className="text-base h-12"
+  // Has content - show preview
+  if (currentUrl) {
+    return (
+      <div className="space-y-3">
+        <Label className="text-base font-medium">{label || defaultLabel}</Label>
+        
+        <div className="relative rounded-lg overflow-hidden border bg-muted">
+          {mediaType === "video" ? (
+            <video
+              ref={mediaRef as React.RefObject<HTMLVideoElement>}
+              src={currentUrl}
+              className="w-full h-32 object-cover"
+              onEnded={handleEnded}
+              controls
             />
-          </div>
+          ) : (
+            <div className="flex items-center gap-3 p-4">
+              <button
+                onClick={togglePlay}
+                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors shrink-0"
+              >
+                {isPlaying ? (
+                  <Pause className="w-4 h-4 text-primary-foreground" />
+                ) : (
+                  <Play className="w-4 h-4 text-primary-foreground ml-0.5" />
+                )}
+              </button>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-foreground text-sm truncate">Áudio carregado</p>
+                <p className="text-xs text-muted-foreground truncate">{currentUrl}</p>
+              </div>
+              <audio
+                ref={mediaRef as React.RefObject<HTMLAudioElement>}
+                src={currentUrl}
+                onEnded={handleEnded}
+                className="hidden"
+              />
+            </div>
+          )}
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={handleRemove}
+            className="absolute top-2 right-2 h-7 w-7"
+          >
+            <X className="w-3 h-3" />
+          </Button>
         </div>
-      ) : (
-        <div className="space-y-4">
-          {/* Upload area */}
+      </div>
+    );
+  }
+
+  // No content - show compact upload interface
+  return (
+    <div className="space-y-3">
+      <Label className="text-base font-medium">{label || defaultLabel}</Label>
+
+      <Tabs defaultValue="upload" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-9">
+          <TabsTrigger value="upload" className="text-xs gap-1.5">
+            <Upload className="w-3.5 h-3.5" />
+            Enviar arquivo
+          </TabsTrigger>
+          <TabsTrigger value="link" className="text-xs gap-1.5">
+            <Link className="w-3.5 h-3.5" />
+            Link externo
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload" className="mt-3">
           <div
             className={`
-              relative border-2 border-dashed rounded-xl p-8 text-center transition-colors
+              relative border-2 border-dashed rounded-lg p-4 text-center transition-colors
               ${isUploading || canResume
                 ? "border-primary bg-primary/5"
                 : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
@@ -404,106 +398,68 @@ export function MediaUpload({
             )}
 
             {isUploading ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-3">
-                  <Loader2 className="w-6 h-6 text-primary animate-spin" />
-                  <p className="text-lg font-medium text-foreground">
-                    Enviando... {uploadProgress}%
-                  </p>
+              <div className="space-y-2">
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                  <p className="text-sm font-medium">{uploadProgress}%</p>
                 </div>
-                <Progress value={uploadProgress} className="h-3" />
+                <Progress value={uploadProgress} className="h-2" />
                 {uploadState && (
-                  <p className="text-sm text-muted-foreground text-center">
-                    {formatBytes(uploadState.bytesUploaded)} de {formatBytes(uploadState.bytesTotal)}
+                  <p className="text-xs text-muted-foreground">
+                    {formatBytes(uploadState.bytesUploaded)} / {formatBytes(uploadState.bytesTotal)}
                   </p>
                 )}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleCancelUpload}
-                  className="mt-2"
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Cancelar
+                <Button variant="ghost" size="sm" onClick={handleCancelUpload} className="h-7 text-xs">
+                  <X className="w-3 h-3 mr-1" /> Cancelar
                 </Button>
               </div>
             ) : canResume && uploadState ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-center gap-3">
-                  <RotateCcw className="w-6 h-6 text-accent-foreground" />
-                  <p className="text-lg font-medium text-foreground">
-                    Upload interrompido
-                  </p>
-                </div>
-                <Progress value={uploadProgress} className="h-3" />
-                <p className="text-sm text-muted-foreground text-center">
-                  {formatBytes(uploadState.bytesUploaded)} de {formatBytes(uploadState.bytesTotal)} enviados
-                </p>
-                <div className="flex gap-2 justify-center mt-2">
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    onClick={handleResumeUpload}
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Retomar upload
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Upload interrompido</p>
+                <Progress value={uploadProgress} className="h-2" />
+                <div className="flex gap-2 justify-center">
+                  <Button size="sm" onClick={handleResumeUpload} className="h-7 text-xs">
+                    <RotateCcw className="w-3 h-3 mr-1" /> Retomar
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleClearResume}
-                  >
-                    <X className="w-4 h-4 mr-2" />
+                  <Button variant="ghost" size="sm" onClick={handleClearResume} className="h-7 text-xs">
                     Cancelar
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <Icon className="w-10 h-10 mx-auto text-muted-foreground" />
-                <div>
-                  <p className="text-lg font-medium text-foreground">
-                    Clique ou arraste o {mediaType === "video" ? "vídeo" : "áudio"}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {mediaType === "video" 
-                      ? "MP4, WebM (máx. 3GB) • Upload com retomada" 
-                      : "MP3, WAV, OGG (máx. 50MB)"}
-                  </p>
-                </div>
+              <div className="space-y-1">
+                <Icon className="w-6 h-6 mx-auto text-muted-foreground" />
+                <p className="text-sm font-medium">Clique ou arraste</p>
+                <p className="text-xs text-muted-foreground">
+                  {mediaType === "video" ? "MP4, WebM (máx. 3GB)" : "MP3, WAV (máx. 50MB)"}
+                </p>
               </div>
             )}
           </div>
+        </TabsContent>
 
-          {/* Manual URL input */}
-          {!isUploading && !canResume && (
-            <>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-muted" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">ou</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="media_url_external" className="text-sm text-muted-foreground">
-                  Insira um link externo
-                </Label>
-                <Input
-                  id="media_url_external"
-                  type="url"
-                  value=""
-                  onChange={(e) => onUrlChange(e.target.value || null)}
-                  placeholder="https://..."
-                  className="text-base h-12"
-                />
-              </div>
-            </>
-          )}
-        </div>
-      )}
+        <TabsContent value="link" className="mt-3">
+          <div className="flex gap-2">
+            <Input
+              type="url"
+              value={externalUrl}
+              onChange={(e) => setExternalUrl(e.target.value)}
+              placeholder="https://..."
+              className="h-10"
+            />
+            <Button 
+              onClick={handleAddExternalUrl} 
+              disabled={!externalUrl.trim()}
+              className="shrink-0"
+            >
+              Adicionar
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            Cole o link do YouTube, Vimeo, Bunny ou outro serviço
+          </p>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

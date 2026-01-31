@@ -11,8 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
-import { PdfUpload } from "@/components/admin/PdfUpload";
-import { TextFilesUpload } from "@/components/admin/TextFilesUpload";
+import { FilesUpload } from "@/components/admin/FilesUpload";
 import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { useState, useEffect, useCallback } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
@@ -113,7 +112,6 @@ const AdminCursos = () => {
     content_type: string;
     media_url: string;
     audio_url: string;
-    pdf_url: string;
     body_markdown: string;
     duration_minutes: string;
     audio_duration_minutes: string;
@@ -121,14 +119,14 @@ const AdminCursos = () => {
     is_published: boolean;
     summary: string;
     module_id: string;
-    text_files: { url: string; name: string }[];
+    /** Unified files array including PDFs and text files */
+    files: { url: string; name: string }[];
   }>({
     title: "",
     access_level: "basic",
     content_type: "text",
     media_url: "",
     audio_url: "",
-    pdf_url: "",
     body_markdown: "",
     duration_minutes: "",
     audio_duration_minutes: "",
@@ -136,7 +134,7 @@ const AdminCursos = () => {
     is_published: false,
     summary: "",
     module_id: "",
-    text_files: [],
+    files: [],
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -331,15 +329,14 @@ const AdminCursos = () => {
       content_type: contentType,
       media_url: "",
       audio_url: "",
-      pdf_url: "",
       body_markdown: "",
       duration_minutes: "",
       audio_duration_minutes: "",
-      released_at: null,
+      released_at: null as Date | null,
       is_published: false,
       summary: "",
       module_id: moduleId,
-      text_files: [] as { url: string; name: string }[],
+      files: [] as { url: string; name: string }[],
     };
     
     setLessonForm(defaultForm);
@@ -360,9 +357,33 @@ const AdminCursos = () => {
   const handleLoadDraft = useCallback(() => {
     const draft = loadDraft();
     if (draft) {
+      // Convert old draft format to new format if needed
+      const files: { url: string; name: string }[] = [];
+      if ((draft as any).pdf_url) {
+        const pdfName = (draft as any).pdf_url.split('/').pop() || 'material.pdf';
+        files.push({ url: (draft as any).pdf_url, name: pdfName });
+      }
+      if ((draft as any).text_files && Array.isArray((draft as any).text_files)) {
+        files.push(...(draft as any).text_files);
+      }
+      if ((draft as any).files && Array.isArray((draft as any).files)) {
+        files.push(...(draft as any).files);
+      }
+      
       setLessonForm({
-        ...draft,
+        title: draft.title || "",
+        access_level: draft.access_level || "basic",
+        content_type: draft.content_type || "text",
+        media_url: draft.media_url || "",
+        audio_url: draft.audio_url || "",
+        body_markdown: draft.body_markdown || "",
+        duration_minutes: draft.duration_minutes || "",
+        audio_duration_minutes: draft.audio_duration_minutes || "",
         released_at: draft.released_at ? new Date(draft.released_at) : null,
+        is_published: draft.is_published || false,
+        summary: draft.summary || "",
+        module_id: draft.module_id || "",
+        files,
       });
       setShowDraftPrompt(false);
       toast({ title: "Rascunho recuperado!" });
@@ -375,8 +396,19 @@ const AdminCursos = () => {
   }, [clearDraft]);
 
   const handleEditLesson = useCallback((lesson: CourseLesson) => {
-    // Parse text_files from the lesson data
+    // Parse files from the lesson data - combine pdf_url and text_files_urls
     const textFiles = (lesson as any).text_files_urls || [];
+    const pdfUrl = (lesson as any).pdf_url;
+    
+    // Combine PDF and text files into unified files array
+    const allFiles: { url: string; name: string }[] = [];
+    if (pdfUrl) {
+      const pdfName = pdfUrl.split('/').pop() || 'material.pdf';
+      allFiles.push({ url: pdfUrl, name: pdfName });
+    }
+    if (Array.isArray(textFiles)) {
+      allFiles.push(...textFiles);
+    }
     
     setLessonForm({
       title: lesson.title,
@@ -384,7 +416,6 @@ const AdminCursos = () => {
       content_type: lesson.content_type,
       media_url: lesson.media_url || "",
       audio_url: (lesson as any).audio_url || "",
-      pdf_url: (lesson as any).pdf_url || "",
       body_markdown: lesson.body_markdown || "",
       duration_minutes: lesson.duration_seconds ? String(Math.round(lesson.duration_seconds / 60)) : "",
       audio_duration_minutes: (lesson as any).audio_duration_seconds ? String(Math.round((lesson as any).audio_duration_seconds / 60)) : "",
@@ -392,7 +423,7 @@ const AdminCursos = () => {
       is_published: lesson.is_published,
       summary: lesson.summary || "",
       module_id: lesson.module_id,
-      text_files: Array.isArray(textFiles) ? textFiles : [],
+      files: allFiles,
     });
     setEditingLessonId(lesson.id);
     setIsCreatingLesson(false);
@@ -440,20 +471,24 @@ const AdminCursos = () => {
         ? parseInt(lessonForm.audio_duration_minutes) * 60 
         : null;
 
+      // Separate PDF from other files for database storage
+      const pdfFile = lessonForm.files.find(f => f.name.toLowerCase().endsWith('.pdf'));
+      const textFiles = lessonForm.files.filter(f => !f.name.toLowerCase().endsWith('.pdf'));
+      
       const lessonData = {
         title: lessonForm.title.trim(),
         access_level: lessonForm.access_level,
         content_type: lessonForm.content_type,
         media_url: lessonForm.media_url.trim() || null,
         audio_url: lessonForm.audio_url.trim() || null,
-        pdf_url: lessonForm.pdf_url.trim() || null,
+        pdf_url: pdfFile?.url || null,
         body_markdown: lessonForm.body_markdown.trim() || null,
         duration_seconds: durationSeconds,
         audio_duration_seconds: audioDurationSeconds,
         released_at: lessonForm.released_at?.toISOString() || null,
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
-        text_files_urls: lessonForm.text_files,
+        text_files_urls: textFiles,
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
@@ -776,28 +811,16 @@ const AdminCursos = () => {
           />
         </div>
 
-        {/* PDF Attachment */}
+        {/* Materials Attachment - Unified PDF and text files */}
         <div className="border-t pt-4">
-          <PdfUpload
-            currentUrl={lessonForm.pdf_url || null}
-            onUrlChange={(url) => setLessonForm(prev => ({ ...prev, pdf_url: url || "" }))}
-            label="Material complementar em PDF (opcional)"
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Adicione um PDF que os usuários podem baixar junto com a aula.
-          </p>
-        </div>
-
-        {/* Text Files Attachment */}
-        <div className="border-t pt-4">
-          <TextFilesUpload
-            files={lessonForm.text_files}
-            onFilesChange={(files) => setLessonForm(prev => ({ ...prev, text_files: files }))}
-            label="Arquivos de texto complementares (opcional)"
+          <FilesUpload
+            files={lessonForm.files}
+            onFilesChange={(files) => setLessonForm(prev => ({ ...prev, files }))}
+            label="Materiais complementares (opcional)"
             maxFiles={10}
           />
           <p className="text-xs text-muted-foreground mt-2">
-            Adicione arquivos de texto (.txt, .md, .csv, .json, etc.) como material complementar.
+            Adicione PDFs, documentos Word, planilhas, apresentações ou arquivos de texto.
           </p>
         </div>
 
