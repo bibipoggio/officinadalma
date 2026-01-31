@@ -669,12 +669,12 @@ const AdminCursos = () => {
 
   // Render lesson form
   const renderLessonForm = (moduleId: string) => (
-    <div className="bg-muted/30 border rounded-xl p-4 space-y-4 mt-3">
+    <div className="bg-muted/30 border rounded-xl p-3 sm:p-4 space-y-3 sm:space-y-4 mt-3">
       {/* Draft recovery prompt */}
       {showDraftPrompt && (
-        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col gap-2">
           <div className="flex items-center gap-2">
-            <FileUp className="w-5 h-5 text-warning" />
+            <FileUp className="w-5 h-5 text-warning shrink-0" />
             <span className="text-sm font-medium">
               Rascunho encontrado. Deseja recuperar?
             </span>
@@ -683,12 +683,14 @@ const AdminCursos = () => {
             <Button
               variant="outline"
               size="sm"
+              className="flex-1"
               onClick={handleDiscardDraft}
             >
               Descartar
             </Button>
             <Button
               size="sm"
+              className="flex-1"
               onClick={handleLoadDraft}
             >
               Recuperar
@@ -698,7 +700,7 @@ const AdminCursos = () => {
       )}
 
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold">
+        <h4 className="font-semibold text-sm sm:text-base">
           {editingLessonId ? "Editar Aula" : "Nova Aula"}
         </h4>
         <Button variant="ghost" size="sm" onClick={handleCancelLessonEdit}>
@@ -706,19 +708,20 @@ const AdminCursos = () => {
         </Button>
       </div>
 
-      <div className="grid gap-4">
-        <div className="space-y-2">
-          <Label>Título *</Label>
+      <div className="grid gap-3 sm:gap-4">
+        <div className="space-y-1.5">
+          <Label className="text-sm">Título *</Label>
           <Input
             value={lessonForm.title}
             onChange={(e) => setLessonForm(prev => ({ ...prev, title: e.target.value }))}
             placeholder="Ex: Introdução ao tema"
+            className="h-10"
           />
         </div>
 
-        <div className="space-y-2">
-          <Label>Tipo de conteúdo *</Label>
-          <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-1.5">
+          <Label className="text-sm">Tipo de conteúdo *</Label>
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
             {(["text", "video", "audio"] as const).map((type) => {
               const config = contentTypeConfig[type];
               const Icon = config.icon;
@@ -727,14 +730,14 @@ const AdminCursos = () => {
                   key={type}
                   type="button"
                   onClick={() => setLessonForm(prev => ({ ...prev, content_type: type }))}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  className={`flex flex-col items-center gap-1 sm:gap-2 p-2 sm:p-3 rounded-lg sm:rounded-xl border-2 transition-all ${
                     lessonForm.content_type === type
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <Icon className={`w-6 h-6 ${lessonForm.content_type === type ? "text-primary" : "text-muted-foreground"}`} />
-                  <span className="text-sm font-medium">{config.label}</span>
+                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${lessonForm.content_type === type ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="text-xs sm:text-sm font-medium">{config.label}</span>
                 </button>
               );
             })}
@@ -742,13 +745,13 @@ const AdminCursos = () => {
         </div>
 
         {lessonForm.content_type === "text" && (
-          <div className="space-y-2">
-            <Label>Conteúdo do texto *</Label>
+          <div className="space-y-1.5">
+            <Label className="text-sm">Conteúdo do texto *</Label>
             <RichTextEditor
               value={lessonForm.body_markdown}
               onChange={(value) => setLessonForm(prev => ({ ...prev, body_markdown: value }))}
               placeholder="Escreva o conteúdo da aula..."
-              minHeight="150px"
+              minHeight="120px"
             />
           </div>
         )}
@@ -768,7 +771,7 @@ const AdminCursos = () => {
 
         {/* Alternative Audio for Video Lessons (Podcast mode) */}
         {lessonForm.content_type === "video" && (
-          <div className="border-t pt-4">
+          <div className="border-t pt-3 sm:pt-4">
             <MediaUpload
               currentUrl={lessonForm.audio_url || null}
               onUrlChange={(url) => setLessonForm(prev => ({ ...prev, audio_url: url || "" }))}
@@ -777,62 +780,59 @@ const AdminCursos = () => {
                 audio_duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
               }))}
               mediaType="audio"
-              label="Áudio alternativo (modo podcast - opcional)"
+              label="Áudio alternativo (podcast)"
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              Adicione uma versão somente em áudio para que os usuários possam ouvir como podcast.
+            <p className="text-xs text-muted-foreground mt-1.5">
+              Versão em áudio para modo podcast (opcional)
             </p>
           </div>
         )}
 
         {/* Text Content for Video/Audio Lessons */}
         {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
-          <div className="border-t pt-4 space-y-2">
-            <Label>Conteúdo de texto complementar (opcional)</Label>
+          <div className="border-t pt-3 sm:pt-4 space-y-1.5">
+            <Label className="text-sm">Texto complementar (opcional)</Label>
             <RichTextEditor
               value={lessonForm.body_markdown}
               onChange={(value) => setLessonForm(prev => ({ ...prev, body_markdown: value }))}
-              placeholder="Adicione texto complementar, transcrição ou notas..."
-              minHeight="120px"
+              placeholder="Adicione texto, transcrição ou notas..."
+              minHeight="100px"
             />
-            <p className="text-xs text-muted-foreground">
-              Este texto será exibido junto com o vídeo/áudio.
-            </p>
           </div>
         )}
 
-        <div className="space-y-2">
-          <Label>Resumo (opcional)</Label>
+        <div className="space-y-1.5">
+          <Label className="text-sm">Resumo (opcional)</Label>
           <Textarea
             value={lessonForm.summary}
             onChange={(e) => setLessonForm(prev => ({ ...prev, summary: e.target.value }))}
             placeholder="Breve descrição do conteúdo..."
-            className="min-h-[80px]"
+            className="min-h-[60px] text-sm"
           />
         </div>
 
         {/* Materials Attachment - Unified PDF and text files */}
-        <div className="border-t pt-4">
+        <div className="border-t pt-3 sm:pt-4">
           <FilesUpload
             files={lessonForm.files}
             onFilesChange={(files) => setLessonForm(prev => ({ ...prev, files }))}
-            label="Materiais complementares (opcional)"
+            label="Materiais complementares"
             maxFiles={10}
           />
-          <p className="text-xs text-muted-foreground mt-2">
-            Adicione PDFs, documentos Word, planilhas, apresentações ou arquivos de texto.
+          <p className="text-xs text-muted-foreground mt-1.5">
+            PDFs, documentos, planilhas (opcional)
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Acesso</Label>
-            <div className="flex gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm">Acesso</Label>
+            <div className="flex gap-1.5">
               <Button
                 type="button"
                 variant={lessonForm.access_level === "basic" ? "default" : "outline"}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-9"
                 onClick={() => setLessonForm(prev => ({ ...prev, access_level: "basic" }))}
               >
                 Básico
@@ -841,7 +841,7 @@ const AdminCursos = () => {
                 type="button"
                 variant={lessonForm.access_level === "premium" ? "default" : "outline"}
                 size="sm"
-                className="flex-1"
+                className="flex-1 h-9"
                 onClick={() => setLessonForm(prev => ({ ...prev, access_level: "premium" }))}
               >
                 Premium
@@ -849,13 +849,15 @@ const AdminCursos = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Liberar em</Label>
+          <div className="space-y-1.5">
+            <Label className="text-sm">Liberar em</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button variant="outline" size="sm" className="w-full justify-start h-9">
                   <CalendarIcon className="w-4 h-4 mr-2" />
-                  {lessonForm.released_at ? formatDateDisplay(lessonForm.released_at.toISOString()) : "Imediato"}
+                  <span className="truncate">
+                    {lessonForm.released_at ? formatDateDisplay(lessonForm.released_at.toISOString()) : "Imediato"}
+                  </span>
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -871,7 +873,7 @@ const AdminCursos = () => {
         </div>
 
         <div className="flex items-center justify-between bg-background rounded-lg p-3">
-          <Label>Publicar aula</Label>
+          <Label className="text-sm">Publicar aula</Label>
           <Switch
             checked={lessonForm.is_published}
             onCheckedChange={(checked) => setLessonForm(prev => ({ ...prev, is_published: checked }))}
@@ -879,12 +881,12 @@ const AdminCursos = () => {
         </div>
       </div>
 
-      <div className="flex gap-2 pt-2">
-        <Button variant="outline" className="flex-1" onClick={handleCancelLessonEdit}>
+      <div className="flex gap-2 pt-1">
+        <Button variant="outline" className="flex-1 h-10" onClick={handleCancelLessonEdit}>
           Cancelar
         </Button>
-        <Button className="flex-1" onClick={handleSaveLesson} disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar Aula"}
+        <Button className="flex-1 h-10" onClick={handleSaveLesson} disabled={isSaving}>
+          {isSaving ? "Salvando..." : "Salvar"}
         </Button>
       </div>
     </div>
@@ -892,15 +894,15 @@ const AdminCursos = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-6 pb-16">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 pb-16 px-0 sm:px-0">
         {/* List View */}
         {viewMode === "list" && (
           <>
-            <header className="space-y-2">
-              <h1 className="text-3xl font-display font-semibold text-foreground">
+            <header className="space-y-1 sm:space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">
                 Cursos e Aulas
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Gerencie cursos, módulos e aulas
               </p>
             </header>
@@ -908,10 +910,10 @@ const AdminCursos = () => {
             {coursesLoading ? (
               <LoadingState message="Carregando cursos..." />
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <Button
                   size="lg"
-                  className="w-full text-lg h-14"
+                  className="w-full text-base sm:text-lg h-12 sm:h-14"
                   onClick={handleNewCourse}
                 >
                   <Plus className="w-5 h-5 mr-2" /> Criar novo curso
@@ -922,25 +924,25 @@ const AdminCursos = () => {
                     Nenhum curso criado ainda.
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2 sm:space-y-3">
                     {courses.map((course) => (
                       <button
                         key={course.id}
                         onClick={() => handleSelectCourse(course)}
-                        className="w-full text-left bg-card border rounded-2xl p-5 hover:border-primary/50 transition-colors"
+                        className="w-full text-left bg-card border rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:border-primary/50 transition-colors"
                       >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-xl font-semibold">{course.title}</h3>
-                            <div className="flex gap-2 mt-2">
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-lg sm:text-xl font-semibold truncate">{course.title}</h3>
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
+                              <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
                                 course.type === "aparte" 
                                   ? "bg-primary/20 text-primary" 
                                   : "bg-muted text-muted-foreground"
                               }`}>
                                 {typeLabels[course.type] || course.type}
                               </span>
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              <span className={`px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${
                                 course.is_published
                                   ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                                   : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
@@ -949,12 +951,12 @@ const AdminCursos = () => {
                               </span>
                             </div>
                             {course.description_short && (
-                              <p className="text-muted-foreground mt-2 line-clamp-2">
+                              <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
                                 {course.description_short}
                               </p>
                             )}
                           </div>
-                          <Pencil className="w-5 h-5 text-muted-foreground" />
+                          <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground shrink-0" />
                         </div>
                       </button>
                     ))}
@@ -968,7 +970,7 @@ const AdminCursos = () => {
         {/* Edit Course View */}
         {viewMode === "edit-course" && (
           <>
-            <header className="space-y-2">
+            <header className="space-y-1 sm:space-y-2">
               <Button 
                 variant="ghost" 
                 size="sm" 
@@ -976,29 +978,29 @@ const AdminCursos = () => {
                 onClick={handleBackToList}
               >
                 <ChevronLeft className="w-4 h-4 mr-1" />
-                Voltar para cursos
+                Voltar
               </Button>
-              <h1 className="text-2xl font-display font-semibold text-foreground">
+              <h1 className="text-xl sm:text-2xl font-display font-semibold text-foreground">
                 {selectedCourseId ? courseForm.title || "Editar Curso" : "Novo Curso"}
               </h1>
             </header>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="info">Curso</TabsTrigger>
-                <TabsTrigger value="modules" disabled={!selectedCourseId}>
+              <TabsList className="w-full grid grid-cols-3 h-10">
+                <TabsTrigger value="info" className="text-xs sm:text-sm">Curso</TabsTrigger>
+                <TabsTrigger value="modules" disabled={!selectedCourseId} className="text-xs sm:text-sm">
                   Módulos
                 </TabsTrigger>
-                <TabsTrigger value="content" disabled={!selectedCourseId}>
+                <TabsTrigger value="content" disabled={!selectedCourseId} className="text-xs sm:text-sm">
                   Aulas
                 </TabsTrigger>
               </TabsList>
 
               {/* Tab: Course Info */}
-              <TabsContent value="info" className="space-y-6 mt-6">
-                <div className="bg-card border rounded-2xl p-6 space-y-5">
-                  <div className="space-y-2">
-                    <Label className="text-base">Nome do curso *</Label>
+              <TabsContent value="info" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+                <div className="bg-card border rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-5">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm sm:text-base">Nome do curso *</Label>
                     <Input
                       value={courseForm.title}
                       onChange={(e) => {
@@ -1009,13 +1011,13 @@ const AdminCursos = () => {
                         }));
                       }}
                       placeholder="Ex: Despertar Interior"
-                      className="text-lg h-12"
+                      className="text-base h-11 sm:h-12"
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-base">Tipo *</Label>
-                    <div className="flex gap-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm sm:text-base">Tipo *</Label>
+                    <div className="flex gap-1.5 sm:gap-2">
                       {[
                         { value: "basic", label: "Gratuito" },
                         { value: "regular", label: "Básico" },
@@ -1025,7 +1027,7 @@ const AdminCursos = () => {
                           key={type.value}
                           type="button"
                           variant={courseForm.type === type.value ? "default" : "outline"}
-                          className="flex-1"
+                          className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                           onClick={() => setCourseForm(prev => ({ ...prev, type: type.value }))}
                         >
                           {type.label}
@@ -1034,13 +1036,13 @@ const AdminCursos = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-base">Descrição curta</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm sm:text-base">Descrição curta</Label>
                     <Textarea
                       value={courseForm.description_short}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, description_short: e.target.value }))}
                       placeholder="Breve descrição do curso..."
-                      className="min-h-[100px]"
+                      className="min-h-[80px] text-sm"
                     />
                   </div>
 
@@ -1051,20 +1053,21 @@ const AdminCursos = () => {
                     label="Imagem de Capa"
                   />
 
-                  <div className="space-y-2">
-                    <Label className="text-base">Slug (endereço) *</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm sm:text-base">Slug (endereço) *</Label>
                     <Input
                       value={courseForm.route_slug}
                       onChange={(e) => setCourseForm(prev => ({ ...prev, route_slug: e.target.value }))}
                       placeholder="despertar-interior"
+                      className="text-sm"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Endereço: /aulas/{courseForm.route_slug || "exemplo"}
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      /aulas/{courseForm.route_slug || "exemplo"}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between bg-muted/50 rounded-xl p-4">
-                    <Label className="text-base">Publicar curso</Label>
+                  <div className="flex items-center justify-between bg-muted/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                    <Label className="text-sm sm:text-base">Publicar curso</Label>
                     <Switch
                       checked={courseForm.is_published}
                       onCheckedChange={(checked) => setCourseForm(prev => ({ ...prev, is_published: checked }))}
@@ -1073,26 +1076,26 @@ const AdminCursos = () => {
 
                   <Button 
                     size="lg" 
-                    className="w-full"
+                    className="w-full h-11 sm:h-12"
                     onClick={handleSaveCourse}
                     disabled={isSaving}
                   >
-                    {isSaving ? "Salvando..." : selectedCourseId ? "Salvar alterações" : "Criar curso"}
+                    {isSaving ? "Salvando..." : selectedCourseId ? "Salvar" : "Criar curso"}
                   </Button>
                 </div>
               </TabsContent>
 
               {/* Tab: Modules */}
-              <TabsContent value="modules" className="space-y-4 mt-6">
+              <TabsContent value="modules" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                 {modulesLoading ? (
                   <LoadingState message="Carregando módulos..." />
                 ) : (
                   <>
                     {/* New module form */}
                     {isCreatingModule ? (
-                      <div className="bg-card border rounded-xl p-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label>Nome do módulo *</Label>
+                      <div className="bg-card border rounded-xl p-3 sm:p-4 space-y-3 sm:space-y-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-sm">Nome do módulo *</Label>
                           <Input
                             value={moduleForm.title}
                             onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
@@ -1135,12 +1138,12 @@ const AdminCursos = () => {
                         {modules.map((module, index) => (
                           <div
                             key={module.id}
-                            className="bg-card border rounded-xl p-4"
+                            className="bg-card border rounded-xl p-3 sm:p-4"
                           >
                             {editingModuleId === module.id ? (
-                              <div className="space-y-4">
-                                <div className="space-y-2">
-                                  <Label>Nome do módulo *</Label>
+                              <div className="space-y-3 sm:space-y-4">
+                                <div className="space-y-1.5">
+                                  <Label className="text-sm">Nome do módulo *</Label>
                                   <Input
                                     value={moduleForm.title}
                                     onChange={(e) => setModuleForm(prev => ({ ...prev, title: e.target.value }))}
@@ -1148,52 +1151,52 @@ const AdminCursos = () => {
                                   />
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <Label>Publicar</Label>
+                                  <Label className="text-sm">Publicar</Label>
                                   <Switch
                                     checked={moduleForm.is_published}
                                     onCheckedChange={(checked) => setModuleForm(prev => ({ ...prev, is_published: checked }))}
                                   />
                                 </div>
                                 <div className="flex gap-2">
-                                  <Button variant="outline" className="flex-1" onClick={handleCancelModuleEdit}>
+                                  <Button variant="outline" className="flex-1 h-9" onClick={handleCancelModuleEdit}>
                                     Cancelar
                                   </Button>
-                                  <Button className="flex-1" onClick={handleSaveModule} disabled={isSaving}>
+                                  <Button className="flex-1 h-9" onClick={handleSaveModule} disabled={isSaving}>
                                     Salvar
                                   </Button>
                                 </div>
                               </div>
                             ) : (
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                                   <div className="flex flex-col gap-0.5">
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-6 w-6"
+                                      className="h-5 w-5 sm:h-6 sm:w-6"
                                       disabled={index === 0}
                                       onClick={() => moveModule(module.id, "up")}
                                     >
-                                      <ChevronUp className="w-4 h-4" />
+                                      <ChevronUp className="w-3 h-3 sm:w-4 sm:h-4" />
                                     </Button>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="h-6 w-6"
+                                      className="h-5 w-5 sm:h-6 sm:w-6"
                                       disabled={index === modules.length - 1}
                                       onClick={() => moveModule(module.id, "down")}
                                     >
-                                      <ChevronDown className="w-4 h-4" />
+                                      <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                                     </Button>
                                   </div>
-                                  <div>
-                                    <p className="font-medium">{module.title}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm sm:text-base truncate">{module.title}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
                                       {(allLessons[module.id] || []).length} aulas • {module.is_published ? "Publicado" : "Rascunho"}
                                     </p>
                                   </div>
                                 </div>
-                                <Button variant="ghost" size="sm" onClick={() => handleEditModule(module)}>
+                                <Button variant="ghost" size="sm" className="shrink-0" onClick={() => handleEditModule(module)}>
                                   <Pencil className="w-4 h-4" />
                                 </Button>
                               </div>
@@ -1207,13 +1210,13 @@ const AdminCursos = () => {
               </TabsContent>
 
               {/* Tab: Aulas (Modules + Lessons) */}
-              <TabsContent value="content" className="space-y-4 mt-6">
+              <TabsContent value="content" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
                 {modulesLoading || lessonsLoading ? (
                   <LoadingState message="Carregando aulas..." />
                 ) : modules.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-muted-foreground mb-4">Crie módulos primeiro na aba "Módulos".</p>
-                    <Button onClick={() => setActiveTab("modules")}>
+                  <div className="text-center py-6 sm:py-8">
+                    <p className="text-sm text-muted-foreground mb-4">Crie módulos primeiro na aba "Módulos".</p>
+                    <Button size="sm" onClick={() => setActiveTab("modules")}>
                       Ir para Módulos
                     </Button>
                   </div>
@@ -1222,7 +1225,7 @@ const AdminCursos = () => {
                     type="multiple" 
                     value={expandedModules}
                     onValueChange={setExpandedModules}
-                    className="space-y-3"
+                    className="space-y-2 sm:space-y-3"
                   >
                     {modules.map((module) => {
                       const moduleLessons = allLessons[module.id] || [];
@@ -1232,20 +1235,20 @@ const AdminCursos = () => {
                           value={module.id}
                           className="bg-card border rounded-xl overflow-hidden"
                         >
-                          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-                            <div className="flex items-center gap-3 text-left">
-                              <div>
-                                <p className="font-semibold">{module.title}</p>
-                                <p className="text-sm text-muted-foreground">
+                          <AccordionTrigger className="px-3 sm:px-4 py-2.5 sm:py-3 hover:no-underline">
+                            <div className="flex items-center gap-2 sm:gap-3 text-left min-w-0">
+                              <div className="min-w-0">
+                                <p className="font-semibold text-sm sm:text-base truncate">{module.title}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {moduleLessons.length} {moduleLessons.length === 1 ? "aula" : "aulas"}
                                 </p>
                               </div>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent className="px-4 pb-4">
+                          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
                             {/* Lessons list */}
                             {moduleLessons.length > 0 && (
-                              <div className="space-y-2 mb-4">
+                              <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
                                 {moduleLessons.map((lesson, lessonIndex) => {
                                   const status = getLessonStatus(lesson);
                                   const config = contentTypeConfig[lesson.content_type as keyof typeof contentTypeConfig];
@@ -1262,13 +1265,14 @@ const AdminCursos = () => {
                                   return (
                                     <div
                                       key={lesson.id}
-                                      className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors"
+                                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors"
                                     >
+                                      {/* Move buttons - always visible on mobile */}
                                       <div className="flex flex-col gap-0.5">
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                                          className="h-5 w-5 sm:opacity-0 sm:group-hover:opacity-100"
                                           disabled={lessonIndex === 0}
                                           onClick={() => handleMoveLesson(lesson, "up")}
                                         >
@@ -1277,7 +1281,7 @@ const AdminCursos = () => {
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-5 w-5 opacity-0 group-hover:opacity-100"
+                                          className="h-5 w-5 sm:opacity-0 sm:group-hover:opacity-100"
                                           disabled={lessonIndex === moduleLessons.length - 1}
                                           onClick={() => handleMoveLesson(lesson, "down")}
                                         >
@@ -1285,47 +1289,48 @@ const AdminCursos = () => {
                                         </Button>
                                       </div>
                                       
-                                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${config?.color || "bg-muted"}`}>
-                                        <Icon className="w-4 h-4" />
+                                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${config?.color || "bg-muted"}`}>
+                                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                       </div>
                                       
                                       <div className="flex-1 min-w-0">
-                                        <p className="font-medium truncate">{lesson.title}</p>
-                                        <div className="flex items-center gap-2 mt-1">
+                                        <p className="font-medium text-sm truncate">{lesson.title}</p>
+                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-wrap">
                                           <button
                                             onClick={() => handleToggleLessonPublish(lesson)}
-                                            className={`px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity ${status.color}`}
+                                            className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium flex items-center gap-0.5 sm:gap-1 cursor-pointer hover:opacity-80 transition-opacity ${status.color}`}
                                             title={lesson.is_published ? "Clique para despublicar" : "Clique para publicar"}
                                           >
                                             <span>{status.icon}</span>
                                             {status.label}
                                           </button>
                                           {lesson.access_level === "premium" && (
-                                            <span className="px-2 py-0.5 rounded text-xs bg-primary/20 text-primary">
+                                            <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs bg-primary/20 text-primary">
                                               Premium
                                             </span>
                                           )}
                                         </div>
                                       </div>
                                       
-                                      <div className="flex gap-1 opacity-0 group-hover:opacity-100">
+                                      {/* Action buttons - always visible on mobile */}
+                                      <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 shrink-0">
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8"
+                                          className="h-7 w-7 sm:h-8 sm:w-8"
                                           onClick={() => handleEditLesson(lesson)}
                                           title="Editar"
                                         >
-                                          <Pencil className="w-4 h-4" />
+                                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                         </Button>
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8"
+                                          className="h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex"
                                           onClick={() => handleDuplicateLesson(lesson)}
                                           title="Duplicar"
                                         >
-                                          <Copy className="w-4 h-4" />
+                                          <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                         </Button>
                                       </div>
                                     </div>
@@ -1344,7 +1349,7 @@ const AdminCursos = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="w-full"
+                                className="w-full h-9"
                                 onClick={() => handleStartCreateLesson(module.id)}
                               >
                                 <Plus className="w-4 h-4 mr-2" />
