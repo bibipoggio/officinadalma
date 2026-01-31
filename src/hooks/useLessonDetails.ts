@@ -235,7 +235,33 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
 export function useLessonProgress(lessonId: string, durationSeconds: number | null) {
   const { user } = useAuth();
   const lastSaveRef = useRef<number>(0);
+  const lastPositionRef = useRef<number>(0);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Force save without throttling (for page unload scenarios)
+  const forceSave = useCallback(
+    async (currentSeconds: number) => {
+      if (!user || !lessonId || currentSeconds <= 0) return;
+
+      try {
+        const percent = durationSeconds && durationSeconds > 0
+          ? Math.min(100, Math.round((currentSeconds / durationSeconds) * 100))
+          : 0;
+
+        await supabase
+          .from("lesson_progress")
+          .update({
+            last_position_seconds: Math.round(currentSeconds),
+            progress_percent: percent,
+          })
+          .eq("user_id", user.id)
+          .eq("lesson_id", lessonId);
+      } catch (err) {
+        console.error("Error force saving progress:", err);
+      }
+    },
+    [user, lessonId, durationSeconds]
+  );
 
   const updateProgress = useCallback(
     async (data: {
@@ -245,9 +271,9 @@ export function useLessonProgress(lessonId: string, durationSeconds: number | nu
     }) => {
       if (!user || !lessonId) return;
 
-      // Throttle saves to every 10 seconds minimum
+      // Throttle regular saves to every 5 seconds minimum (reduced from 10)
       const now = Date.now();
-      if (now - lastSaveRef.current < 10000 && !data.completed_at) {
+      if (now - lastSaveRef.current < 5000 && !data.completed_at) {
         return;
       }
       lastSaveRef.current = now;
@@ -272,14 +298,17 @@ export function useLessonProgress(lessonId: string, durationSeconds: number | nu
 
   const savePosition = useCallback(
     (currentSeconds: number) => {
+      // Always update the ref for page unload saves
+      lastPositionRef.current = currentSeconds;
+
       if (!durationSeconds || durationSeconds <= 0) {
-        updateProgress({ last_position_seconds: currentSeconds });
+        updateProgress({ last_position_seconds: Math.round(currentSeconds) });
         return;
       }
 
       const percent = Math.min(100, Math.round((currentSeconds / durationSeconds) * 100));
       updateProgress({
-        last_position_seconds: currentSeconds,
+        last_position_seconds: Math.round(currentSeconds),
         progress_percent: percent,
       });
     },
@@ -310,11 +339,46 @@ export function useLessonProgress(lessonId: string, durationSeconds: number | nu
     }
   }, [user, lessonId]);
 
+  // Save progress when user leaves the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (lastPositionRef.current > 0) {
+        // Use sendBeacon for reliable save on page close
+        const percent = durationSeconds && durationSeconds > 0
+          ? Math.min(100, Math.round((lastPositionRef.current / durationSeconds) * 100))
+          : 0;
+        
+        // Fallback: trigger immediate save
+        forceSave(lastPositionRef.current);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden" && lastPositionRef.current > 0) {
+        forceSave(lastPositionRef.current);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      
+      // Save on unmount as well
+      if (lastPositionRef.current > 0) {
+        forceSave(lastPositionRef.current);
+      }
+    };
+  }, [forceSave, durationSeconds]);
+
   return {
     updateProgress,
     savePosition,
     markCompleted,
     isSaving,
+    forceSave,
   };
 }
 

@@ -117,7 +117,11 @@ export function AudioPlayer({
         onPlay={() => setIsPlaying(true)}
         onPause={() => {
           setIsPlaying(false);
-          if (audioRef.current) onTimeUpdate?.(audioRef.current.currentTime);
+          // Force save on pause for better progress tracking
+          if (audioRef.current) {
+            lastSaveRef.current = 0; // Reset throttle to ensure save
+            onTimeUpdate?.(audioRef.current.currentTime);
+          }
         }}
         onEnded={() => {
           setIsPlaying(false);

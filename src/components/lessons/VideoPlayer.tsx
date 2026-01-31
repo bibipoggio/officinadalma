@@ -172,7 +172,11 @@ export function VideoPlayer({
             onPlay={() => setIsPlaying(true)}
             onPause={() => {
               setIsPlaying(false);
-              if (videoRef.current) onTimeUpdate?.(videoRef.current.currentTime);
+              // Force save on pause for better progress tracking
+              if (videoRef.current) {
+                lastSaveRef.current = 0; // Reset throttle to ensure save
+                onTimeUpdate?.(videoRef.current.currentTime);
+              }
             }}
             onEnded={() => {
               setIsPlaying(false);
