@@ -336,29 +336,29 @@ const Aula = () => {
 
         {/* Navigation */}
         {(prevLesson || nextLesson) && (
-          <div className="flex gap-3">
+          <div className="flex gap-2 w-full overflow-hidden">
             {prevLesson && (
-              <Link to={`/aulas/${slug}/aula/${prevLesson.id}`} className="flex-1">
+              <Link to={`/aulas/${slug}/aula/${prevLesson.id}`} className="flex-1 min-w-0">
                 <Button
                   variant="outline"
-                  className="w-full justify-start text-left"
-                  size="lg"
+                  className="w-full justify-start text-left min-w-0"
+                  size="default"
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2 shrink-0" />
+                  <ChevronLeft className="w-4 h-4 shrink-0" />
                   <span className="truncate">{prevLesson.title}</span>
                 </Button>
               </Link>
             )}
 
             {nextLesson && (
-              <Link to={`/aulas/${slug}/aula/${nextLesson.id}`} className="flex-1">
+              <Link to={`/aulas/${slug}/aula/${nextLesson.id}`} className="flex-1 min-w-0">
                 <Button
                   variant="outline"
-                  className="w-full justify-end text-right"
-                  size="lg"
+                  className="w-full justify-end text-right min-w-0"
+                  size="default"
                 >
                   <span className="truncate">{nextLesson.title}</span>
-                  <ChevronRight className="w-4 h-4 ml-2 shrink-0" />
+                  <ChevronRight className="w-4 h-4 shrink-0" />
                 </Button>
               </Link>
             )}
