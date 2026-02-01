@@ -361,10 +361,10 @@ export function MediaUpload({
 
   // No content - show compact upload interface
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 min-w-0 overflow-x-auto">
       <Label className="text-base font-medium">{label || defaultLabel}</Label>
 
-      <Tabs defaultValue="upload" className="w-full">
+      <Tabs defaultValue="upload" className="w-full min-w-0">
         <TabsList className="grid w-full grid-cols-2 h-9">
           <TabsTrigger value="upload" className="text-xs gap-1.5">
             <Upload className="w-3.5 h-3.5" />
@@ -439,13 +439,13 @@ export function MediaUpload({
         </TabsContent>
 
         <TabsContent value="link" className="mt-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 min-w-0">
             <Input
               type="url"
               value={externalUrl}
               onChange={(e) => setExternalUrl(e.target.value)}
               placeholder="https://..."
-              className="h-10"
+              className="h-10 min-w-0 flex-1"
             />
             <Button 
               onClick={handleAddExternalUrl} 
