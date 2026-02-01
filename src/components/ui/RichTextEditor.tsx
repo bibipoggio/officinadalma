@@ -1,4 +1,4 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Bold, Italic, Underline } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ export const RichTextEditor = ({
   maxLength,
 }: RichTextEditorProps) => {
   const editorRef = useRef<HTMLDivElement>(null);
+  const isInternalChange = useRef(false);
 
   const execCommand = useCallback((command: string) => {
     document.execCommand(command, false);
@@ -39,6 +40,7 @@ export const RichTextEditor = ({
 
   const handleInput = useCallback(() => {
     if (editorRef.current) {
+      isInternalChange.current = true;
       let html = editorRef.current.innerHTML;
       // Convert empty div/br to empty string
       if (html === "<br>" || html === "<div><br></div>") {
@@ -62,11 +64,15 @@ export const RichTextEditor = ({
     document.execCommand("insertHTML", false, htmlText);
   }, []);
 
-  // Sync value to editor when it changes externally
-  const handleFocus = useCallback(() => {
-    if (editorRef.current && editorRef.current.innerHTML !== value) {
-      // Only sync if different to avoid cursor jump
+  // Sync value to editor when it changes externally (not from user input)
+  useEffect(() => {
+    if (editorRef.current && !isInternalChange.current) {
+      // Only update if the value is different from current content
+      if (editorRef.current.innerHTML !== value) {
+        editorRef.current.innerHTML = value || "";
+      }
     }
+    isInternalChange.current = false;
   }, [value]);
 
   return (
@@ -121,8 +127,6 @@ export const RichTextEditor = ({
         onInput={handleInput}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
-        onFocus={handleFocus}
-        dangerouslySetInnerHTML={{ __html: value || "" }}
         data-placeholder={placeholder}
         suppressContentEditableWarning
       />
