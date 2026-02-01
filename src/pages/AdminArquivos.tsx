@@ -115,15 +115,42 @@ const AdminArquivos = () => {
   const fetchFiles = async (bucketId: string) => {
     setIsLoadingFiles(true);
     try {
-      const { data, error } = await supabase.storage.from(bucketId).list("", {
-        limit: 500,
-        sortBy: { column: "created_at", order: "desc" },
-      });
-      if (error) throw error;
+      const allFiles: StorageFile[] = [];
       
-      // Filter out folders (items without id)
-      const filesOnly = (data || []).filter(item => item.id) as StorageFile[];
-      setFiles(filesOnly.map(f => ({ ...f, bucket_id: bucketId })));
+      // Recursive function to list files in all folders
+      const listFilesRecursive = async (path: string = "") => {
+        const { data, error } = await supabase.storage.from(bucketId).list(path, {
+          limit: 500,
+          sortBy: { column: "created_at", order: "desc" },
+        });
+        
+        if (error) throw error;
+        
+        for (const item of data || []) {
+          if (item.id) {
+            // It's a file
+            const fullPath = path ? `${path}/${item.name}` : item.name;
+            allFiles.push({ 
+              ...item, 
+              name: fullPath,
+              bucket_id: bucketId 
+            } as StorageFile);
+          } else {
+            // It's a folder - recurse into it
+            const folderPath = path ? `${path}/${item.name}` : item.name;
+            await listFilesRecursive(folderPath);
+          }
+        }
+      };
+      
+      await listFilesRecursive("");
+      
+      // Sort by created_at descending
+      allFiles.sort((a, b) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setFiles(allFiles);
     } catch (error) {
       console.error("Error fetching files:", error);
       toast({

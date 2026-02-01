@@ -445,13 +445,25 @@ const AdminCursos = () => {
       return;
     }
 
-    if ((lessonForm.content_type === "video" || lessonForm.content_type === "audio") && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Arquivo de mídia", variant: "destructive" });
+    // Validate required media for video/audio content types
+    if (lessonForm.content_type === "video" && !lessonForm.media_url.trim()) {
+      toast({ title: "Falta preencher: Arquivo de vídeo", variant: "destructive" });
       return;
     }
 
-    if ((lessonForm.content_type === "video" || lessonForm.content_type === "audio") && lessonForm.media_url && !isValidUrl(lessonForm.media_url)) {
-      toast({ title: "O link da mídia não é válido.", variant: "destructive" });
+    if (lessonForm.content_type === "audio" && !lessonForm.media_url.trim()) {
+      toast({ title: "Falta preencher: Arquivo de áudio", variant: "destructive" });
+      return;
+    }
+
+    // Validate URL format if provided
+    if (lessonForm.media_url && !isValidUrl(lessonForm.media_url)) {
+      toast({ title: "O link do vídeo não é válido.", variant: "destructive" });
+      return;
+    }
+
+    if (lessonForm.audio_url && !isValidUrl(lessonForm.audio_url)) {
+      toast({ title: "O link do áudio não é válido.", variant: "destructive" });
       return;
     }
 
@@ -756,7 +768,8 @@ const AdminCursos = () => {
           </div>
         )}
 
-        {(lessonForm.content_type === "video" || lessonForm.content_type === "audio") && (
+        {/* Video Upload - available for video and text lessons */}
+        {(lessonForm.content_type === "video" || lessonForm.content_type === "text") && (
           <MediaUpload
             currentUrl={lessonForm.media_url || null}
             onUrlChange={(url) => setLessonForm(prev => ({ ...prev, media_url: url || "" }))}
@@ -764,28 +777,52 @@ const AdminCursos = () => {
               ...prev, 
               duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
             }))}
-            mediaType={lessonForm.content_type as "video" | "audio"}
-            label={`Arquivo de ${lessonForm.content_type === "video" ? "vídeo" : "áudio"} *`}
+            mediaType="video"
+            label={lessonForm.content_type === "video" ? "Vídeo *" : "Vídeo (opcional)"}
+          />
+        )}
+
+        {/* Audio Upload - available for audio and text lessons */}
+        {(lessonForm.content_type === "audio" || lessonForm.content_type === "text") && (
+          <MediaUpload
+            currentUrl={lessonForm.content_type === "audio" ? lessonForm.media_url || null : lessonForm.audio_url || null}
+            onUrlChange={(url) => {
+              if (lessonForm.content_type === "audio") {
+                setLessonForm(prev => ({ ...prev, media_url: url || "" }));
+              } else {
+                setLessonForm(prev => ({ ...prev, audio_url: url || "" }));
+              }
+            }}
+            onDurationChange={(seconds) => {
+              if (lessonForm.content_type === "audio") {
+                setLessonForm(prev => ({ 
+                  ...prev, 
+                  duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+                }));
+              } else {
+                setLessonForm(prev => ({ 
+                  ...prev, 
+                  audio_duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+                }));
+              }
+            }}
+            mediaType="audio"
+            label={lessonForm.content_type === "audio" ? "Áudio *" : "Áudio/Podcast (opcional)"}
           />
         )}
 
         {/* Alternative Audio for Video Lessons (Podcast mode) */}
         {lessonForm.content_type === "video" && (
-          <div className="border-t pt-3 sm:pt-4">
-            <MediaUpload
-              currentUrl={lessonForm.audio_url || null}
-              onUrlChange={(url) => setLessonForm(prev => ({ ...prev, audio_url: url || "" }))}
-              onDurationChange={(seconds) => setLessonForm(prev => ({ 
-                ...prev, 
-                audio_duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
-              }))}
-              mediaType="audio"
-              label="Áudio alternativo (podcast)"
-            />
-            <p className="text-xs text-muted-foreground mt-1.5">
-              Versão em áudio para modo podcast (opcional)
-            </p>
-          </div>
+          <MediaUpload
+            currentUrl={lessonForm.audio_url || null}
+            onUrlChange={(url) => setLessonForm(prev => ({ ...prev, audio_url: url || "" }))}
+            onDurationChange={(seconds) => setLessonForm(prev => ({ 
+              ...prev, 
+              audio_duration_minutes: seconds ? String(Math.round(seconds / 60)) : "" 
+            }))}
+            mediaType="audio"
+            label="Áudio alternativo (podcast)"
+          />
         )}
 
         {/* Text Content for Video/Audio Lessons */}
