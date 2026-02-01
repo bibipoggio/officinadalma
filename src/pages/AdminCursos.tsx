@@ -681,7 +681,7 @@ const AdminCursos = () => {
 
   // Render lesson form
   const renderLessonForm = (moduleId: string) => (
-    <div className="bg-muted/30 border rounded-xl p-3 sm:p-4 space-y-3 sm:space-y-4 mt-3">
+    <div className="bg-muted/30 border rounded-xl p-3 sm:p-4 space-y-3 sm:space-y-4 mt-3 -mx-1 sm:mx-0 overflow-visible">
       {/* Draft recovery prompt */}
       {showDraftPrompt && (
         <div className="bg-warning/10 border border-warning/30 rounded-lg p-3 flex flex-col gap-2">
@@ -931,7 +931,7 @@ const AdminCursos = () => {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 pb-16 px-0 sm:px-0">
+      <div className="max-w-5xl mx-auto space-y-4 sm:space-y-6 pb-16 overflow-visible">
         {/* List View */}
         {viewMode === "list" && (
           <>
@@ -1270,7 +1270,7 @@ const AdminCursos = () => {
                         <AccordionItem 
                           key={module.id} 
                           value={module.id}
-                          className="bg-card border rounded-xl overflow-hidden"
+                          className="bg-card border rounded-xl overflow-visible"
                         >
                           <AccordionTrigger className="px-3 sm:px-4 py-2.5 sm:py-3 hover:no-underline">
                             <div className="flex items-center gap-2 sm:gap-3 text-left min-w-0">
@@ -1282,7 +1282,7 @@ const AdminCursos = () => {
                               </div>
                             </div>
                           </AccordionTrigger>
-                          <AccordionContent className="px-3 sm:px-4 pb-3 sm:pb-4">
+                          <AccordionContent className="px-2 sm:px-4 pb-3 sm:pb-4 overflow-visible">
                             {/* Lessons list */}
                             {moduleLessons.length > 0 && (
                               <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
