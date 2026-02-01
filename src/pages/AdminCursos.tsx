@@ -720,7 +720,7 @@ const AdminCursos = () => {
         </Button>
       </div>
 
-      <div className="grid gap-3 sm:gap-4">
+      <div className="grid gap-3 sm:gap-4 min-w-0 overflow-x-auto">
         <div className="space-y-1.5">
           <Label className="text-sm">Título *</Label>
           <Input
