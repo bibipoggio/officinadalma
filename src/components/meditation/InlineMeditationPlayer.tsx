@@ -1,4 +1,4 @@
- import { useState, useRef, useEffect } from "react";
+ import { useState, useRef, useEffect, useCallback } from "react";
  import { Button } from "@/components/ui/button";
  import { Slider } from "@/components/ui/slider";
  import {
@@ -11,11 +11,13 @@
    ChevronUp,
  } from "lucide-react";
  import { cn } from "@/lib/utils";
+ import { useMeditationTracking } from "@/hooks/useEnhancedAnalytics";
  
  interface InlineMeditationPlayerProps {
    audioUrl: string;
    title?: string;
    durationSeconds?: number | null;
+   dailyContentId?: string;
  }
  
  const formatTime = (seconds: number) => {
@@ -28,6 +30,7 @@
    audioUrl,
    title = "Meditação do Dia",
    durationSeconds,
+   dailyContentId,
  }: InlineMeditationPlayerProps) {
    const audioRef = useRef<HTMLAudioElement>(null);
    const [isExpanded, setIsExpanded] = useState(false);
@@ -35,6 +38,16 @@
    const [currentTime, setCurrentTime] = useState(0);
    const [duration, setDuration] = useState(durationSeconds || 0);
    const [audioError, setAudioError] = useState(false);
+   const [hasTrackedPlay, setHasTrackedPlay] = useState(false);
+   const { trackPlay, trackComplete } = useMeditationTracking();
+ 
+   // Track meditation completion
+   const handleEnded = useCallback(() => {
+     setIsPlaying(false);
+     if (dailyContentId) {
+       trackComplete(dailyContentId);
+     }
+   }, [dailyContentId, trackComplete]);
  
    useEffect(() => {
      const audio = audioRef.current;
@@ -42,7 +55,6 @@
  
      const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
      const handleDurationChange = () => setDuration(audio.duration || durationSeconds || 0);
-     const handleEnded = () => setIsPlaying(false);
      const handleError = () => setAudioError(true);
      const handleCanPlay = () => setAudioError(false);
  
@@ -59,7 +71,7 @@
        audio.removeEventListener("error", handleError);
        audio.removeEventListener("canplay", handleCanPlay);
      };
-   }, [audioUrl, durationSeconds]);
+   }, [audioUrl, durationSeconds, handleEnded]);
  
    const togglePlay = () => {
      if (!audioRef.current) return;
@@ -72,6 +84,12 @@
          setIsExpanded(true);
        }
        audioRef.current.play().catch(() => setAudioError(true));
+       
+       // Track play event once per session
+       if (!hasTrackedPlay && dailyContentId) {
+         trackPlay(dailyContentId);
+         setHasTrackedPlay(true);
+       }
      }
      setIsPlaying(!isPlaying);
    };
