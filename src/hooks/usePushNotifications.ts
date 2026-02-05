@@ -10,12 +10,29 @@ interface PushSubscriptionData {
   };
 }
 
+// Get VAPID public key from environment or use the one from secrets
+const getVapidPublicKey = async (): Promise<string | null> => {
+  try {
+    // Call edge function to get the public key
+    const { data, error } = await supabase.functions.invoke('get-vapid-key');
+    if (error || !data?.publicKey) {
+      console.error('Failed to get VAPID key:', error);
+      return null;
+    }
+    return data.publicKey;
+  } catch (err) {
+    console.error('Error fetching VAPID key:', err);
+    return null;
+  }
+};
+
 export function usePushNotifications() {
   const { user } = useAuth();
   const [isSupported, setIsSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [permission, setPermission] = useState<NotificationPermission>("default");
+  const [vapidKey, setVapidKey] = useState<string | null>(null);
 
   // Check if push notifications are supported
   useEffect(() => {
@@ -24,6 +41,8 @@ export function usePushNotifications() {
     
     if (supported) {
       setPermission(Notification.permission);
+      // Fetch VAPID key
+      getVapidPublicKey().then(setVapidKey);
     }
     
     setIsLoading(false);
@@ -75,7 +94,10 @@ export function usePushNotifications() {
   }, [isSupported]);
 
   const subscribe = useCallback(async (): Promise<boolean> => {
-    if (!isSupported || !user) return false;
+    if (!isSupported || !user || !vapidKey) {
+      console.error('Cannot subscribe: missing requirements', { isSupported, user: !!user, vapidKey: !!vapidKey });
+      return false;
+    }
 
     try {
       setIsLoading(true);
@@ -94,13 +116,9 @@ export function usePushNotifications() {
       
       if (!subscription) {
         // Subscribe to push notifications
-        // Note: In production, you'd get the VAPID public key from your server
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            // This is a placeholder VAPID public key - in production, generate your own
-            "BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U"
-          ),
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
         });
       }
 
@@ -138,7 +156,7 @@ export function usePushNotifications() {
       setIsLoading(false);
       return false;
     }
-  }, [isSupported, user, requestPermission]);
+  }, [isSupported, user, requestPermission, vapidKey]);
 
   const unsubscribe = useCallback(async (): Promise<boolean> => {
     if (!isSupported || !user) return false;
@@ -202,6 +220,7 @@ export function usePushNotifications() {
     subscribe,
     unsubscribe,
     showNotification,
+    vapidKey,
   };
 }
 

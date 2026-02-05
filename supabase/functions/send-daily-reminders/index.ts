@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import webPush from "web-push";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +25,12 @@ interface Profile {
   notification_enabled: boolean;
 }
 
+interface SendResult {
+  success: boolean;
+  endpoint: string;
+  error?: string;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,7 +39,24 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+    const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+    const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error("Missing VAPID keys");
+      return new Response(
+        JSON.stringify({ error: "VAPID keys not configured" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Configure web-push with VAPID keys
+    webPush.setVapidDetails(
+      "mailto:contato@oficinadalma.com.br",
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get today's date in Brazil timezone
@@ -111,25 +135,69 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Note: In production, you would use web-push library here
-    // For now, we log what would be sent
-    const results = {
-      totalSubscriptions: subscriptions.length,
-      enabledUsers: profiles.length,
-      activeSubscriptions: activeSubscriptions.length,
-      payload: notificationPayload,
-      dailyContent: dailyContent ? {
-        title: dailyContent.tonica_title,
-      } : null,
-    };
+    // Send push notifications to all active subscriptions
+    const sendResults: SendResult[] = [];
+    const failedEndpoints: string[] = [];
 
-    console.log("Daily reminder results:", results);
+    for (const sub of activeSubscriptions) {
+      const pushSubscription = {
+        endpoint: sub.endpoint,
+        keys: {
+          p256dh: sub.p256dh,
+          auth: sub.auth,
+        },
+      };
+
+      try {
+        await webPush.sendNotification(
+          pushSubscription,
+          JSON.stringify(notificationPayload)
+        );
+        sendResults.push({ success: true, endpoint: sub.endpoint });
+        console.log(`✓ Notification sent to ${sub.endpoint.substring(0, 50)}...`);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        console.error(`✗ Failed to send to ${sub.endpoint.substring(0, 50)}...:`, errorMessage);
+        sendResults.push({ success: false, endpoint: sub.endpoint, error: errorMessage });
+        
+        // If subscription is invalid (410 Gone or 404), mark for cleanup
+        const webPushError = error as { statusCode?: number };
+        if (webPushError.statusCode === 410 || webPushError.statusCode === 404) {
+          failedEndpoints.push(sub.endpoint);
+        }
+      }
+    }
+
+    // Clean up invalid subscriptions
+    if (failedEndpoints.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("push_subscriptions")
+        .delete()
+        .in("endpoint", failedEndpoints);
+      
+      if (deleteError) {
+        console.error("Error cleaning up invalid subscriptions:", deleteError);
+      } else {
+        console.log(`Cleaned up ${failedEndpoints.length} invalid subscriptions`);
+      }
+    }
+
+    const successCount = sendResults.filter(r => r.success).length;
+    const failCount = sendResults.filter(r => !r.success).length;
+
+    console.log(`Daily reminder results: ${successCount} sent, ${failCount} failed, ${failedEndpoints.length} cleaned up`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Would send ${activeSubscriptions.length} notifications`,
-        ...results 
+        message: `Sent ${successCount} notifications, ${failCount} failed`,
+        totalSubscriptions: subscriptions.length,
+        enabledUsers: profiles.length,
+        activeSubscriptions: activeSubscriptions.length,
+        sent: successCount,
+        failed: failCount,
+        cleanedUp: failedEndpoints.length,
+        dailyContent: dailyContent ? { title: dailyContent.tonica_title } : null,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
