@@ -417,6 +417,52 @@ export type Database = {
           },
         ]
       }
+      daily_content_analytics: {
+        Row: {
+          action: string
+          created_at: string
+          daily_content_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          daily_content_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          daily_content_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_content_analytics_daily_content_id_fkey"
+            columns: ["daily_content_id"]
+            isOneToOne: false
+            referencedRelation: "daily_content"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_content_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_content_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_replies: {
         Row: {
           author_id: string
@@ -1039,7 +1085,15 @@ export type Database = {
           new_users: number
         }[]
       }
+      get_enhanced_analytics: { Args: { p_period?: string }; Returns: Json }
       get_lesson_analytics: { Args: never; Returns: Json }
+      get_new_users_history: {
+        Args: { p_days?: number }
+        Returns: {
+          date: string
+          new_users: number
+        }[]
+      }
       get_public_profile: {
         Args: { profile_id: string }
         Returns: {
@@ -1069,6 +1123,17 @@ export type Database = {
           trial_ends_at: string
           updated_at: string
           user_id: string
+        }[]
+      }
+      get_users_list: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          id: string
+          last_active: string
+          total_checkins: number
+          total_lesson_views: number
         }[]
       }
       has_role: {

@@ -295,6 +295,7 @@ const Home = () => {
                     audioUrl={dailyContent.meditation_audio_url}
                     title={dailyContent.tonica_title || "Meditação do Dia"}
                     durationSeconds={dailyContent.meditation_duration_seconds}
+                    dailyContentId={dailyContent.id}
                   />
                 </div>
               )}
