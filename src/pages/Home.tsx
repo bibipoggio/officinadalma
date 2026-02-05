@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createSafeHtml } from "@/lib/sanitize";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
@@ -36,7 +36,9 @@ import {
   BookOpen,
   CheckCircle,
   Pencil,
+  Calendar,
 } from "lucide-react";
+import { InlineMeditationPlayer } from "@/components/meditation/InlineMeditationPlayer";
 
 const formatDateDisplay = (dateStr: string) => {
   const date = new Date(dateStr + "T12:00:00");
@@ -278,7 +280,7 @@ const Home = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Moon className="w-5 h-5 text-primary" />
                     </div>
@@ -286,23 +288,14 @@ const Home = () => {
                       <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
                         Meditação do Dia
                       </p>
-                      <h3 className="font-display text-lg font-semibold text-foreground">
-                        Meditação Disponível
-                      </h3>
                     </div>
                   </div>
 
-                  {dailyContent.meditation_duration_seconds && (
-                    <p className="text-sm text-muted-foreground">
-                      Duração: {Math.round(dailyContent.meditation_duration_seconds / 60)} minutos
-                    </p>
-                  )}
-
-                  <Link to={`/meditacao/${today}`}>
-                    <Button className="w-full sm:w-auto">
-                      Ouvir agora <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
+                  <InlineMeditationPlayer
+                    audioUrl={dailyContent.meditation_audio_url}
+                    title={dailyContent.tonica_title || "Meditação do Dia"}
+                    durationSeconds={dailyContent.meditation_duration_seconds}
+                  />
                 </div>
               )}
             </CardContent>
