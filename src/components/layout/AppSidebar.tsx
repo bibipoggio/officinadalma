@@ -15,6 +15,7 @@ import {
   LogOut,
   FolderOpen,
   BarChart3,
+  Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +41,7 @@ const adminItems = [
   { href: "/admin/moderacao", label: "Moderação", icon: Shield },
   { href: "/admin/arquivos", label: "Arquivos", icon: FolderOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/admin/eventos", label: "Eventos", icon: Bell },
 ];
 
 export function AppSidebar({ open, onClose }: AppSidebarProps) {

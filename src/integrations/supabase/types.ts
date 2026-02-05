@@ -864,6 +864,60 @@ export type Database = {
           },
         ]
       }
+      scheduled_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_of_week: number
+          description: string | null
+          event_time: string
+          id: string
+          is_active: boolean
+          reminder_minutes_before: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week: number
+          description?: string | null
+          event_time: string
+          id?: string
+          is_active?: boolean
+          reminder_minutes_before?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_of_week?: number
+          description?: string | null
+          event_time?: string
+          id?: string
+          is_active?: boolean
+          reminder_minutes_before?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           created_at: string
