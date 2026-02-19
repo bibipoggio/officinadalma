@@ -17,6 +17,9 @@ import {
   BarChart3,
   Bell,
   UserCog,
+  Instagram,
+  MessageCircle,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -173,6 +176,40 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                 </ul>
               </>
             )}
+
+            {/* Conecte-se Section */}
+            <div className="my-4 border-t border-sidebar-border" />
+            <p className="px-3 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Conecte-se
+            </p>
+            <ul className="space-y-1">
+              <li>
+                <a
+                  href="https://www.instagram.com/officinadalma/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                >
+                  <Instagram className="w-5 h-5" />
+                  Instagram da Officina
+                  <ExternalLink className="w-3.5 h-3.5 ml-auto opacity-50" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://chat.whatsapp.com/JbZYUXvrcMkLQjql8RvmrE?mode=gi_t"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  Grupo do WhatsApp
+                  <ExternalLink className="w-3.5 h-3.5 ml-auto opacity-50" />
+                </a>
+              </li>
+            </ul>
 
             {/* Logout Button */}
             {isAuthenticated && (

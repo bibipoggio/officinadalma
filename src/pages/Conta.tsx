@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Lock, CreditCard, LogOut, Shield } from "lucide-react";
+import { User, Mail, Lock, CreditCard, LogOut, Shield, Instagram, MessageCircle } from "lucide-react";
 
 const Conta = () => {
   const { user, profile, role, isLoading, signOut, hasAdminAccess } = useAuth();
@@ -93,6 +93,54 @@ const Conta = () => {
                 </CardContent>
               </Card>
             )}
+
+            {/* Conecte-se Section */}
+            <div>
+              <h2 className="text-lg font-display font-semibold text-foreground mb-3 px-1">Conecte-se</h2>
+              <div className="space-y-4">
+                <Card variant="elevated">
+                  <CardContent className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Instagram className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-display font-semibold text-foreground text-base">
+                        Siga a Officina da Alma
+                      </h3>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Conteúdos, avisos e inspirações do dia.
+                    </p>
+                    <Button variant="primary" size="lg" className="w-full text-base" asChild>
+                      <a href="https://www.instagram.com/officinadalma/" target="_blank" rel="noopener noreferrer">
+                        Abrir Instagram
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card variant="elevated">
+                  <CardContent className="p-6 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MessageCircle className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-display font-semibold text-foreground text-base">
+                        Entre no grupo do WhatsApp
+                      </h3>
+                    </div>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Aqui você receberá os links para as nossas aulas ao vivo.
+                    </p>
+                    <Button variant="primary" size="lg" className="w-full text-base" asChild>
+                      <a href="https://chat.whatsapp.com/JbZYUXvrcMkLQjql8RvmrE?mode=gi_t" target="_blank" rel="noopener noreferrer">
+                        Entrar no grupo
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
 
             {/* Notification Settings */}
             <NotificationSettings />
