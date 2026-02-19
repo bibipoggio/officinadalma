@@ -39,6 +39,7 @@ export interface CourseLesson {
   is_published: boolean;
   position: number;
   summary: string | null;
+  deleted_at: string | null;
 }
 
 export function useAdminCourses() {

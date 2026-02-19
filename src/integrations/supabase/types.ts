@@ -199,6 +199,7 @@ export type Database = {
           content_type: string
           course_id: string
           created_at: string
+          deleted_at: string | null
           duration_seconds: number | null
           id: string
           is_published: boolean
@@ -220,6 +221,7 @@ export type Database = {
           content_type?: string
           course_id: string
           created_at?: string
+          deleted_at?: string | null
           duration_seconds?: number | null
           id?: string
           is_published?: boolean
@@ -241,6 +243,7 @@ export type Database = {
           content_type?: string
           course_id?: string
           created_at?: string
+          deleted_at?: string | null
           duration_seconds?: number | null
           id?: string
           is_published?: boolean
