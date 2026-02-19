@@ -8,12 +8,21 @@ import { Badge } from "@/components/ui/badge";
 import { useState, useMemo } from "react";
 import { useAdminUsers, type AdminUser } from "@/hooks/useAdminUsers";
 import { useAuth } from "@/contexts/AuthContext";
-import { Search, Shield, ShieldAlert, ShieldCheck, UserX, UserCheck } from "lucide-react";
+import { Search, Shield, ShieldAlert, ShieldCheck, UserX, UserCheck, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { format } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ptBR } from "date-fns/locale";
 
 type RoleFilter = "all" | "user" | "moderator" | "admin";
 type StatusFilter = "all" | "active" | "suspended";
+type SortField = "name" | "created_at" | "role";
+type SortDir = "asc" | "desc";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
@@ -34,6 +43,8 @@ const AdminUsuarios = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   // Confirmation modal state
   const [confirmAction, setConfirmAction] = useState<{
@@ -45,7 +56,7 @@ const AdminUsuarios = () => {
   const [isActioning, setIsActioning] = useState(false);
 
   const filteredUsers = useMemo(() => {
-    return users.filter((u) => {
+    const filtered = users.filter((u) => {
       const matchesSearch =
         !search ||
         (u.display_name || "").toLowerCase().includes(search.toLowerCase()) ||
@@ -57,7 +68,22 @@ const AdminUsuarios = () => {
         (statusFilter === "suspended" && u.is_suspended);
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, search, roleFilter, statusFilter]);
+
+    filtered.sort((a, b) => {
+      let cmp = 0;
+      if (sortField === "name") {
+        cmp = (a.display_name || "").localeCompare(b.display_name || "");
+      } else if (sortField === "created_at") {
+        cmp = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      } else if (sortField === "role") {
+        const order: Record<string, number> = { admin: 0, moderator: 1, user: 2 };
+        cmp = (order[a.role] ?? 3) - (order[b.role] ?? 3);
+      }
+      return sortDir === "asc" ? cmp : -cmp;
+    });
+
+    return filtered;
+  }, [users, search, roleFilter, statusFilter, sortField, sortDir]);
 
   const handleConfirmAction = async () => {
     if (!confirmAction) return;
@@ -115,7 +141,7 @@ const AdminUsuarios = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           <div className="flex gap-1">
             {(["all", "user", "moderator", "admin"] as RoleFilter[]).map((r) => (
               <Button
@@ -142,6 +168,29 @@ const AdminUsuarios = () => {
               </Button>
             ))}
           </div>
+        </div>
+
+        {/* Sort */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">Ordenar por:</span>
+          <Select value={sortField} onValueChange={(v) => setSortField(v as SortField)}>
+            <SelectTrigger className="h-8 text-xs w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name">Nome</SelectItem>
+              <SelectItem value="created_at">Data de cadastro</SelectItem>
+              <SelectItem value="role">Permissão</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => setSortDir(sortDir === "asc" ? "desc" : "asc")}
+          >
+            {sortDir === "asc" ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+          </Button>
         </div>
 
         {/* Users list */}
