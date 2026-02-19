@@ -13,6 +13,8 @@ import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { MediaUpload } from "@/components/admin/MediaUpload";
 import { FilesUpload } from "@/components/admin/FilesUpload";
 import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
+import { ConfirmModal } from "@/components/ui/Modal";
+import { SortableLessonItem } from "@/components/admin/SortableLessonItem";
 import { useState, useEffect, useCallback } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
 import { 
@@ -44,6 +46,20 @@ import {
   FileUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 type ViewMode = "list" | "edit-course";
 
@@ -71,6 +87,9 @@ const formatDateDisplay = (dateStr: string | null) => {
 };
 
 const getLessonStatus = (lesson: CourseLesson): { label: string; color: string; icon: string } => {
+  if (lesson.deleted_at) {
+    return { label: "Removida", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: "✕" };
+  }
   if (!lesson.is_published) {
     return { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: "●" };
   }
@@ -141,6 +160,14 @@ const AdminCursos = () => {
   const [isCreatingModule, setIsCreatingModule] = useState(false);
   const [isCreatingLesson, setIsCreatingLesson] = useState(false);
   const [creatingLessonForModule, setCreatingLessonForModule] = useState<string | null>(null);
+  const [deletingLesson, setDeletingLesson] = useState<CourseLesson | null>(null);
+  const [isDeletingLesson, setIsDeletingLesson] = useState(false);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const { courses, isLoading: coursesLoading, createCourse, updateCourse, toggleCoursePublished } = useAdminCourses();
   const { modules, isLoading: modulesLoading, createModule, updateModule, moveModule } = useAdminModules(selectedCourseId);
@@ -677,6 +704,79 @@ const AdminCursos = () => {
         ? "A aula agora está visível para os alunos."
         : "A aula foi movida para rascunhos."
     });
+  };
+
+  // Soft delete lesson handler
+  const handleSoftDeleteLesson = async () => {
+    if (!deletingLesson) return;
+    setIsDeletingLesson(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase
+        .from("course_lessons")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", deletingLesson.id);
+
+      if (error) {
+        toast({ title: "Erro ao remover aula", description: error.message, variant: "destructive" });
+        return;
+      }
+
+      // Refresh lessons
+      const { data: refreshedLessons } = await supabase
+        .from("course_lessons")
+        .select("*")
+        .eq("module_id", deletingLesson.module_id)
+        .order("position", { ascending: true });
+
+      setAllLessons(prev => ({
+        ...prev,
+        [deletingLesson.module_id]: (refreshedLessons || []) as CourseLesson[],
+      }));
+
+      toast({ title: "Aula removida", description: "A aula não está mais disponível para os alunos." });
+    } finally {
+      setIsDeletingLesson(false);
+      setDeletingLesson(null);
+    }
+  };
+
+  // Drag and drop handler
+  const handleDragEnd = async (event: DragEndEvent, moduleId: string) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const moduleLessons = allLessons[moduleId] || [];
+    const oldIndex = moduleLessons.findIndex(l => l.id === active.id);
+    const newIndex = moduleLessons.findIndex(l => l.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistic reorder
+    const reordered = [...moduleLessons];
+    const [moved] = reordered.splice(oldIndex, 1);
+    reordered.splice(newIndex, 0, moved);
+
+    setAllLessons(prev => ({ ...prev, [moduleId]: reordered }));
+
+    // Persist new positions
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const updates = reordered.map((lesson, i) => 
+        supabase.from("course_lessons").update({ position: i + 1 }).eq("id", lesson.id)
+      );
+      await Promise.all(updates);
+      toast({ title: "Ordem atualizada!" });
+    } catch {
+      toast({ title: "Erro ao reordenar", variant: "destructive" });
+      // Refresh from DB on error
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data } = await supabase
+        .from("course_lessons")
+        .select("*")
+        .eq("module_id", moduleId)
+        .order("position", { ascending: true });
+      setAllLessons(prev => ({ ...prev, [moduleId]: (data || []) as CourseLesson[] }));
+    }
   };
 
   // Render lesson form
@@ -1283,97 +1383,41 @@ const AdminCursos = () => {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="px-2 sm:px-4 pb-3 sm:pb-4 overflow-visible">
-                            {/* Lessons list */}
+                            {/* Lessons list with drag and drop */}
                             {moduleLessons.length > 0 && (
-                              <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
-                                {moduleLessons.map((lesson, lessonIndex) => {
-                                  const status = getLessonStatus(lesson);
-                                  const config = contentTypeConfig[lesson.content_type as keyof typeof contentTypeConfig];
-                                  const Icon = config?.icon || FileText;
-                                  
-                                  if (editingLessonId === lesson.id) {
-                                    return (
-                                      <div key={lesson.id}>
-                                        {renderLessonForm(module.id)}
-                                      </div>
-                                    );
-                                  }
-                                  
-                                  return (
-                                    <div
-                                      key={lesson.id}
-                                      className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-muted/30 rounded-lg group hover:bg-muted/50 transition-colors"
-                                    >
-                                      {/* Move buttons - always visible on mobile */}
-                                      <div className="flex flex-col gap-0.5">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-5 w-5 sm:opacity-0 sm:group-hover:opacity-100"
-                                          disabled={lessonIndex === 0}
-                                          onClick={() => handleMoveLesson(lesson, "up")}
-                                        >
-                                          <ChevronUp className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-5 w-5 sm:opacity-0 sm:group-hover:opacity-100"
-                                          disabled={lessonIndex === moduleLessons.length - 1}
-                                          onClick={() => handleMoveLesson(lesson, "down")}
-                                        >
-                                          <ChevronDown className="w-3 h-3" />
-                                        </Button>
-                                      </div>
+                              <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={(event) => handleDragEnd(event, module.id)}
+                              >
+                                <SortableContext
+                                  items={moduleLessons.map(l => l.id)}
+                                  strategy={verticalListSortingStrategy}
+                                >
+                                  <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
+                                    {moduleLessons.map((lesson) => {
+                                      if (editingLessonId === lesson.id) {
+                                        return (
+                                          <div key={lesson.id}>
+                                            {renderLessonForm(module.id)}
+                                          </div>
+                                        );
+                                      }
                                       
-                                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 ${config?.color || "bg-muted"}`}>
-                                        <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                      </div>
-                                      
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-sm truncate">{lesson.title}</p>
-                                        <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1 flex-wrap">
-                                          <button
-                                            onClick={() => handleToggleLessonPublish(lesson)}
-                                            className={`px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium flex items-center gap-0.5 sm:gap-1 cursor-pointer hover:opacity-80 transition-opacity ${status.color}`}
-                                            title={lesson.is_published ? "Clique para despublicar" : "Clique para publicar"}
-                                          >
-                                            <span>{status.icon}</span>
-                                            {status.label}
-                                          </button>
-                                          {lesson.access_level === "premium" && (
-                                            <span className="px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs bg-primary/20 text-primary">
-                                              Premium
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Action buttons - always visible on mobile */}
-                                      <div className="flex gap-0.5 sm:gap-1 sm:opacity-0 sm:group-hover:opacity-100 shrink-0">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 sm:h-8 sm:w-8"
-                                          onClick={() => handleEditLesson(lesson)}
-                                          title="Editar"
-                                        >
-                                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex"
-                                          onClick={() => handleDuplicateLesson(lesson)}
-                                          title="Duplicar"
-                                        >
-                                          <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                                      return (
+                                        <SortableLessonItem
+                                          key={lesson.id}
+                                          lesson={lesson}
+                                          onEdit={handleEditLesson}
+                                          onDuplicate={handleDuplicateLesson}
+                                          onDelete={(l) => setDeletingLesson(l)}
+                                          onTogglePublish={handleToggleLessonPublish}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                </SortableContext>
+                              </DndContext>
                             )}
 
                             {/* Creating lesson form */}
@@ -1404,6 +1448,18 @@ const AdminCursos = () => {
           </>
         )}
       </div>
+
+      {/* Delete confirmation modal */}
+      <ConfirmModal
+        open={!!deletingLesson}
+        onOpenChange={(open) => { if (!open) setDeletingLesson(null); }}
+        title="Remover esta aula?"
+        description={`"${deletingLesson?.title}" não ficará mais disponível para os alunos. Você pode restaurar depois.`}
+        confirmLabel="Remover"
+        cancelLabel="Cancelar"
+        onConfirm={handleSoftDeleteLesson}
+        loading={isDeletingLesson}
+      />
     </AppLayout>
   );
 };
