@@ -72,16 +72,15 @@ export function useCommunityFeed() {
       let profilesMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
       if (communityUserIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
-          .from("public_profiles")
-          .select("id, display_name, avatar_url")
-          .in("id", communityUserIds);
+          .rpc("get_all_public_profiles");
 
         if (profilesError) {
           console.error("Error fetching profiles:", profilesError);
         }
 
         if (profiles) {
-          profilesMap = profiles.reduce((acc, p) => {
+          const filtered = profiles.filter((p: any) => communityUserIds.includes(p.id));
+          profilesMap = filtered.reduce((acc: typeof profilesMap, p: any) => {
             if (p.id) {
               acc[p.id] = { display_name: p.display_name, avatar_url: p.avatar_url };
             }
