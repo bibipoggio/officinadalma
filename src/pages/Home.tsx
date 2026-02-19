@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PWAInstallBanner } from "@/components/ui/PWAInstallBanner";
+import { CommunityInviteModal, useCommunityInvite } from "@/components/ui/CommunityInviteModal";
 import { SliderEnergia } from "@/components/ui/SliderEnergia";
 import { 
   PrivacyDisclaimerModal, 
@@ -68,6 +69,7 @@ const Home = () => {
   const [shareMode, setShareMode] = useState<ShareMode>("private");
   const [isEditing, setIsEditing] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const { open: inviteOpen, setOpen: setInviteOpen, triggerInvite } = useCommunityInvite();
 
   // Sync form with existing checkin
   useEffect(() => {
@@ -115,6 +117,8 @@ const Home = () => {
             : "Seu check-in foi compartilhado de forma anônima.")
           : "Seu check-in foi salvo de forma privada."
       });
+      // Trigger community invite after first check-in
+      setTimeout(() => triggerInvite(), 1500);
     } else {
       toast({ 
         title: "Erro", 
@@ -599,6 +603,9 @@ const Home = () => {
       
       {/* PWA Install Banner */}
       <PWAInstallBanner />
+
+      {/* Community Invite Modal */}
+      <CommunityInviteModal open={inviteOpen} onOpenChange={setInviteOpen} />
     </AppLayout>
   );
 };
