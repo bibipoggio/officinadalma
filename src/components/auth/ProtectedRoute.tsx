@@ -9,6 +9,7 @@ import { ShieldX } from "lucide-react";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
+  requireOnlyAdmin?: boolean;
 }
 
 // Check if profile is complete (has required fields)
@@ -25,8 +26,8 @@ function isProfileComplete(profile: {
   return !!(profile.birth_date && profile.birth_city && profile.phone);
 }
 
-export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, hasAdminAccess, profile } = useAuth();
+export function ProtectedRoute({ children, requireAdmin = false, requireOnlyAdmin = false }: ProtectedRouteProps) {
+  const { isAuthenticated, isLoading, hasAdminAccess, isAdmin, profile, isSuspended, signOut } = useAuth();
   const location = useLocation();
 
   // Show loading while checking auth state
@@ -61,8 +62,34 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/completar-perfil" replace />;
   }
 
+  // Block suspended users
+  if (isSuspended) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <Card className="max-w-md w-full">
+            <CardContent className="p-8 space-y-4">
+              <div className="w-16 h-16 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <ShieldX className="w-8 h-8 text-destructive" />
+              </div>
+              <h2 className="text-xl font-display font-semibold text-foreground">
+                Acesso Suspenso
+              </h2>
+              <p className="text-muted-foreground">
+                Seu acesso está suspenso. Contate o suporte para mais informações.
+              </p>
+              <Button onClick={() => signOut()} variant="outline" className="w-full">
+                Sair
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
+
   // Check admin access for admin routes
-  if (requireAdmin && !hasAdminAccess) {
+  if ((requireAdmin && !hasAdminAccess) || (requireOnlyAdmin && !isAdmin)) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -75,8 +102,7 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
                 Acesso Restrito
               </h2>
               <p className="text-muted-foreground">
-                Você não tem permissão para acessar esta área. 
-                Esta página é restrita a moderadores e administradores.
+                Você não tem permissão para acessar esta área.
               </p>
               <Button onClick={() => window.location.href = "/"} className="w-full">
                 Voltar para Início

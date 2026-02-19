@@ -16,6 +16,7 @@ import {
   FolderOpen,
   BarChart3,
   Bell,
+  UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,12 +43,13 @@ const adminItems = [
   { href: "/admin/arquivos", label: "Arquivos", icon: FolderOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/eventos", label: "Eventos", icon: Bell },
+  { href: "/admin/usuarios", label: "Usuários", icon: UserCog },
 ];
 
 export function AppSidebar({ open, onClose }: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasAdminAccess, isAuthenticated, signOut } = useAuth();
+  const { hasAdminAccess, isAdmin, isAuthenticated, signOut } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
@@ -146,7 +148,7 @@ export function AppSidebar({ open, onClose }: AppSidebarProps) {
                   Admin
                 </p>
                 <ul className="space-y-1">
-                  {adminItems.map((item) => {
+                  {adminItems.filter(item => item.href !== "/admin/usuarios" || isAdmin).map((item) => {
                     const Icon = item.icon;
                     const isActive = location.pathname === item.href;
                     return (
