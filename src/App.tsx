@@ -33,6 +33,7 @@ import AdminModeracao from "./pages/AdminModeracao";
 import AdminArquivos from "./pages/AdminArquivos";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminEventos from "./pages/AdminEventos";
+import AdminUsuarios from "./pages/AdminUsuarios";
 import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 
@@ -78,6 +79,7 @@ const App = () => (
             <Route path="/admin/arquivos" element={<ProtectedRoute requireAdmin><AdminArquivos /></ProtectedRoute>} />
             <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AdminAnalytics /></ProtectedRoute>} />
             <Route path="/admin/eventos" element={<ProtectedRoute requireAdmin><AdminEventos /></ProtectedRoute>} />
+            <Route path="/admin/usuarios" element={<ProtectedRoute requireOnlyAdmin><AdminUsuarios /></ProtectedRoute>} />
             
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />

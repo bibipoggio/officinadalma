@@ -754,6 +754,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_suspended: boolean
           notification_enabled: boolean | null
           phone: string | null
           reminder_time: string | null
@@ -768,6 +769,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_suspended?: boolean
           notification_enabled?: boolean | null
           phone?: string | null
           reminder_time?: string | null
@@ -782,6 +784,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_suspended?: boolean
           notification_enabled?: boolean | null
           phone?: string | null
           reminder_time?: string | null
@@ -866,6 +869,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      role_audit_log: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          id: string
+          new_is_suspended: boolean | null
+          new_role: string | null
+          old_is_suspended: boolean | null
+          old_role: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id: string
+          created_at?: string
+          id?: string
+          new_is_suspended?: boolean | null
+          new_role?: string | null
+          old_is_suspended?: boolean | null
+          old_role?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          new_is_suspended?: boolean | null
+          new_role?: string | null
+          old_is_suspended?: boolean | null
+          old_role?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
       }
       scheduled_events: {
         Row: {
@@ -1141,6 +1180,18 @@ export type Database = {
     }
     Functions: {
       get_admin_analytics: { Args: never; Returns: Json }
+      get_admin_users_list: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          is_suspended: boolean
+          role: string
+        }[]
+      }
       get_all_public_profiles: {
         Args: never
         Returns: {

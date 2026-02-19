@@ -16,6 +16,7 @@ interface UserProfile {
   phone: string | null;
   avatar_url: string | null;
   created_at: string;
+  is_suspended: boolean;
 }
 
 interface SignUpProfileData {
@@ -31,13 +32,14 @@ interface SignUpProfileData {
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  profile: UserProfile | null | undefined; // undefined = not loaded yet, null = loaded but doesn't exist
+  profile: UserProfile | null | undefined;
   role: AppRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isModerator: boolean;
   hasAdminAccess: boolean;
+  isSuspended: boolean;
   signUp: (email: string, password: string, profileData?: SignUpProfileData) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
@@ -262,6 +264,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAdmin = role === "admin";
   const isModerator = role === "moderator";
   const hasAdminAccess = isAdmin || isModerator;
+  const isSuspended = profile?.is_suspended === true;
 
   return (
     <AuthContext.Provider
@@ -275,6 +278,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAdmin,
         isModerator,
         hasAdminAccess,
+        isSuspended,
         signUp,
         signIn,
         signInWithGoogle,

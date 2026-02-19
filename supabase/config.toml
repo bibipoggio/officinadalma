@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.send-event-reminders]
 verify_jwt = false
+
+[functions.admin-update-user-role]
+verify_jwt = false
+
+[functions.admin-update-user-suspension]
+verify_jwt = false
