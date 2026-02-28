@@ -15,6 +15,7 @@ export interface DailyContentData {
   meditation_duration_seconds: number | null;
   spotify_episode_url: string | null;
   cover_image_url: string | null;
+  enraizamento_audio_url: string | null;
   published: boolean;
   created_by?: string | null;
 }
@@ -30,6 +31,7 @@ const emptyContent = (date: string): DailyContentData => ({
   meditation_duration_seconds: null,
   spotify_episode_url: null,
   cover_image_url: null,
+  enraizamento_audio_url: null,
   published: false,
 });
 
@@ -133,6 +135,7 @@ export function useDailyContent(selectedDate: string) {
         meditation_duration_seconds: content.meditation_duration_seconds,
         spotify_episode_url: content.spotify_episode_url?.trim() || null,
         cover_image_url: content.cover_image_url?.trim() || null,
+        enraizamento_audio_url: content.enraizamento_audio_url?.trim() || null,
         published: publish,
         created_by: user?.id || null,
       };

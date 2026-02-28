@@ -21,7 +21,7 @@ import { useBasicCourse } from "@/hooks/useBasicCourse";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { createSafeHtml } from "@/lib/sanitize";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -38,8 +38,13 @@ import {
   CheckCircle,
   Pencil,
   Calendar,
+  Play,
+  Pause,
+  Volume2,
 } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 import { InlineMeditationPlayer } from "@/components/meditation/InlineMeditationPlayer";
+import { formatTime } from "@/hooks/useMediaProgress";
 
 const formatDateDisplay = (dateStr: string) => {
   const date = new Date(dateStr + "T12:00:00");
@@ -70,6 +75,39 @@ const Home = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const { open: inviteOpen, setOpen: setInviteOpen, triggerInvite } = useCommunityInvite();
+
+  // Enraizamento audio player state
+  const enraizamentoRef = useRef<HTMLAudioElement | null>(null);
+  const [enraizamentoPlaying, setEnraizamentoPlaying] = useState(false);
+  const [enraizamentoTime, setEnraizamentoTime] = useState(0);
+  const [enraizamentoDuration, setEnraizamentoDuration] = useState(0);
+  const [enraizamentoRate, setEnraizamentoRate] = useState(1);
+  const PLAYBACK_RATES = [1, 1.25, 1.5, 1.75, 2];
+
+  const toggleEnraizamento = useCallback(() => {
+    if (!enraizamentoRef.current) return;
+    if (enraizamentoPlaying) {
+      enraizamentoRef.current.pause();
+    } else {
+      enraizamentoRef.current.play();
+    }
+  }, [enraizamentoPlaying]);
+
+  const cycleEnraizamentoRate = useCallback(() => {
+    setEnraizamentoRate(prev => {
+      const idx = PLAYBACK_RATES.indexOf(prev);
+      const next = PLAYBACK_RATES[(idx + 1) % PLAYBACK_RATES.length];
+      if (enraizamentoRef.current) enraizamentoRef.current.playbackRate = next;
+      return next;
+    });
+  }, []);
+
+  const seekEnraizamento = useCallback((value: number[]) => {
+    if (!enraizamentoRef.current || enraizamentoDuration <= 0) return;
+    const time = (value[0] / 100) * enraizamentoDuration;
+    enraizamentoRef.current.currentTime = time;
+    setEnraizamentoTime(time);
+  }, [enraizamentoDuration]);
 
   // Sync form with existing checkin
   useEffect(() => {
@@ -254,6 +292,66 @@ const Home = () => {
                     </h3>
                   </div>
                 </div>
+
+                {/* Enraizamento Audio Player */}
+                {dailyContent.enraizamento_audio_url && (
+                  <div className="rounded-xl bg-primary/5 p-4 space-y-3">
+                    <audio
+                      ref={enraizamentoRef}
+                      src={dailyContent.enraizamento_audio_url}
+                      className="hidden"
+                      onPlay={() => setEnraizamentoPlaying(true)}
+                      onPause={() => setEnraizamentoPlaying(false)}
+                      onEnded={() => setEnraizamentoPlaying(false)}
+                      onTimeUpdate={() => {
+                        if (enraizamentoRef.current) setEnraizamentoTime(enraizamentoRef.current.currentTime);
+                      }}
+                      onLoadedMetadata={() => {
+                        if (enraizamentoRef.current) {
+                          setEnraizamentoDuration(enraizamentoRef.current.duration);
+                          enraizamentoRef.current.playbackRate = enraizamentoRate;
+                        }
+                      }}
+                    />
+                    <div className="flex items-center gap-3">
+                      <Volume2 className="w-4 h-4 text-primary" />
+                      <span className="text-sm font-medium text-foreground">Enraizamento</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-10 w-10 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
+                        onClick={toggleEnraizamento}
+                        aria-label={enraizamentoPlaying ? "Pausar" : "Reproduzir"}
+                      >
+                        {enraizamentoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                      </Button>
+                      <div className="flex-1 space-y-1">
+                        <Slider
+                          value={[enraizamentoDuration > 0 ? (enraizamentoTime / enraizamentoDuration) * 100 : 0]}
+                          max={100}
+                          step={0.1}
+                          onValueChange={seekEnraizamento}
+                          aria-label="Progresso do áudio"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>{formatTime(enraizamentoTime)}</span>
+                          <span>{formatTime(enraizamentoDuration)}</span>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={cycleEnraizamentoRate}
+                        className="text-xs text-muted-foreground"
+                      >
+                        {enraizamentoRate}x
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <div 
                   className="text-muted-foreground leading-relaxed prose prose-sm max-w-none [&_br]:block [&_br]:my-2"
                   dangerouslySetInnerHTML={createSafeHtml(dailyContent.tonica_short)}
