@@ -114,18 +114,24 @@ const Aula = () => {
     }
   };
 
-  // Check if lesson has both video and audio
-  const hasVideoAndAudio = lesson?.content_type === "video" && lesson?.media_url && lesson?.audio_url;
-  const isCompleted = !!progress?.completed_at;
-  
-  // Detect if media_url is a video (even when content_type is not "video")
+  // Detect if media_url is a video (YouTube, Vimeo, or .mp4)
   const isMediaUrlVideo = (() => {
     if (!lesson?.media_url) return false;
     const url = lesson.media_url.toLowerCase();
     return url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com") || url.endsWith(".mp4");
   })();
+
+  // Has video content (either content_type=video or media_url is a video link)
+  const hasVideo = (lesson?.content_type === "video" || isMediaUrlVideo) && !!lesson?.media_url;
   
-  const hasMediaContent = lesson?.content_type === "video" || lesson?.content_type === "audio" || isMediaUrlVideo;
+  // Has audio content (audio_url, or content_type=audio with media_url)
+  const hasAudio = !!lesson?.audio_url || (lesson?.content_type === "audio" && !!lesson?.media_url);
+  
+  // Show video/audio toggle when both are available
+  const hasVideoAndAudio = hasVideo && hasAudio;
+  
+  const isCompleted = !!progress?.completed_at;
+  const hasMediaContent = hasVideo || hasAudio;
 
   if (isLoading) {
     return (
@@ -288,8 +294,8 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Video Player */}
-            {lesson.content_type === "video" && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
+            {/* Video Player - show when video available and not in audio mode */}
+            {hasVideo && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
               <VideoPlayer
                 src={lesson.media_url}
                 title={lesson.title}
@@ -301,10 +307,10 @@ const Aula = () => {
               />
             )}
 
-            {/* Alternative Audio Mode (Podcast) for lessons with both video and audio */}
-            {hasVideoAndAudio && mediaMode === "audio" && lesson.audio_url && (
+            {/* Audio Player - podcast mode (when toggled from video+audio) */}
+            {hasVideoAndAudio && mediaMode === "audio" && (
               <AudioPlayer
-                src={lesson.audio_url}
+                src={lesson.audio_url || lesson.media_url!}
                 title={lesson.title}
                 initialPosition={progress?.last_position_seconds || 0}
                 onTimeUpdate={savePosition}
@@ -315,23 +321,10 @@ const Aula = () => {
               />
             )}
 
-            {/* Audio Player (for audio-only lessons) */}
-            {lesson.content_type === "audio" && lesson.media_url && (
+            {/* Audio-only Player (no video available) */}
+            {hasAudio && !hasVideo && (
               <AudioPlayer
-                src={lesson.media_url}
-                title={lesson.title}
-                initialPosition={progress?.last_position_seconds || 0}
-                onTimeUpdate={savePosition}
-                onEnded={handleMediaEnded}
-                playbackRate={playbackRate}
-                onPlaybackRateChange={handlePlaybackRateChange}
-              />
-            )}
-
-            {/* Video Player for text lessons that have a video URL */}
-            {lesson.content_type === "text" && lesson.media_url && isMediaUrlVideo && (
-              <VideoPlayer
-                src={lesson.media_url}
+                src={lesson.audio_url || lesson.media_url!}
                 title={lesson.title}
                 initialPosition={progress?.last_position_seconds || 0}
                 onTimeUpdate={savePosition}
