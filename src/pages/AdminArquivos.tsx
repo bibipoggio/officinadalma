@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -30,6 +31,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -44,6 +52,9 @@ import {
   Search,
   RefreshCw,
   HardDrive,
+  Link2,
+  Check,
+  Copy,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -67,6 +78,15 @@ interface StorageFile {
   } | null;
 }
 
+interface LessonOption {
+  id: string;
+  title: string;
+  course_title: string;
+  content_type: string;
+  media_url: string | null;
+  audio_url: string | null;
+}
+
 const AdminArquivos = () => {
   const [buckets, setBuckets] = useState<StorageBucket[]>([]);
   const [selectedBucket, setSelectedBucket] = useState<string>("");
@@ -76,6 +96,15 @@ const AdminArquivos = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [deleteFile, setDeleteFile] = useState<StorageFile | null>(null);
   const { toast } = useToast();
+
+  // Assign file to lesson state
+  const [assignFile, setAssignFile] = useState<StorageFile | null>(null);
+  const [lessons, setLessons] = useState<LessonOption[]>([]);
+  const [isLoadingLessons, setIsLoadingLessons] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState<string>("");
+  const [assignTarget, setAssignTarget] = useState<"media_url" | "audio_url">("media_url");
+  const [isAssigning, setIsAssigning] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   // Fetch buckets on mount
   useEffect(() => {
@@ -117,7 +146,6 @@ const AdminArquivos = () => {
     try {
       const allFiles: StorageFile[] = [];
       
-      // Recursive function to list files in all folders
       const listFilesRecursive = async (path: string = "") => {
         const { data, error } = await supabase.storage.from(bucketId).list(path, {
           limit: 500,
@@ -128,7 +156,6 @@ const AdminArquivos = () => {
         
         for (const item of data || []) {
           if (item.id) {
-            // It's a file
             const fullPath = path ? `${path}/${item.name}` : item.name;
             allFiles.push({ 
               ...item, 
@@ -136,7 +163,6 @@ const AdminArquivos = () => {
               bucket_id: bucketId 
             } as StorageFile);
           } else {
-            // It's a folder - recurse into it
             const folderPath = path ? `${path}/${item.name}` : item.name;
             await listFilesRecursive(folderPath);
           }
@@ -144,8 +170,6 @@ const AdminArquivos = () => {
       };
       
       await listFilesRecursive("");
-      
-      // Sort by created_at descending
       allFiles.sort((a, b) => 
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
@@ -163,6 +187,42 @@ const AdminArquivos = () => {
     }
   };
 
+  const fetchLessons = useCallback(async () => {
+    setIsLoadingLessons(true);
+    try {
+      const { data: coursesData, error: coursesError } = await supabase
+        .from("courses")
+        .select("id, title");
+      
+      if (coursesError) throw coursesError;
+
+      const { data: lessonsData, error: lessonsError } = await supabase
+        .from("course_lessons")
+        .select("id, title, content_type, media_url, audio_url, course_id, position")
+        .is("deleted_at", null)
+        .order("position", { ascending: true });
+
+      if (lessonsError) throw lessonsError;
+
+      const courseMap = new Map((coursesData || []).map(c => [c.id, c.title]));
+      
+      setLessons(
+        (lessonsData || []).map(l => ({
+          id: l.id,
+          title: l.title,
+          course_title: courseMap.get(l.course_id) || "Curso desconhecido",
+          content_type: l.content_type,
+          media_url: l.media_url,
+          audio_url: l.audio_url,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching lessons:", error);
+    } finally {
+      setIsLoadingLessons(false);
+    }
+  }, []);
+
   const handleDeleteFile = async () => {
     if (!deleteFile) return;
 
@@ -178,7 +238,6 @@ const AdminArquivos = () => {
         description: "O arquivo foi excluído com sucesso.",
       });
 
-      // Refresh files list
       fetchFiles(selectedBucket);
     } catch (error) {
       console.error("Error deleting file:", error);
@@ -197,12 +256,74 @@ const AdminArquivos = () => {
     return data.publicUrl;
   };
 
-  const getFileIcon = (mimeType?: string) => {
-    if (!mimeType) return <File className="w-5 h-5 text-muted-foreground" />;
-    if (mimeType.startsWith("image/")) return <Image className="w-5 h-5 text-blue-500" />;
-    if (mimeType.startsWith("audio/")) return <Music className="w-5 h-5 text-purple-500" />;
-    if (mimeType.startsWith("video/")) return <Video className="w-5 h-5 text-pink-500" />;
-    if (mimeType.includes("pdf") || mimeType.includes("text")) return <FileText className="w-5 h-5 text-orange-500" />;
+  const handleOpenAssign = (file: StorageFile) => {
+    setAssignFile(file);
+    setSelectedLessonId("");
+    
+    // Auto-detect target based on file type
+    const mime = file.metadata?.mimetype || "";
+    const name = file.name.toLowerCase();
+    if (mime.startsWith("audio/") || name.endsWith(".m4a") || name.endsWith(".mp3")) {
+      setAssignTarget("audio_url");
+    } else {
+      setAssignTarget("media_url");
+    }
+    
+    fetchLessons();
+  };
+
+  const handleAssign = async () => {
+    if (!assignFile || !selectedLessonId) return;
+
+    setIsAssigning(true);
+    try {
+      const fileUrl = getFileUrl(assignFile);
+      
+      const updateData: Record<string, string> = {};
+      updateData[assignTarget] = fileUrl;
+
+      const { error } = await supabase
+        .from("course_lessons")
+        .update(updateData)
+        .eq("id", selectedLessonId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Arquivo atribuído",
+        description: `Arquivo vinculado como ${assignTarget === "media_url" ? "vídeo" : "áudio"} da aula com sucesso.`,
+      });
+
+      setAssignFile(null);
+      // Refresh lessons data
+      fetchLessons();
+    } catch (error) {
+      console.error("Error assigning file:", error);
+      toast({
+        title: "Erro ao atribuir",
+        description: "Não foi possível vincular o arquivo à aula.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  const handleCopyUrl = (file: StorageFile) => {
+    const url = getFileUrl(file);
+    navigator.clipboard.writeText(url);
+    setCopiedUrl(file.id);
+    setTimeout(() => setCopiedUrl(null), 2000);
+    toast({ title: "URL copiada!" });
+  };
+
+  const getFileIcon = (mimeType?: string, fileName?: string) => {
+    const name = fileName?.toLowerCase() || "";
+    if (!mimeType && !name) return <File className="w-5 h-5 text-muted-foreground" />;
+    if (mimeType?.startsWith("image/") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".webp")) return <Image className="w-5 h-5 text-blue-500" />;
+    if (mimeType?.startsWith("audio/") || name.endsWith(".mp3") || name.endsWith(".m4a")) return <Music className="w-5 h-5 text-purple-500" />;
+    if (mimeType?.startsWith("video/") || name.endsWith(".mp4")) return <Video className="w-5 h-5 text-pink-500" />;
+    if (mimeType?.includes("pdf") || mimeType?.includes("text") || name.endsWith(".pdf")) return <FileText className="w-5 h-5 text-orange-500" />;
     return <File className="w-5 h-5 text-muted-foreground" />;
   };
 
@@ -219,6 +340,8 @@ const AdminArquivos = () => {
 
   const totalSize = files.reduce((acc, file) => acc + (file.metadata?.size || 0), 0);
 
+  const selectedLesson = lessons.find(l => l.id === selectedLessonId);
+
   return (
     <AppLayout>
       <div className="space-y-6">
@@ -228,7 +351,7 @@ const AdminArquivos = () => {
               Gerenciador de Arquivos
             </h1>
             <p className="text-muted-foreground mt-1">
-              Visualize e gerencie todos os arquivos da plataforma
+              Visualize, gerencie e vincule arquivos às aulas
             </p>
           </div>
           <Button
@@ -262,8 +385,8 @@ const AdminArquivos = () => {
 
               <Card>
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                    <File className="w-6 h-6 text-blue-500" />
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <File className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Arquivos</p>
@@ -274,8 +397,8 @@ const AdminArquivos = () => {
 
               <Card>
                 <CardContent className="p-4 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <HardDrive className="w-6 h-6 text-green-500" />
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <HardDrive className="w-6 h-6 text-primary" />
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Tamanho Total</p>
@@ -344,11 +467,11 @@ const AdminArquivos = () => {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[50%]">Arquivo</TableHead>
+                          <TableHead className="w-[40%]">Arquivo</TableHead>
                           <TableHead>Tipo</TableHead>
                           <TableHead>Tamanho</TableHead>
                           <TableHead>Data</TableHead>
-                          <TableHead className="w-[100px] text-right">Ações</TableHead>
+                          <TableHead className="w-[140px] text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -356,8 +479,8 @@ const AdminArquivos = () => {
                           <TableRow key={file.id}>
                             <TableCell>
                               <div className="flex items-center gap-3">
-                                {getFileIcon(file.metadata?.mimetype)}
-                                <span className="truncate max-w-[300px]" title={file.name}>
+                                {getFileIcon(file.metadata?.mimetype, file.name)}
+                                <span className="truncate max-w-[280px]" title={file.name}>
                                   {file.name}
                                 </span>
                               </div>
@@ -381,6 +504,28 @@ const AdminArquivos = () => {
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleCopyUrl(file)}
+                                  title="Copiar URL"
+                                >
+                                  {copiedUrl === file.id ? (
+                                    <Check className="w-4 h-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => handleOpenAssign(file)}
+                                  title="Atribuir a uma aula"
+                                >
+                                  <Link2 className="w-4 h-4" />
+                                </Button>
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -433,6 +578,121 @@ const AdminArquivos = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assign File to Lesson Dialog */}
+      <Dialog open={!!assignFile} onOpenChange={() => setAssignFile(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Atribuir arquivo à aula</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5 py-2">
+            {/* File info */}
+            <div className="rounded-lg bg-muted/50 border p-3">
+              <div className="flex items-center gap-3">
+                {assignFile && getFileIcon(assignFile.metadata?.mimetype, assignFile.name)}
+                <span className="text-sm font-medium truncate">{assignFile?.name}</span>
+              </div>
+              {assignFile && (
+                <p className="text-xs text-muted-foreground mt-1 break-all">
+                  {getFileUrl(assignFile)}
+                </p>
+              )}
+            </div>
+
+            {/* Target field */}
+            <div className="space-y-2">
+              <Label>Vincular como</Label>
+              <Select value={assignTarget} onValueChange={(v) => setAssignTarget(v as "media_url" | "audio_url")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="media_url">
+                    <div className="flex items-center gap-2">
+                      <Video className="w-4 h-4" />
+                      Vídeo da aula (media_url)
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="audio_url">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-4 h-4" />
+                      Áudio / Podcast (audio_url)
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Lesson selector */}
+            <div className="space-y-2">
+              <Label>Selecione a aula</Label>
+              {isLoadingLessons ? (
+                <p className="text-sm text-muted-foreground">Carregando aulas...</p>
+              ) : (
+                <Select value={selectedLessonId} onValueChange={setSelectedLessonId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha uma aula..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {lessons.map((lesson) => (
+                      <SelectItem key={lesson.id} value={lesson.id}>
+                        <div className="flex flex-col">
+                          <span className="text-sm">{lesson.title}</span>
+                          <span className="text-xs text-muted-foreground">{lesson.course_title}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Current values preview */}
+            {selectedLesson && (
+              <div className="rounded-lg border p-3 space-y-2 text-sm">
+                <p className="font-medium">Valores atuais da aula:</p>
+                <div className="space-y-1 text-muted-foreground">
+                  <p className="flex items-center gap-2">
+                    <Video className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      {selectedLesson.media_url || <span className="italic">Sem vídeo</span>}
+                    </span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Music className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">
+                      {selectedLesson.audio_url || <span className="italic">Sem áudio</span>}
+                    </span>
+                  </p>
+                </div>
+                {assignTarget === "media_url" && selectedLesson.media_url && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                    ⚠️ O vídeo atual será substituído.
+                  </p>
+                )}
+                {assignTarget === "audio_url" && selectedLesson.audio_url && (
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                    ⚠️ O áudio atual será substituído.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignFile(null)}>
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAssign}
+              disabled={!selectedLessonId || isAssigning}
+            >
+              {isAssigning ? "Atribuindo..." : "Atribuir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
