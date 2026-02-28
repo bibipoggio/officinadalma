@@ -81,6 +81,7 @@ export interface DailyContent {
   meditation_audio_url: string | null;
   meditation_duration_seconds: number | null;
   spotify_episode_url: string | null;
+  enraizamento_audio_url: string | null;
   published: boolean;
 }
 

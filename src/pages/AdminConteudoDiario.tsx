@@ -216,6 +216,22 @@ const AdminConteudoDiario = () => {
               </div>
             </section>
 
+            {/* Section A.1 - Enraizamento Audio */}
+            <section className="bg-card border rounded-2xl p-6 space-y-6">
+              <h2 className="text-2xl font-display font-semibold text-foreground border-b pb-3">
+                Seção A.1 — Enraizamento (Áudio)
+              </h2>
+              <p className="text-muted-foreground text-lg">
+                Áudio reproduzido na Home junto à Tônica do Dia (opcional)
+              </p>
+              
+              <AudioUpload
+                currentUrl={content.enraizamento_audio_url}
+                onUrlChange={(url) => updateField("enraizamento_audio_url", url)}
+                date={selectedDate}
+              />
+            </section>
+
             {/* Section B - Meditação */}
             <section className="bg-card border rounded-2xl p-6 space-y-6">
               <h2 className="text-2xl font-display font-semibold text-foreground border-b pb-3">

@@ -12,6 +12,7 @@ export interface PublicDailyContent {
   meditation_duration_seconds: number | null;
   spotify_episode_url: string | null;
   cover_image_url: string | null;
+  enraizamento_audio_url: string | null;
 }
 
 export function useDailyContentForDate(date: string) {
@@ -42,7 +43,8 @@ export function useDailyContentForDate(date: string) {
             meditation_audio_url,
             meditation_duration_seconds,
             spotify_episode_url,
-            cover_image_url
+            cover_image_url,
+            enraizamento_audio_url
           `)
           .eq("date", date)
           .eq("published", true)

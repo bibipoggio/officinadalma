@@ -1,0 +1,1 @@
+ALTER TABLE public.daily_content ADD COLUMN enraizamento_audio_url text DEFAULT NULL;

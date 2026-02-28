@@ -357,6 +357,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           date: string
+          enraizamento_audio_url: string | null
           id: string
           meditation_audio_url: string | null
           meditation_duration_seconds: number | null
@@ -374,6 +375,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date: string
+          enraizamento_audio_url?: string | null
           id?: string
           meditation_audio_url?: string | null
           meditation_duration_seconds?: number | null
@@ -391,6 +393,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           date?: string
+          enraizamento_audio_url?: string | null
           id?: string
           meditation_audio_url?: string | null
           meditation_duration_seconds?: number | null
