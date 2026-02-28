@@ -94,6 +94,7 @@ const AdminArquivos = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingFiles, setIsLoadingFiles] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"all" | "image" | "audio" | "video" | "document">("all");
   const [deleteFile, setDeleteFile] = useState<StorageFile | null>(null);
   const { toast } = useToast();
 
@@ -323,9 +324,21 @@ const AdminArquivos = () => {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   };
 
-  const filteredFiles = files.filter(file =>
-    file.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const getFileType = (file: StorageFile): "image" | "audio" | "video" | "document" | "other" => {
+    const mime = file.metadata?.mimetype || "";
+    const name = file.name.toLowerCase();
+    if (mime.startsWith("image/") || /\.(jpg|jpeg|png|gif|webp|svg)$/.test(name)) return "image";
+    if (mime.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|aac)$/.test(name)) return "audio";
+    if (mime.startsWith("video/") || /\.(mp4|mov|avi|webm)$/.test(name)) return "video";
+    if (mime.includes("pdf") || mime.includes("text") || /\.(pdf|txt|md|doc|docx|csv|json)$/.test(name)) return "document";
+    return "other";
+  };
+
+  const filteredFiles = files.filter(file => {
+    const matchesSearch = file.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter === "all" || getFileType(file) === typeFilter;
+    return matchesSearch && matchesType;
+  });
 
   const totalSize = files.reduce((acc, file) => acc + (file.metadata?.size || 0), 0);
 
@@ -436,6 +449,33 @@ const AdminArquivos = () => {
                       className="pl-10"
                     />
                   </div>
+                </div>
+
+                {/* Type filter chips */}
+                <div className="flex flex-wrap gap-2">
+                  {([
+                    { value: "all", label: "Todos", icon: File },
+                    { value: "image", label: "Imagens", icon: Image },
+                    { value: "audio", label: "Áudios", icon: Music },
+                    { value: "video", label: "Vídeos", icon: Video },
+                    { value: "document", label: "Documentos", icon: FileText },
+                  ] as const).map(({ value, label, icon: Icon }) => (
+                    <Button
+                      key={value}
+                      variant={typeFilter === value ? "default" : "outline"}
+                      size="sm"
+                      className="h-7 text-xs gap-1.5"
+                      onClick={() => setTypeFilter(value)}
+                    >
+                      <Icon className="w-3 h-3" />
+                      {label}
+                      {value !== "all" && (
+                        <Badge variant="secondary" className="ml-1 h-4 px-1 text-[10px]">
+                          {files.filter(f => getFileType(f) === value).length}
+                        </Badge>
+                      )}
+                    </Button>
+                  ))}
                 </div>
 
                 {isLoadingFiles ? (
