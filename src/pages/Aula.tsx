@@ -117,7 +117,15 @@ const Aula = () => {
   // Check if lesson has both video and audio
   const hasVideoAndAudio = lesson?.content_type === "video" && lesson?.media_url && lesson?.audio_url;
   const isCompleted = !!progress?.completed_at;
-  const hasMediaContent = lesson?.content_type === "video" || lesson?.content_type === "audio";
+  
+  // Detect if media_url is a video (even when content_type is not "video")
+  const isMediaUrlVideo = (() => {
+    if (!lesson?.media_url) return false;
+    const url = lesson.media_url.toLowerCase();
+    return url.includes("youtube.com") || url.includes("youtu.be") || url.includes("vimeo.com") || url.endsWith(".mp4");
+  })();
+  
+  const hasMediaContent = lesson?.content_type === "video" || lesson?.content_type === "audio" || isMediaUrlVideo;
 
   if (isLoading) {
     return (
@@ -310,6 +318,19 @@ const Aula = () => {
             {/* Audio Player (for audio-only lessons) */}
             {lesson.content_type === "audio" && lesson.media_url && (
               <AudioPlayer
+                src={lesson.media_url}
+                title={lesson.title}
+                initialPosition={progress?.last_position_seconds || 0}
+                onTimeUpdate={savePosition}
+                onEnded={handleMediaEnded}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={handlePlaybackRateChange}
+              />
+            )}
+
+            {/* Video Player for text lessons that have a video URL */}
+            {lesson.content_type === "text" && lesson.media_url && isMediaUrlVideo && (
+              <VideoPlayer
                 src={lesson.media_url}
                 title={lesson.title}
                 initialPosition={progress?.last_position_seconds || 0}
