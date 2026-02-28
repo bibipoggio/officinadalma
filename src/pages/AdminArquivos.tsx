@@ -452,94 +452,109 @@ const AdminArquivos = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[40%]">Arquivo</TableHead>
-                          <TableHead>Tipo</TableHead>
-                          <TableHead>Tamanho</TableHead>
-                          <TableHead>Data</TableHead>
-                          <TableHead className="w-[140px] text-right">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredFiles.map((file) => (
-                          <TableRow key={file.id}>
-                            <TableCell>
-                              <div className="flex items-center gap-3">
-                                {getFileIcon(file.metadata?.mimetype, file.name)}
-                                <span className="truncate max-w-[280px]" title={file.name}>
-                                  {file.name}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm text-muted-foreground">
-                                {file.metadata?.mimetype?.split("/")[1]?.toUpperCase() || "—"}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm">
-                                {formatFileSize(file.metadata?.size)}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <span className="text-sm text-muted-foreground">
-                                {format(new Date(file.created_at), "dd/MM/yyyy", {
-                                  locale: ptBR,
-                                })}
-                              </span>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleCopyUrl(file)}
-                                  title="Copiar URL"
-                                >
-                                  {copiedUrl === file.id ? (
-                                    <Check className="w-4 h-4 text-green-500" />
-                                  ) : (
-                                    <Copy className="w-4 h-4" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => handleOpenAssign(file)}
-                                  title="Atribuir a uma aula"
-                                >
-                                  <Link2 className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => window.open(getFileUrl(file), "_blank")}
-                                  title="Abrir arquivo"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-destructive hover:text-destructive"
-                                  onClick={() => setDeleteFile(file)}
-                                  title="Excluir arquivo"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                  <>
+                    {/* Desktop table */}
+                    <div className="hidden md:block border rounded-lg overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="min-w-[200px]">Arquivo</TableHead>
+                            <TableHead className="w-[80px]">Tipo</TableHead>
+                            <TableHead className="w-[90px]">Tamanho</TableHead>
+                            <TableHead className="w-[100px]">Data</TableHead>
+                            <TableHead className="w-[150px] text-right">Ações</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredFiles.map((file) => (
+                            <TableRow key={file.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  {getFileIcon(file.metadata?.mimetype, file.name)}
+                                  <span className="truncate" title={file.name}>
+                                    {file.name}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-xs text-muted-foreground">
+                                  {file.metadata?.mimetype?.split("/")[1]?.toUpperCase() || "—"}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-xs">
+                                  {formatFileSize(file.metadata?.size)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(file.created_at), "dd/MM/yy", { locale: ptBR })}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleCopyUrl(file)} title="Copiar URL">
+                                    {copiedUrl === file.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenAssign(file)} title="Atribuir a uma aula">
+                                    <Link2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => window.open(getFileUrl(file), "_blank")} title="Abrir arquivo">
+                                    <ExternalLink className="w-4 h-4" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteFile(file)} title="Excluir arquivo">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+
+                    {/* Mobile card list */}
+                    <div className="md:hidden space-y-2">
+                      {filteredFiles.map((file) => (
+                        <div key={file.id} className="border rounded-lg p-3 space-y-2">
+                          <div className="flex items-start gap-2">
+                            {getFileIcon(file.metadata?.mimetype, file.name)}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate" title={file.name}>
+                                {file.name.split("/").pop()}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {file.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span>{file.metadata?.mimetype?.split("/")[1]?.toUpperCase() || "—"}</span>
+                            <span>•</span>
+                            <span>{formatFileSize(file.metadata?.size)}</span>
+                            <span>•</span>
+                            <span>{format(new Date(file.created_at), "dd/MM/yy", { locale: ptBR })}</span>
+                          </div>
+                          <div className="flex items-center gap-1 pt-1 border-t border-border/50">
+                            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => handleCopyUrl(file)}>
+                              {copiedUrl === file.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                              Copiar
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => handleOpenAssign(file)}>
+                              <Link2 className="w-3 h-3" />
+                              Vincular
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => window.open(getFileUrl(file), "_blank")}>
+                              <ExternalLink className="w-3 h-3" />
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs text-destructive hover:text-destructive" onClick={() => setDeleteFile(file)}>
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </CardContent>
             </Card>
