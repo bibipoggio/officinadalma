@@ -106,9 +106,19 @@ const AdminArquivos = () => {
   const [isAssigning, setIsAssigning] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
-  // Fetch buckets on mount
+  // Known buckets (listBuckets requires service role, so we hardcode them)
+  const KNOWN_BUCKETS: StorageBucket[] = [
+    { id: "daily-content", name: "daily-content", public: true, created_at: "" },
+    { id: "lesson-content", name: "lesson-content", public: true, created_at: "" },
+    { id: "course-images", name: "course-images", public: true, created_at: "" },
+    { id: "avatars", name: "avatars", public: true, created_at: "" },
+  ];
+
+  // Initialize buckets on mount
   useEffect(() => {
-    fetchBuckets();
+    setBuckets(KNOWN_BUCKETS);
+    setSelectedBucket(KNOWN_BUCKETS[0].id);
+    setIsLoading(false);
   }, []);
 
   // Fetch files when bucket changes
@@ -119,27 +129,6 @@ const AdminArquivos = () => {
       setFiles([]);
     }
   }, [selectedBucket]);
-
-  const fetchBuckets = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.storage.listBuckets();
-      if (error) throw error;
-      setBuckets(data || []);
-      if (data && data.length > 0) {
-        setSelectedBucket(data[0].id);
-      }
-    } catch (error) {
-      console.error("Error fetching buckets:", error);
-      toast({
-        title: "Erro ao carregar buckets",
-        description: "Não foi possível carregar os buckets de armazenamento.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const fetchFiles = async (bucketId: string) => {
     setIsLoadingFiles(true);
