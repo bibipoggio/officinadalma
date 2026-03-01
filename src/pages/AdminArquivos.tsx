@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,8 @@ import {
   Link2,
   Check,
   Copy,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -106,6 +108,8 @@ const AdminArquivos = () => {
   const [assignTarget, setAssignTarget] = useState<"media_url" | "audio_url">("media_url");
   const [isAssigning, setIsAssigning] = useState(false);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   // Known buckets (listBuckets requires service role, so we hardcode them)
   const KNOWN_BUCKETS: StorageBucket[] = [
@@ -307,6 +311,54 @@ const AdminArquivos = () => {
     toast({ title: "URL copiada!" });
   };
 
+  const handleUploadFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0 || !selectedBucket) return;
+
+    setIsUploading(true);
+    let successCount = 0;
+
+    try {
+      for (const file of Array.from(selectedFiles)) {
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "Arquivo muito grande",
+            description: `"${file.name}" excede o limite de 50MB.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const filePath = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name}`;
+
+        const { error } = await supabase.storage
+          .from(selectedBucket)
+          .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+        if (error) {
+          console.error("Upload error:", error);
+          toast({
+            title: `Erro ao enviar "${file.name}"`,
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          successCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: successCount === 1 ? "Arquivo enviado!" : `${successCount} arquivos enviados!`,
+        });
+        fetchFiles(selectedBucket);
+      }
+    } finally {
+      setIsUploading(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = "";
+    }
+  };
+
   const getFileIcon = (mimeType?: string, fileName?: string) => {
     const name = fileName?.toLowerCase() || "";
     if (!mimeType && !name) return <File className="w-5 h-5 text-muted-foreground" />;
@@ -356,15 +408,38 @@ const AdminArquivos = () => {
               Visualize, gerencie e vincule arquivos às aulas
             </p>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => selectedBucket && fetchFiles(selectedBucket)}
-            disabled={isLoadingFiles}
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingFiles ? "animate-spin" : ""}`} />
-            Atualizar
-          </Button>
+          <div className="flex gap-2">
+            <input
+              ref={uploadInputRef}
+              type="file"
+              multiple
+              onChange={handleUploadFiles}
+              disabled={isUploading || !selectedBucket}
+              className="hidden"
+            />
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => uploadInputRef.current?.click()}
+              disabled={isUploading || !selectedBucket}
+            >
+              {isUploading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              {isUploading ? "Enviando..." : "Upload"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => selectedBucket && fetchFiles(selectedBucket)}
+              disabled={isLoadingFiles}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoadingFiles ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+          </div>
         </header>
 
         {isLoading ? (
