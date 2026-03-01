@@ -10,9 +10,12 @@ interface AudioUploadProps {
   currentUrl: string | null;
   onUrlChange: (url: string | null) => void;
   date: string;
+  /** Prefix used in the storage filename to avoid collisions between different audio fields */
+  filePrefix?: string;
+  label?: string;
 }
 
-export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps) {
+export function AudioUpload({ currentUrl, onUrlChange, date, filePrefix = "meditation", label = "Áudio da Meditação" }: AudioUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +45,7 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
     try {
       // Create unique filename
       const fileExt = file.name.split(".").pop();
-      const fileName = `meditation-${date}.${fileExt}`;
+      const fileName = `${filePrefix}-${date}.${fileExt}`;
       const filePath = `meditations/${fileName}`;
 
       // Upload to Supabase Storage
@@ -96,7 +99,7 @@ export function AudioUpload({ currentUrl, onUrlChange, date }: AudioUploadProps)
 
   return (
     <div className="space-y-4">
-      <Label className="text-lg font-medium">Áudio da Meditação</Label>
+      <Label className="text-lg font-medium">{label}</Label>
       
       {currentUrl ? (
         <div className="space-y-3">

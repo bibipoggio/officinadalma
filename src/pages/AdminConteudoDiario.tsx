@@ -229,6 +229,8 @@ const AdminConteudoDiario = () => {
                 currentUrl={content.enraizamento_audio_url}
                 onUrlChange={(url) => updateField("enraizamento_audio_url", url)}
                 date={selectedDate}
+                filePrefix="enraizamento"
+                label="Áudio do Enraizamento"
               />
             </section>
 
