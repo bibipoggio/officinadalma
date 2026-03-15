@@ -3,12 +3,13 @@ import { LoadingState } from "@/components/layout/PageState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useState } from "react";
 import { useDailyContent } from "@/hooks/useDailyContent";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Check, FileEdit } from "lucide-react";
 import { AudioUpload } from "@/components/admin/AudioUpload";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 
