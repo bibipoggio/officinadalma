@@ -260,9 +260,6 @@ const Diario = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
-        {/* Streak Achievement Section */}
-        <StreakAchievement />
-
         <header>
           <h1 className="text-2xl font-display font-semibold text-foreground">Meu Diário</h1>
           <p className="text-muted-foreground mt-1">
@@ -285,6 +282,9 @@ const Diario = () => {
               <span className="hidden sm:inline">Meus Cursos</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Streak Achievement Section - below quick access bar */}
+          <StreakAchievement />
 
           {/* Calendar Tab */}
           <TabsContent value="calendario" className="space-y-4">
