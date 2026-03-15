@@ -15,7 +15,7 @@ const FlowerOfLife = ({ size = 110 }: { size?: number }) => {
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--primary))" strokeWidth="0.8" opacity="0.15" />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--primary))" strokeWidth="4" opacity="0.18" />
       {angles.map((angle, i) => {
         const rad = (angle * Math.PI) / 180;
         const px = cx + d * Math.cos(rad);
@@ -28,11 +28,13 @@ const FlowerOfLife = ({ size = 110 }: { size?: number }) => {
             r={r}
             fill="none"
             stroke="hsl(var(--primary))"
-            strokeWidth="0.8"
-            opacity="0.15"
+            strokeWidth="4"
+            opacity="0.18"
           />
         );
       })}
+      {/* Solid violet circle behind the number for contrast */}
+      <circle cx={cx} cy={cy} r={r * 0.82} fill="hsl(var(--primary) / 0.12)" />
     </svg>
   );
 };
