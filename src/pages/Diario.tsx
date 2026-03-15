@@ -44,6 +44,7 @@ import {
 } from "@/hooks/useDiario";
 import type { Checkin, ShareMode } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
+import { StreakAchievement } from "@/components/streak/StreakAchievement";
 
 // Format date to PT-BR
 const formatDatePtBr = (dateStr: string) => {
