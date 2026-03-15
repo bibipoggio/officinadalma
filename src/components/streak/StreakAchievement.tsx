@@ -1,25 +1,21 @@
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star } from "lucide-react";
 import { useConsecutiveStreak, getMotivationalPhrase } from "@/hooks/useConsecutiveStreak";
 import { cn } from "@/lib/utils";
 
-const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
 
-/** Flower of Life SVG – 7 overlapping circles in violet */
-const FlowerOfLife = ({ size = 96 }: { size?: number }) => {
-  const r = size * 0.22;
+/** Flower of Life SVG – subtle violet mandala backdrop */
+const FlowerOfLife = ({ size = 110 }: { size?: number }) => {
+  const r = size * 0.20;
   const cx = size / 2;
   const cy = size / 2;
-  const d = r; // distance from center to petal centers
-
+  const d = r;
   const angles = [0, 60, 120, 180, 240, 300];
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="drop-shadow-sm">
-      {/* Center circle */}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(263, 70%, 50%)" strokeWidth="1.2" opacity="0.7" />
-      {/* Petal circles */}
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--primary))" strokeWidth="0.8" opacity="0.15" />
       {angles.map((angle, i) => {
         const rad = (angle * Math.PI) / 180;
         const px = cx + d * Math.cos(rad);
@@ -31,9 +27,9 @@ const FlowerOfLife = ({ size = 96 }: { size?: number }) => {
             cy={py}
             r={r}
             fill="none"
-            stroke="hsl(263, 70%, 50%)"
-            strokeWidth="1.2"
-            opacity={0.5 + i * 0.05}
+            stroke="hsl(var(--primary))"
+            strokeWidth="0.8"
+            opacity="0.15"
           />
         );
       })}
@@ -41,8 +37,23 @@ const FlowerOfLife = ({ size = 96 }: { size?: number }) => {
   );
 };
 
+/** Golden star for completed days */
+const GoldenStar = ({ size = 22 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="#D4AF37" aria-hidden="true">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+  </svg>
+);
+
+/** Gray dot placeholder for incomplete days */
+const GrayDot = ({ size = 22 }: { size?: number }) => (
+  <div
+    className="rounded-full bg-muted"
+    style={{ width: size * 0.45, height: size * 0.45 }}
+    aria-hidden="true"
+  />
+);
+
 interface StreakAchievementProps {
-  /** If true, show a subtle glow animation on the number (just incremented) */
   glowActive?: boolean;
 }
 
@@ -54,67 +65,91 @@ export function StreakAchievement({ glowActive = false }: StreakAchievementProps
     return (
       <div className="bg-card rounded-2xl p-6 shadow-soft space-y-4">
         <div className="flex flex-col items-center gap-3">
-          <Skeleton className="w-24 h-24 rounded-full" />
-          <Skeleton className="h-4 w-40" />
+          <Skeleton className="w-28 h-28 rounded-full" />
+          <Skeleton className="h-3 w-32" />
         </div>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-5">
           {Array.from({ length: 7 }).map((_, i) => (
-            <Skeleton key={i} className="w-8 h-10 rounded" />
+            <Skeleton key={i} className="w-7 h-9 rounded" />
           ))}
         </div>
-        <Skeleton className="h-4 w-64 mx-auto" />
+        <Skeleton className="h-4 w-56 mx-auto" />
       </div>
     );
   }
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-soft" aria-label="Conquista de constância">
-      {/* Central element: Flower of Life + streak number */}
-      <div className="flex flex-col items-center gap-1">
-        <div className="relative">
-          <FlowerOfLife size={96} />
-          {/* Streak number centered in flower */}
+    <section
+      className="bg-card rounded-2xl shadow-soft"
+      aria-label="Conquista de constância"
+      style={{ padding: "28px 24px 24px" }}
+    >
+      {/* Central: Flower of Life + streak number */}
+      <div className="flex flex-col items-center">
+        <div className="relative" style={{ width: 110, height: 110 }}>
+          <FlowerOfLife size={110} />
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span
               className={cn(
-                "text-3xl font-display font-bold transition-all duration-700",
+                "font-display font-bold transition-all duration-700",
                 glowActive && "animate-streak-glow"
               )}
-              style={{ color: "#D4AF37" }}
+              style={{
+                fontSize: "2.25rem",
+                lineHeight: 1,
+                color: "#D4AF37",
+                textShadow: "0 1px 4px rgba(212, 175, 55, 0.25)",
+              }}
             >
               {consecutiveDays}
             </span>
           </div>
         </div>
-        <span className="text-xs tracking-wide text-muted-foreground font-body">
+
+        <span
+          className="font-body font-medium uppercase"
+          style={{
+            fontSize: "0.65rem",
+            letterSpacing: "0.12em",
+            color: "hsl(var(--foreground))",
+            marginTop: 6,
+          }}
+        >
           {consecutiveDays === 1 ? "dia consecutivo" : "dias consecutivos"}
         </span>
       </div>
 
-      {/* Weekly bar */}
-      <div className="flex justify-center gap-3 sm:gap-5 mt-5">
+      {/* Weekly star bar */}
+      <div className="flex justify-center items-end gap-5 sm:gap-6" style={{ marginTop: 24 }}>
         {weekDays.map((day) => (
           <div key={day.date} className="flex flex-col items-center gap-1.5">
-            <span className="text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wider">
+            <span
+              className="font-body font-medium uppercase"
+              style={{
+                fontSize: "0.6rem",
+                letterSpacing: "0.08em",
+                color: "hsl(var(--muted-foreground))",
+              }}
+            >
               {DAY_LABELS[day.dayIndex]}
             </span>
-            <Star
-              className={cn(
-                "w-5 h-5 sm:w-6 sm:h-6 transition-colors",
-                day.hasCheckin
-                  ? "fill-[#D4AF37] text-[#D4AF37] drop-shadow-sm"
-                  : "text-muted-foreground/30"
-              )}
-              strokeWidth={day.hasCheckin ? 1.5 : 1}
-            />
+            <div className="flex items-center justify-center" style={{ width: 22, height: 22 }}>
+              {day.hasCheckin ? <GoldenStar size={22} /> : <GrayDot size={22} />}
+            </div>
           </div>
         ))}
       </div>
 
       {/* Motivational phrase */}
       <p
-        className="text-center text-sm italic mt-5 leading-relaxed px-4 font-body"
-        style={{ color: "#6B7280" }}
+        className="text-center font-body italic leading-relaxed"
+        style={{
+          color: "hsl(var(--muted-foreground))",
+          fontSize: "0.8125rem",
+          marginTop: 24,
+          paddingLeft: 8,
+          paddingRight: 8,
+        }}
       >
         "{phrase}"
       </p>
