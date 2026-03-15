@@ -29,7 +29,6 @@ import {
   Moon, 
   Music, 
   Heart, 
-  Flame, 
   ArrowRight,
   RefreshCw,
   Sparkles,
