@@ -1123,12 +1123,12 @@ const AdminCursos = () => {
             </header>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3 h-10">
-                <TabsTrigger value="info" className="text-xs sm:text-sm">Curso</TabsTrigger>
-                <TabsTrigger value="modules" disabled={!selectedCourseId} className="text-xs sm:text-sm">
+              <TabsList className="w-full grid grid-cols-3 h-12 sm:h-14">
+                <TabsTrigger value="info" className="text-sm sm:text-base font-semibold tracking-wide uppercase">Curso</TabsTrigger>
+                <TabsTrigger value="modules" disabled={!selectedCourseId} className="text-sm sm:text-base font-semibold tracking-wide uppercase">
                   Módulos
                 </TabsTrigger>
-                <TabsTrigger value="content" disabled={!selectedCourseId} className="text-xs sm:text-sm">
+                <TabsTrigger value="content" disabled={!selectedCourseId} className="text-sm sm:text-base font-semibold tracking-wide uppercase">
                   Aulas
                 </TabsTrigger>
               </TabsList>
