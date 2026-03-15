@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { InlineMeditationPlayer } from "@/components/meditation/InlineMeditationPlayer";
+import { StreakAchievement } from "@/components/streak/StreakAchievement";
 import { formatTime } from "@/hooks/useMediaProgress";
 
 const formatDateDisplay = (dateStr: string) => {
