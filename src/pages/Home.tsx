@@ -174,7 +174,7 @@ const Home = () => {
     setShowPrivacyModal(false);
   };
 
-  const isLoading = subscriptionLoading || contentLoading || checkinLoading || streakLoading;
+  const isLoading = subscriptionLoading || contentLoading || checkinLoading;
 
   const getPrivacyDescription = () => {
     if (shareMode === "private") {
