@@ -14,7 +14,6 @@ import {
   useSubscription, 
   useDailyContentForDate, 
   useCheckin, 
-  useMonthlyStreak,
   type ShareMode,
 } from "@/hooks/useSubscription";
 import { useBasicCourse } from "@/hooks/useBasicCourse";
