@@ -55,24 +55,27 @@ export function StreakAchievement({ glowActive = false }: StreakAchievementProps
     >
       {/* Central: Flower of Life + streak number */}
       <div className="flex flex-col items-center">
-        <div className="relative" style={{ width: 110, height: 110 }}>
-          <FlowerOfLife size={110} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span
-              className={cn(
-                "font-display font-bold transition-all duration-700",
-                glowActive && "animate-streak-glow"
-              )}
-              style={{
-                fontSize: "2.25rem",
-                lineHeight: 1,
-                color: "#D4AF37",
-                textShadow: "0 1px 4px rgba(212, 175, 55, 0.25)",
-              }}
-            >
-              {consecutiveDays}
-            </span>
-          </div>
+        <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+          <img
+            src={streakFrame}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+          <span
+            className={cn(
+              "relative font-display font-bold transition-all duration-700",
+              glowActive && "animate-streak-glow"
+            )}
+            style={{
+              fontSize: "2.5rem",
+              lineHeight: 1,
+              color: "#D4AF37",
+              textShadow: "0 0 18px rgba(212, 175, 55, 0.5), 0 0 36px rgba(212, 175, 55, 0.2), 0 2px 4px rgba(212, 175, 55, 0.3)",
+            }}
+          >
+            {consecutiveDays}
+          </span>
         </div>
 
         <span
