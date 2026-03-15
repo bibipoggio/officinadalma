@@ -115,25 +115,19 @@ const Home = () => {
     }
   }, [checkin]);
 
-  // Handle share mode change
   const handleShareModeChange = (newMode: ShareMode) => {
     setShareMode(newMode);
   };
 
-  // Handle save button click
   const handleSaveClick = () => {
-    // If public mode and not yet accepted privacy, show modal
     if ((shareMode === "community" || shareMode === "anonymous") && !hasAcceptedPrivacyDisclaimer()) {
       setShowPrivacyModal(true);
     } else {
-      // Save directly
       performSave();
     }
   };
 
-  // Actually save the check-in
   const performSave = async () => {
-    // If private, published = false; otherwise published = true
     const shouldPublish = shareMode !== "private";
     
     const result = await saveCheckin({
@@ -152,7 +146,6 @@ const Home = () => {
             : "Seu check-in foi compartilhado de forma anônima.")
           : "Seu check-in foi salvo de forma privada."
       });
-      // Trigger community invite after first check-in
       setTimeout(() => triggerInvite(), 1500);
     } else {
       toast({ 
@@ -165,7 +158,6 @@ const Home = () => {
 
   const handlePrivacyAccept = () => {
     setShowPrivacyModal(false);
-    // After accepting, save the check-in
     performSave();
   };
 
@@ -176,15 +168,9 @@ const Home = () => {
   const isLoading = subscriptionLoading || contentLoading || checkinLoading;
 
   const getPrivacyDescription = () => {
-    if (shareMode === "private") {
-      return "Somente você verá este check-in.";
-    }
-    if (shareMode === "community") {
-      return "Seu nome e check-in serão visíveis para a comunidade.";
-    }
-    if (shareMode === "anonymous") {
-      return "Seu check-in será visível para a comunidade, mas sem seu nome.";
-    }
+    if (shareMode === "private") return "Somente você verá este check-in.";
+    if (shareMode === "community") return "Seu nome e check-in serão visíveis para a comunidade.";
+    if (shareMode === "anonymous") return "Seu check-in será visível para a comunidade, mas sem seu nome.";
     return "";
   };
 
@@ -201,8 +187,152 @@ const Home = () => {
           </p>
         </section>
 
-        {/* Streak Achievement Section */}
+        {/* 1. Streak Achievement Section */}
         <StreakAchievement />
+
+        {/* 2. Check-in do Dia */}
+        <Card>
+          <CardContent className="p-5 space-y-6">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                checkin ? "bg-green-500/10" : "bg-rose-500/10"
+              }`}>
+                {checkin ? (
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Heart className="w-5 h-5 text-rose-500" />
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                  Check-in do Dia
+                </p>
+                <h3 className="font-display text-lg font-semibold text-foreground">
+                  {checkin ? "Check-in realizado" : "Como você está hoje?"}
+                </h3>
+              </div>
+              {checkin && !isEditing && (
+                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                  <Pencil className="w-4 h-4 mr-1" />
+                  Editar
+                </Button>
+              )}
+            </div>
+
+            {checkinLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-24 w-full" />
+              </div>
+            ) : checkin && !isEditing ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-muted-foreground">Energia:</span>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-sm font-bold text-primary">{checkin.energy}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">/10</span>
+                  </div>
+                </div>
+                {checkin.feeling_text && (
+                  <div className="bg-muted/30 rounded-lg p-4">
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{checkin.feeling_text}</p>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  {checkin.share_mode === "private" && <span>🔒 Privado</span>}
+                  {checkin.share_mode === "community" && <span>👥 Compartilhado com a comunidade</span>}
+                  {checkin.share_mode === "anonymous" && <span>🎭 Compartilhado anonimamente</span>}
+                </div>
+              </div>
+            ) : (
+              <>
+                <SliderEnergia value={energy} onChange={setEnergy} disabled={isSaving} />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Como você está se sentindo?</label>
+                  <Textarea
+                    value={feelingText}
+                    onChange={(e) => setFeelingText(e.target.value.slice(0, 500))}
+                    placeholder="Escreva sobre o seu dia, seus sentimentos..."
+                    className="min-h-[100px] resize-none"
+                    disabled={isSaving}
+                  />
+                  <p className="text-right text-xs text-muted-foreground">{feelingText.length}/500</p>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-foreground">Compartilhar como</label>
+                  <div className="flex flex-wrap gap-2">
+                    {([
+                      { value: "private", label: "🔒 Privado", desc: "Só você vê" },
+                      { value: "community", label: "👥 Comunidade", desc: "Com seu nome" },
+                      { value: "anonymous", label: "🎭 Anônimo", desc: "Sem seu nome" },
+                    ] as const).map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => handleShareModeChange(option.value)}
+                        disabled={isSaving}
+                        className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
+                          shareMode === option.value
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-background text-muted-foreground hover:bg-muted/50 border-border"
+                        }`}
+                      >
+                        <span className="block text-base">{option.label}</span>
+                        <span className="block text-xs opacity-80 mt-0.5">{option.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className={`text-xs flex items-center gap-1.5 ${
+                    shareMode === "private" ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400"
+                  }`}>
+                    {shareMode !== "private" && (
+                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    )}
+                    {getPrivacyDescription()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {isEditing && (
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setIsEditing(false);
+                        if (checkin) {
+                          setEnergy(checkin.energy);
+                          setFeelingText(checkin.feeling_text);
+                          setShareMode(checkin.share_mode);
+                        }
+                      }}
+                      disabled={isSaving}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                  <Button
+                    className={isEditing ? "flex-1" : "w-full"}
+                    size="lg"
+                    onClick={handleSaveClick}
+                    disabled={isSaving || !feelingText.trim()}
+                  >
+                    {isSaving 
+                      ? "Salvando..." 
+                      : isEditing
+                        ? "Salvar alterações"
+                        : shareMode === "private"
+                          ? "Salvar check-in"
+                          : shareMode === "community"
+                            ? "Compartilhar com a comunidade"
+                            : "Compartilhar anonimamente"
+                    }
+                  </Button>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Error State */}
         {contentError && (
@@ -217,8 +347,7 @@ const Home = () => {
           </Card>
         )}
 
-
-        {/* Tônica do Dia */}
+        {/* 3. Tônica do Dia / Enraizamento */}
         <Card>
           <CardContent className="p-5">
             {contentLoading ? (
@@ -235,16 +364,11 @@ const Home = () => {
                     <Sun className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                      Tônica do Dia
-                    </p>
-                    <h3 className="font-display text-lg font-semibold text-foreground">
-                      {dailyContent.tonica_title}
-                    </h3>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">Tônica do Dia</p>
+                    <h3 className="font-display text-lg font-semibold text-foreground">{dailyContent.tonica_title}</h3>
                   </div>
                 </div>
 
-                {/* Enraizamento Audio Player */}
                 {dailyContent.enraizamento_audio_url && (
                   <div className="rounded-xl bg-primary/5 p-4 space-y-3">
                     <audio
@@ -322,7 +446,7 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* Meditação do Dia - Gratuita para todos */}
+        {/* 4. Meditação do Dia */}
         {dailyContent?.meditation_audio_url && (
           <Card>
             <CardContent className="p-5">
@@ -356,7 +480,7 @@ const Home = () => {
           </Card>
         )}
 
-        {/* Astrowake (Spotify Podcast) */}
+        {/* 5. Astrowake (Spotify Podcast) */}
         <Card>
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center gap-3">
@@ -466,179 +590,6 @@ const Home = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Check-in do Dia */}
-        <Card>
-          <CardContent className="p-5 space-y-6">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                checkin ? "bg-green-500/10" : "bg-rose-500/10"
-              }`}>
-                {checkin ? (
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                ) : (
-                  <Heart className="w-5 h-5 text-rose-500" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Check-in do Dia
-                </p>
-                <h3 className="font-display text-lg font-semibold text-foreground">
-                  {checkin ? "Check-in realizado" : "Como você está hoje?"}
-                </h3>
-              </div>
-              {checkin && !isEditing && (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="w-4 h-4 mr-1" />
-                  Editar
-                </Button>
-              )}
-            </div>
-
-            {checkinLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            ) : checkin && !isEditing ? (
-              /* Completed check-in view */
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-muted-foreground">Energia:</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                      <span className="text-sm font-bold text-primary">{checkin.energy}</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">/10</span>
-                  </div>
-                </div>
-                
-                {checkin.feeling_text && (
-                  <div className="bg-muted/30 rounded-lg p-4">
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{checkin.feeling_text}</p>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  {checkin.share_mode === "private" && <span>🔒 Privado</span>}
-                  {checkin.share_mode === "community" && <span>👥 Compartilhado com a comunidade</span>}
-                  {checkin.share_mode === "anonymous" && <span>🎭 Compartilhado anonimamente</span>}
-                </div>
-              </div>
-            ) : (
-              /* Edit/Create form */
-              <>
-                {/* Energy Slider */}
-                <SliderEnergia
-                  value={energy}
-                  onChange={setEnergy}
-                  disabled={isSaving}
-                />
-
-                {/* Feeling Text */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">
-                    Como você está se sentindo?
-                  </label>
-                  <Textarea
-                    value={feelingText}
-                    onChange={(e) => setFeelingText(e.target.value.slice(0, 500))}
-                    placeholder="Escreva sobre o seu dia, seus sentimentos..."
-                    className="min-h-[100px] resize-none"
-                    disabled={isSaving}
-                  />
-                  <p className="text-right text-xs text-muted-foreground">
-                    {feelingText.length}/500
-                  </p>
-                </div>
-
-                {/* Privacy Options */}
-                <div className="space-y-3">
-                  <label className="text-sm font-medium text-foreground">
-                    Compartilhar como
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {([
-                      { value: "private", label: "🔒 Privado", desc: "Só você vê" },
-                      { value: "community", label: "👥 Comunidade", desc: "Com seu nome" },
-                      { value: "anonymous", label: "🎭 Anônimo", desc: "Sem seu nome" },
-                    ] as const).map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => handleShareModeChange(option.value)}
-                        disabled={isSaving}
-                        className={`flex-1 min-w-[100px] px-4 py-3 rounded-xl text-sm font-medium transition-all border-2 ${
-                          shareMode === option.value
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-background text-muted-foreground hover:bg-muted/50 border-border"
-                        }`}
-                      >
-                        <span className="block text-base">{option.label}</span>
-                        <span className="block text-xs opacity-80 mt-0.5">{option.desc}</span>
-                      </button>
-                    ))}
-                  </div>
-                  {/* Privacy description */}
-                  <p className={`text-xs flex items-center gap-1.5 ${
-                    shareMode === "private" 
-                      ? "text-muted-foreground" 
-                      : "text-amber-600 dark:text-amber-400"
-                  }`}>
-                    {shareMode !== "private" && (
-                      <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                    )}
-                    {getPrivacyDescription()}
-                  </p>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {isEditing && (
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        setIsEditing(false);
-                        // Reset form to original values
-                        if (checkin) {
-                          setEnergy(checkin.energy);
-                          setFeelingText(checkin.feeling_text);
-                          setShareMode(checkin.share_mode);
-                        }
-                      }}
-                      disabled={isSaving}
-                    >
-                      Cancelar
-                    </Button>
-                  )}
-                  <Button
-                    className={isEditing ? "flex-1" : "w-full"}
-                    size="lg"
-                    onClick={handleSaveClick}
-                    disabled={isSaving || !feelingText.trim()}
-                  >
-                    {isSaving 
-                      ? "Salvando..." 
-                      : isEditing
-                        ? "Salvar alterações"
-                        : shareMode === "private"
-                          ? "Salvar check-in"
-                          : shareMode === "community"
-                            ? "Compartilhar com a comunidade"
-                            : "Compartilhar anonimamente"
-                    }
-                  </Button>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       {/* Privacy Disclaimer Modal */}
