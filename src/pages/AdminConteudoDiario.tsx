@@ -3,12 +3,13 @@ import { LoadingState } from "@/components/layout/PageState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useState } from "react";
 import { useDailyContent } from "@/hooks/useDailyContent";
 import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, ChevronLeft, ChevronRight, Check, X } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Check, FileEdit } from "lucide-react";
 import { AudioUpload } from "@/components/admin/AudioUpload";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 
@@ -65,25 +66,17 @@ const AdminConteudoDiario = () => {
           {/* Status Badge */}
           <div className="flex justify-center">
             {!isLoading && (
-              <div
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-lg font-medium ${
-                  content.published
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
-                }`}
-              >
-                {content.published ? (
-                  <>
-                    <Check className="w-5 h-5" />
-                    Publicado
-                  </>
-                ) : (
-                  <>
-                    <X className="w-5 h-5" />
-                    Agendado (não publicado)
-                  </>
-                )}
-              </div>
+              content.published ? (
+                <Badge className="gap-2 px-5 py-2.5 text-base bg-[#EDE9FE] text-[#6D28D9] hover:bg-[#EDE9FE] border-transparent">
+                  <Check className="w-4 h-4" />
+                  Publicado
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-2 px-5 py-2.5 text-base">
+                  <FileEdit className="w-4 h-4" />
+                  Rascunho
+                </Badge>
+              )
             )}
           </div>
         </header>
@@ -330,7 +323,7 @@ const AdminConteudoDiario = () => {
                 ) : (
                   <Button
                     size="lg"
-                    className="flex-1 text-xl h-16 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 text-xl h-16"
                     onClick={() => saveContent(true)}
                     disabled={isSaving}
                   >
