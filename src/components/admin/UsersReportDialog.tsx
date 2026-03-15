@@ -140,9 +140,12 @@
                      <TableCell className="text-right">
                        {user.total_checkins}
                      </TableCell>
-                     <TableCell className="text-right">
-                       {user.total_lesson_views}
-                     </TableCell>
+                      <TableCell className="text-right">
+                        {user.total_lesson_views}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {user.total_meditations_completed}
+                      </TableCell>
                    </TableRow>
                  ))}
                  {filteredUsers?.length === 0 && (
