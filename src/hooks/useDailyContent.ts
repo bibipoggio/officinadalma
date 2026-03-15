@@ -160,10 +160,10 @@ export function useDailyContent(selectedDate: string) {
       if (isNewContent) setIsNewContent(false);
 
       toast({
-        title: publish ? "Conteúdo publicado." : "Conteúdo salvo.",
+        title: publish ? "Conteúdo publicado." : "Rascunho salvo com sucesso.",
         description: publish 
           ? "O conteúdo está disponível para os usuários." 
-          : "O rascunho foi salvo.",
+          : "Você pode continuar editando quando quiser.",
       });
 
       // Refresh to get the ID if it was a new insert
