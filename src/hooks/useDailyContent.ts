@@ -87,39 +87,41 @@ export function useDailyContent(selectedDate: string) {
   };
 
   const saveContent = async (publish: boolean) => {
-    // Validation
-    const missingFields: string[] = [];
-    if (!content.tonica_title.trim()) missingFields.push("Título da Tônica");
-    if (!content.tonica_short.trim()) missingFields.push("Resumo curto");
-    if (!content.tonica_full.trim()) missingFields.push("Texto completo");
-    if (!content.tonica_practice.trim()) missingFields.push("Prática do dia");
+    // Only validate required fields when publishing
+    if (publish) {
+      const missingFields: string[] = [];
+      if (!content.tonica_title.trim()) missingFields.push("Título da Tônica");
+      if (!content.tonica_short.trim()) missingFields.push("Resumo curto");
+      if (!content.tonica_full.trim()) missingFields.push("Texto completo");
+      if (!content.tonica_practice.trim()) missingFields.push("Prática do dia");
 
-    if (missingFields.length > 0) {
-      toast({
-        title: "Falta preencher",
-        description: missingFields.join(", "),
-        variant: "destructive",
-      });
-      return false;
-    }
+      if (missingFields.length > 0) {
+        toast({
+          title: "Para publicar, preencha todos os campos obrigatórios",
+          description: missingFields.join(", "),
+          variant: "destructive",
+        });
+        return false;
+      }
 
-    // URL validation
-    if (content.meditation_audio_url && !isValidUrl(content.meditation_audio_url)) {
-      toast({
-        title: "Link inválido",
-        description: "O link do áudio não é válido.",
-        variant: "destructive",
-      });
-      return false;
-    }
+      // URL validation only on publish
+      if (content.meditation_audio_url && !isValidUrl(content.meditation_audio_url)) {
+        toast({
+          title: "Link inválido",
+          description: "O link do áudio não é válido.",
+          variant: "destructive",
+        });
+        return false;
+      }
 
-    if (content.spotify_episode_url && !isValidUrl(content.spotify_episode_url)) {
-      toast({
-        title: "Link inválido",
-        description: "O link do Spotify não é válido.",
-        variant: "destructive",
-      });
-      return false;
+      if (content.spotify_episode_url && !isValidUrl(content.spotify_episode_url)) {
+        toast({
+          title: "Link inválido",
+          description: "O link do Spotify não é válido.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     setIsSaving(true);
