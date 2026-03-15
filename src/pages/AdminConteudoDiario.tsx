@@ -66,25 +66,17 @@ const AdminConteudoDiario = () => {
           {/* Status Badge */}
           <div className="flex justify-center">
             {!isLoading && (
-              <div
-                className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-lg font-medium ${
-                  content.published
-                    ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                    : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
-                }`}
-              >
-                {content.published ? (
-                  <>
-                    <Check className="w-5 h-5" />
-                    Publicado
-                  </>
-                ) : (
-                  <>
-                    <X className="w-5 h-5" />
-                    Agendado (não publicado)
-                  </>
-                )}
-              </div>
+              content.published ? (
+                <Badge className="gap-2 px-5 py-2.5 text-base bg-[#EDE9FE] text-[#6D28D9] hover:bg-[#EDE9FE] border-transparent">
+                  <Check className="w-4 h-4" />
+                  Publicado
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="gap-2 px-5 py-2.5 text-base">
+                  <FileEdit className="w-4 h-4" />
+                  Rascunho
+                </Badge>
+              )
             )}
           </div>
         </header>
