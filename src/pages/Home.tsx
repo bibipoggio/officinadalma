@@ -59,13 +59,11 @@ const Home = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const today = formatDateISO(new Date());
-  const currentDayOfMonth = new Date().getDate();
 
   // Parallel data loading
   const { isPremium, isLoading: subscriptionLoading } = useSubscription();
   const { content: dailyContent, isLoading: contentLoading, error: contentError, refetch: refetchContent } = useDailyContentForDate(today);
   const { checkin, isLoading: checkinLoading, isSaving, saveCheckin, refetch: refetchCheckin } = useCheckin(today);
-  const { streakDays, isLoading: streakLoading } = useMonthlyStreak();
   const { course: basicCourse, latestLesson, totalLessons, isLoading: courseLoading } = useBasicCourse();
 
   // Check-in form state
