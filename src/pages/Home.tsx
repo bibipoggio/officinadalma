@@ -14,7 +14,6 @@ import {
   useSubscription, 
   useDailyContentForDate, 
   useCheckin, 
-  useMonthlyStreak,
   type ShareMode,
 } from "@/hooks/useSubscription";
 import { useBasicCourse } from "@/hooks/useBasicCourse";
@@ -30,7 +29,6 @@ import {
   Moon, 
   Music, 
   Heart, 
-  Flame, 
   ArrowRight,
   RefreshCw,
   Sparkles,
@@ -44,6 +42,7 @@ import {
 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { InlineMeditationPlayer } from "@/components/meditation/InlineMeditationPlayer";
+import { StreakAchievement } from "@/components/streak/StreakAchievement";
 import { formatTime } from "@/hooks/useMediaProgress";
 
 const formatDateDisplay = (dateStr: string) => {
@@ -59,13 +58,11 @@ const Home = () => {
   const { profile } = useAuth();
   const { toast } = useToast();
   const today = formatDateISO(new Date());
-  const currentDayOfMonth = new Date().getDate();
 
   // Parallel data loading
   const { isPremium, isLoading: subscriptionLoading } = useSubscription();
   const { content: dailyContent, isLoading: contentLoading, error: contentError, refetch: refetchContent } = useDailyContentForDate(today);
   const { checkin, isLoading: checkinLoading, isSaving, saveCheckin, refetch: refetchCheckin } = useCheckin(today);
-  const { streakDays, isLoading: streakLoading } = useMonthlyStreak();
   const { course: basicCourse, latestLesson, totalLessons, isLoading: courseLoading } = useBasicCourse();
 
   // Check-in form state
@@ -176,7 +173,7 @@ const Home = () => {
     setShowPrivacyModal(false);
   };
 
-  const isLoading = subscriptionLoading || contentLoading || checkinLoading || streakLoading;
+  const isLoading = subscriptionLoading || contentLoading || checkinLoading;
 
   const getPrivacyDescription = () => {
     if (shareMode === "private") {
@@ -204,54 +201,8 @@ const Home = () => {
           </p>
         </section>
 
-        {/* Monthly Streak Card */}
-        <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-5">
-            {streakLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-4 w-56" />
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Flame className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Seu ritmo neste mês
-                  </h2>
-                  {streakDays === 0 ? (
-                    <p className="text-muted-foreground">
-                      Seu primeiro check-in do mês pode ser hoje.
-                    </p>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground">
-                        <span className="text-primary font-semibold">{streakDays} {streakDays === 1 ? "dia" : "dias"}</span> com check-in neste mês
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        Continue no seu ritmo.
-                      </p>
-                    </>
-                  )}
-                </div>
-                {/* Simple progress indicator */}
-                <div className="hidden sm:block w-24">
-                  <div className="h-2 bg-primary/20 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${Math.min((streakDays / currentDayOfMonth) * 100, 100)}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center mt-1">
-                    {streakDays}/{currentDayOfMonth}
-                  </p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Streak Achievement Section */}
+        <StreakAchievement />
 
         {/* Error State */}
         {contentError && (

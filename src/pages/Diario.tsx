@@ -44,6 +44,7 @@ import {
 } from "@/hooks/useDiario";
 import type { Checkin, ShareMode } from "@/hooks/useSubscription";
 import { cn } from "@/lib/utils";
+import { StreakAchievement } from "@/components/streak/StreakAchievement";
 
 // Format date to PT-BR
 const formatDatePtBr = (dateStr: string) => {
@@ -259,6 +260,9 @@ const Diario = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Streak Achievement Section */}
+        <StreakAchievement />
+
         <header>
           <h1 className="text-2xl font-display font-semibold text-foreground">Meu Diário</h1>
           <p className="text-muted-foreground mt-1">
