@@ -55,7 +55,7 @@ export function StreakAchievement({ glowActive = false }: StreakAchievementProps
     >
       {/* Central: Flower of Life + streak number */}
       <div className="flex flex-col items-center">
-        <div className="relative flex items-center justify-center" style={{ width: 140, height: 140 }}>
+        <div className="relative flex items-center justify-center" style={{ width: 160, height: 160 }}>
           <img
             src={streakFrame}
             alt=""
@@ -68,9 +68,10 @@ export function StreakAchievement({ glowActive = false }: StreakAchievementProps
               glowActive && "animate-streak-glow"
             )}
             style={{
-              fontSize: "2.5rem",
+              fontSize: "2rem",
               lineHeight: 1,
               color: "#D4AF37",
+              marginTop: -4,
               textShadow: "0 0 18px rgba(212, 175, 55, 0.5), 0 0 36px rgba(212, 175, 55, 0.2), 0 2px 4px rgba(212, 175, 55, 0.3)",
             }}
           >
