@@ -323,7 +323,7 @@ const AdminConteudoDiario = () => {
                 ) : (
                   <Button
                     size="lg"
-                    className="flex-1 text-xl h-16 bg-green-600 hover:bg-green-700 text-white"
+                    className="flex-1 text-xl h-16"
                     onClick={() => saveContent(true)}
                     disabled={isSaving}
                   >
