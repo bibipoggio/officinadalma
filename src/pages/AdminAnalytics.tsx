@@ -1,17 +1,18 @@
- import { useState } from "react";
- import { AppLayout } from "@/components/layout/AppLayout";
- import { LoadingState } from "@/components/layout/PageState";
- import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
- import { Button } from "@/components/ui/button";
- import { Progress } from "@/components/ui/progress";
- import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
- import { useAdminLessonAnalytics } from "@/hooks/useLessonAnalytics";
- import {
-   useEnhancedAnalytics,
-   useNewUsersHistory,
-   type AnalyticsPeriod,
- } from "@/hooks/useEnhancedAnalytics";
- import { useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { LoadingState } from "@/components/layout/PageState";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
+import { useAdminLessonAnalytics } from "@/hooks/useLessonAnalytics";
+import {
+  useEnhancedAnalytics,
+  useNewUsersHistory,
+  type AnalyticsPeriod,
+} from "@/hooks/useEnhancedAnalytics";
+import { useMeditationFunnelAnalytics } from "@/hooks/useMeditationAnalytics";
+import { useAuth } from "@/contexts/AuthContext";
  import { Navigate } from "react-router-dom";
  import {
    Users,
