@@ -67,7 +67,12 @@ import { useAuth } from "@/contexts/AuthContext";
      isLoading: enhancedLoading,
      refetch: refetchEnhanced,
    } = useEnhancedAnalytics(period);
-   const { data: newUsersHistory } = useNewUsersHistory(30);
+  const { data: newUsersHistory } = useNewUsersHistory(30);
+  const {
+    data: meditationFunnel,
+    isLoading: funnelLoading,
+    refetch: refetchFunnel,
+  } = useMeditationFunnelAnalytics(period);
  
    if (authLoading) {
      return (
