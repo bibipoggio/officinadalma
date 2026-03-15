@@ -2,42 +2,9 @@ import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConsecutiveStreak, getMotivationalPhrase } from "@/hooks/useConsecutiveStreak";
 import { cn } from "@/lib/utils";
+import streakFrame from "@/assets/streak-frame.png";
 
 const DAY_LABELS = ["D", "S", "T", "Q", "Q", "S", "S"];
-
-/** Flower of Life SVG – subtle violet mandala backdrop */
-const FlowerOfLife = ({ size = 110 }: { size?: number }) => {
-  const r = size * 0.20;
-  const cx = size / 2;
-  const cy = size / 2;
-  const d = r;
-  const angles = [0, 60, 120, 180, 240, 300];
-
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="hsl(var(--primary))" strokeWidth="4" opacity="0.18" />
-      {angles.map((angle, i) => {
-        const rad = (angle * Math.PI) / 180;
-        const px = cx + d * Math.cos(rad);
-        const py = cy + d * Math.sin(rad);
-        return (
-          <circle
-            key={i}
-            cx={px}
-            cy={py}
-            r={r}
-            fill="none"
-            stroke="hsl(var(--primary))"
-            strokeWidth="4"
-            opacity="0.18"
-          />
-        );
-      })}
-      {/* Solid violet circle behind the number for contrast */}
-      <circle cx={cx} cy={cy} r={r * 0.82} fill="hsl(var(--primary) / 0.12)" />
-    </svg>
-  );
-};
 
 /** Golden star for completed days */
 const GoldenStar = ({ size = 22 }: { size?: number }) => (
