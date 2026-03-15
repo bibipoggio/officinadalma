@@ -39,23 +39,9 @@ export function useCommunityFeed() {
       const sixDaysAgo = subDays(today, 6);
       const minDate = format(sixDaysAgo, "yyyy-MM-dd");
 
-      // Fetch checkins with profiles
+      // Fetch checkins via SECURITY DEFINER function that strips user_id for anonymous entries
       const { data: checkinsData, error: checkinsError } = await supabase
-        .from("checkins")
-        .select(`
-          id,
-          user_id,
-          date,
-          energy,
-          feeling_text,
-          share_mode,
-          created_at
-        `)
-        .eq("published", true)
-        .in("share_mode", ["community", "anonymous"])
-        .gte("date", minDate)
-        .order("date", { ascending: false })
-        .order("created_at", { ascending: false });
+        .rpc("get_community_checkins", { p_min_date: minDate });
 
       if (checkinsError) throw checkinsError;
 

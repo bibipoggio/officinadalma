@@ -1213,6 +1213,18 @@ export type Database = {
           status: Database["public"]["Enums"]["report_status"]
         }[]
       }
+      get_community_checkins: {
+        Args: { p_min_date: string }
+        Returns: {
+          created_at: string
+          date: string
+          energy: number
+          feeling_text: string
+          id: string
+          share_mode: string
+          user_id: string
+        }[]
+      }
       get_course_engagement: {
         Args: never
         Returns: {
