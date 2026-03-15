@@ -260,6 +260,9 @@ const Diario = () => {
   return (
     <AppLayout>
       <div className="space-y-6">
+        {/* Streak Achievement Section */}
+        <StreakAchievement />
+
         <header>
           <h1 className="text-2xl font-display font-semibold text-foreground">Meu Diário</h1>
           <p className="text-muted-foreground mt-1">

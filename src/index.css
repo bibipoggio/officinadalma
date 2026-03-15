@@ -339,3 +339,19 @@
 .animate-spin-slow {
   animation: spin-slow 1s linear infinite;
 }
+
+@keyframes streak-glow {
+  0% {
+    text-shadow: 0 0 0 transparent;
+  }
+  50% {
+    text-shadow: 0 0 18px rgba(212, 175, 55, 0.6), 0 0 36px rgba(212, 175, 55, 0.25);
+  }
+  100% {
+    text-shadow: 0 0 0 transparent;
+  }
+}
+
+.animate-streak-glow {
+  animation: streak-glow 1.5s ease-in-out;
+}
