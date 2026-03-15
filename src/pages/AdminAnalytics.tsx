@@ -192,26 +192,68 @@ import { useAuth } from "@/contexts/AuthContext";
            </div>
          </div>
  
-         {/* Meditation Metrics */}
-         <div>
-           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-             <Headphones className="w-5 h-5" />
-             Meditação do Dia
-           </h2>
-           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <AnalyticsMetricCard
-               title="Reproduções Hoje"
-               value={enhancedAnalytics?.meditation_plays || 0}
-               icon={<PlayCircle className="w-5 h-5" />}
-             />
-             <AnalyticsMetricCard
-               title="Usuários que Meditaram"
-               value={enhancedAnalytics?.meditation_unique_users || 0}
-               subtitle="usuários únicos hoje"
-               icon={<Headphones className="w-5 h-5" />}
-             />
-           </div>
-         </div>
+        {/* Meditation Funnel */}
+        <div>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Headphones className="w-5 h-5" />
+            Funil da Meditação do Dia
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <AnalyticsMetricCard
+              title="Aberturas"
+              value={meditationFunnel?.opened || 0}
+              subtitle="meditações abertas"
+              icon={<Eye className="w-5 h-5" />}
+            />
+            <AnalyticsMetricCard
+              title="Play Iniciado"
+              value={meditationFunnel?.play_started || 0}
+              subtitle={`${meditationFunnel?.rate_open_to_play || 0}% de conversão`}
+              icon={<PlayCircle className="w-5 h-5" />}
+            />
+            <AnalyticsMetricCard
+              title="Concluídas"
+              value={meditationFunnel?.completed || 0}
+              subtitle={`${meditationFunnel?.rate_play_to_complete || 0}% do play`}
+              icon={<CheckCircle className="w-5 h-5" />}
+            />
+            <AnalyticsMetricCard
+              title="Usuários que Concluíram"
+              value={meditationFunnel?.unique_completed_users || 0}
+              subtitle={`média ${meditationFunnel?.avg_per_user || 0}/usuário`}
+              icon={<Headphones className="w-5 h-5" />}
+            />
+          </div>
+          {/* Funnel conversion summary */}
+          {(meditationFunnel?.opened || 0) > 0 && (
+            <Card className="mt-4">
+              <CardContent className="pt-6">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="text-center flex-1">
+                    <p className="text-2xl font-bold text-foreground">{meditationFunnel?.opened || 0}</p>
+                    <p className="text-muted-foreground">Aberturas</p>
+                  </div>
+                  <div className="text-muted-foreground text-xs">→ {meditationFunnel?.rate_open_to_play || 0}%</div>
+                  <div className="text-center flex-1">
+                    <p className="text-2xl font-bold text-foreground">{meditationFunnel?.play_started || 0}</p>
+                    <p className="text-muted-foreground">Plays</p>
+                  </div>
+                  <div className="text-muted-foreground text-xs">→ {meditationFunnel?.rate_play_to_complete || 0}%</div>
+                  <div className="text-center flex-1">
+                    <p className="text-2xl font-bold text-foreground">{meditationFunnel?.completed || 0}</p>
+                    <p className="text-muted-foreground">Concluídas</p>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <TrendingUp className="w-3 h-3" />
+                    <span>Taxa abertura → conclusão: {meditationFunnel?.rate_open_to_complete || 0}%</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
  
          {/* New Users Chart */}
          <Card>
