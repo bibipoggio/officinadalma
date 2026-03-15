@@ -86,7 +86,7 @@ import { useAuth } from "@/contexts/AuthContext";
      return <Navigate to="/" replace />;
    }
  
-   if (isLoading || lessonLoading || enhancedLoading) {
+   if (isLoading || lessonLoading || enhancedLoading || funnelLoading) {
      return (
        <AppLayout>
          <LoadingState message="Carregando métricas..." />
