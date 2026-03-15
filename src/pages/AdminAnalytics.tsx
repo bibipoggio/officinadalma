@@ -97,7 +97,8 @@ import { useAuth } from "@/contexts/AuthContext";
    const handleRefreshAll = () => {
      refetch();
      refetchLessons();
-     refetchEnhanced();
+      refetchEnhanced();
+      refetchFunnel();
    };
  
    if (error) {
