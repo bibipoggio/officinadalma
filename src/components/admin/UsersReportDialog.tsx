@@ -149,9 +149,11 @@
                    </TableRow>
                  ))}
                  {filteredUsers?.length === 0 && (
-                   <TableRow>
-                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                       Nenhum usuário encontrado
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
                      </TableCell>
                    </TableRow>
                  )}
