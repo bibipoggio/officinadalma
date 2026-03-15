@@ -13,14 +13,15 @@
    meditation_unique_users: number;
  }
  
- interface UserListItem {
-   id: string;
-   display_name: string | null;
-   created_at: string;
-   last_active: string | null;
-   total_checkins: number;
-   total_lesson_views: number;
- }
+interface UserListItem {
+  id: string;
+  display_name: string | null;
+  created_at: string;
+  last_active: string | null;
+  total_checkins: number;
+  total_lesson_views: number;
+  total_meditations_completed: number;
+}
  
  interface NewUsersHistoryItem {
    date: string;
