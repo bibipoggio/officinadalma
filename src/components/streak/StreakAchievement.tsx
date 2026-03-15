@@ -70,7 +70,8 @@ export function StreakAchievement({ glowActive = false }: StreakAchievementProps
             style={{
               fontSize: "8.5rem",
               lineHeight: 1,
-              marginTop: "-15%",
+              marginTop: "-22%",
+              color: "#D4AF37",
               textShadow: "0 0 18px rgba(212, 175, 55, 0.5), 0 0 36px rgba(212, 175, 55, 0.2), 0 2px 4px rgba(212, 175, 55, 0.3)",
             }}
           >
