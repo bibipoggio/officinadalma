@@ -30,28 +30,30 @@
      user.display_name?.toLowerCase().includes(search.toLowerCase())
    );
  
-   const handleExportCSV = () => {
-     if (!users || users.length === 0) return;
- 
-     const headers = [
-       "Nome",
-       "Data de Cadastro",
-       "Último Acesso",
-       "Total Check-ins",
-       "Total Aulas Assistidas",
-     ];
- 
-     const rows = users.map((user) => [
-       user.display_name || "Sem nome",
-       user.created_at
-         ? format(parseISO(user.created_at), "dd/MM/yyyy", { locale: ptBR })
-         : "-",
-       user.last_active
-         ? format(parseISO(user.last_active), "dd/MM/yyyy", { locale: ptBR })
-         : "Nunca",
-       user.total_checkins.toString(),
-       user.total_lesson_views.toString(),
-     ]);
+  const handleExportCSV = () => {
+    if (!users || users.length === 0) return;
+
+    const headers = [
+      "Nome",
+      "Data de Cadastro",
+      "Último Acesso",
+      "Total Check-ins",
+      "Total Aulas Assistidas",
+      "Meditações Concluídas",
+    ];
+
+    const rows = users.map((user) => [
+      user.display_name || "Sem nome",
+      user.created_at
+        ? format(parseISO(user.created_at), "dd/MM/yyyy", { locale: ptBR })
+        : "-",
+      user.last_active
+        ? format(parseISO(user.last_active), "dd/MM/yyyy", { locale: ptBR })
+        : "Nunca",
+      user.total_checkins.toString(),
+      user.total_lesson_views.toString(),
+      user.total_meditations_completed.toString(),
+    ]);
  
      const csvContent = [
        headers.join(";"),
