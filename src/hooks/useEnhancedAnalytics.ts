@@ -13,14 +13,15 @@
    meditation_unique_users: number;
  }
  
- interface UserListItem {
-   id: string;
-   display_name: string | null;
-   created_at: string;
-   last_active: string | null;
-   total_checkins: number;
-   total_lesson_views: number;
- }
+interface UserListItem {
+  id: string;
+  display_name: string | null;
+  created_at: string;
+  last_active: string | null;
+  total_checkins: number;
+  total_lesson_views: number;
+  total_meditations_completed: number;
+}
  
  interface NewUsersHistoryItem {
    date: string;
@@ -92,43 +93,5 @@
    });
  }
  
- // Hook for tracking meditation plays
- export function useMeditationTracking() {
-   const trackPlay = async (dailyContentId: string) => {
-     try {
-       const { data: { user } } = await supabase.auth.getUser();
-       if (!user) return;
- 
-       await supabase.from("daily_content_analytics").upsert(
-         {
-           user_id: user.id,
-           daily_content_id: dailyContentId,
-           action: "play",
-         },
-         { onConflict: "user_id,daily_content_id,action" }
-       );
-     } catch (err) {
-       console.error("Error tracking meditation play:", err);
-     }
-   };
- 
-   const trackComplete = async (dailyContentId: string) => {
-     try {
-       const { data: { user } } = await supabase.auth.getUser();
-       if (!user) return;
- 
-       await supabase.from("daily_content_analytics").upsert(
-         {
-           user_id: user.id,
-           daily_content_id: dailyContentId,
-           action: "complete",
-         },
-         { onConflict: "user_id,daily_content_id,action" }
-       );
-     } catch (err) {
-       console.error("Error tracking meditation completion:", err);
-     }
-   };
- 
-   return { trackPlay, trackComplete };
- }
+// Legacy tracking hook — now delegates to useMeditationAnalytics
+export { useMeditationTracking } from "@/hooks/useMeditationAnalytics";

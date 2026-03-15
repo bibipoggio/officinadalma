@@ -1280,6 +1280,7 @@ export type Database = {
           last_active: string
           total_checkins: number
           total_lesson_views: number
+          total_meditations_completed: number
         }[]
       }
       has_role: {

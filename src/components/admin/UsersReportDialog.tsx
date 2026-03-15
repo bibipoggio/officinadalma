@@ -30,28 +30,30 @@
      user.display_name?.toLowerCase().includes(search.toLowerCase())
    );
  
-   const handleExportCSV = () => {
-     if (!users || users.length === 0) return;
- 
-     const headers = [
-       "Nome",
-       "Data de Cadastro",
-       "Último Acesso",
-       "Total Check-ins",
-       "Total Aulas Assistidas",
-     ];
- 
-     const rows = users.map((user) => [
-       user.display_name || "Sem nome",
-       user.created_at
-         ? format(parseISO(user.created_at), "dd/MM/yyyy", { locale: ptBR })
-         : "-",
-       user.last_active
-         ? format(parseISO(user.last_active), "dd/MM/yyyy", { locale: ptBR })
-         : "Nunca",
-       user.total_checkins.toString(),
-       user.total_lesson_views.toString(),
-     ]);
+  const handleExportCSV = () => {
+    if (!users || users.length === 0) return;
+
+    const headers = [
+      "Nome",
+      "Data de Cadastro",
+      "Último Acesso",
+      "Total Check-ins",
+      "Total Aulas Assistidas",
+      "Meditações Concluídas",
+    ];
+
+    const rows = users.map((user) => [
+      user.display_name || "Sem nome",
+      user.created_at
+        ? format(parseISO(user.created_at), "dd/MM/yyyy", { locale: ptBR })
+        : "-",
+      user.last_active
+        ? format(parseISO(user.last_active), "dd/MM/yyyy", { locale: ptBR })
+        : "Nunca",
+      user.total_checkins.toString(),
+      user.total_lesson_views.toString(),
+      user.total_meditations_completed.toString(),
+    ]);
  
      const csvContent = [
        headers.join(";"),
@@ -107,11 +109,12 @@
              <Table>
                <TableHeader>
                  <TableRow>
-                   <TableHead>Nome</TableHead>
-                   <TableHead>Cadastro</TableHead>
-                   <TableHead>Último Acesso</TableHead>
-                   <TableHead className="text-right">Check-ins</TableHead>
-                   <TableHead className="text-right">Aulas</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead>Último Acesso</TableHead>
+                    <TableHead className="text-right">Check-ins</TableHead>
+                    <TableHead className="text-right">Aulas</TableHead>
+                    <TableHead className="text-right">Meditações</TableHead>
                  </TableRow>
                </TableHeader>
                <TableBody>
@@ -137,18 +140,21 @@
                      <TableCell className="text-right">
                        {user.total_checkins}
                      </TableCell>
-                     <TableCell className="text-right">
-                       {user.total_lesson_views}
-                     </TableCell>
+                      <TableCell className="text-right">
+                        {user.total_lesson_views}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {user.total_meditations_completed}
+                      </TableCell>
                    </TableRow>
                  ))}
-                 {filteredUsers?.length === 0 && (
-                   <TableRow>
-                     <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                       Nenhum usuário encontrado
-                     </TableCell>
-                   </TableRow>
-                 )}
+                  {filteredUsers?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
                </TableBody>
              </Table>
            )}
