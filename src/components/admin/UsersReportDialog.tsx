@@ -109,11 +109,12 @@
              <Table>
                <TableHeader>
                  <TableRow>
-                   <TableHead>Nome</TableHead>
-                   <TableHead>Cadastro</TableHead>
-                   <TableHead>Último Acesso</TableHead>
-                   <TableHead className="text-right">Check-ins</TableHead>
-                   <TableHead className="text-right">Aulas</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Cadastro</TableHead>
+                    <TableHead>Último Acesso</TableHead>
+                    <TableHead className="text-right">Check-ins</TableHead>
+                    <TableHead className="text-right">Aulas</TableHead>
+                    <TableHead className="text-right">Meditações</TableHead>
                  </TableRow>
                </TableHeader>
                <TableBody>
