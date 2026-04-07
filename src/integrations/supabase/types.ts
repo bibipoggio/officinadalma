@@ -746,6 +746,39 @@ export type Database = {
           },
         ]
       }
+      meditation_analytics_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          meditation_id: string
+          progress_percent: number | null
+          progress_seconds: number | null
+          session_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          meditation_id: string
+          progress_percent?: number | null
+          progress_seconds?: number | null
+          session_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          meditation_id?: string
+          progress_percent?: number | null
+          progress_seconds?: number | null
+          session_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1182,6 +1215,15 @@ export type Database = {
       }
     }
     Functions: {
+      get_active_users_today: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          session_count: number
+          user_id: string
+        }[]
+      }
       get_admin_analytics: { Args: never; Returns: Json }
       get_admin_users_list: {
         Args: never
@@ -1245,6 +1287,10 @@ export type Database = {
       }
       get_enhanced_analytics: { Args: { p_period?: string }; Returns: Json }
       get_lesson_analytics: { Args: never; Returns: Json }
+      get_meditation_funnel_analytics: {
+        Args: { p_period?: string }
+        Returns: Json
+      }
       get_new_users_history: {
         Args: { p_days?: number }
         Returns: {
