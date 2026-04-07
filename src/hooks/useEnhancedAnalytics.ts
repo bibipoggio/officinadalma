@@ -3,15 +3,17 @@
  
  export type AnalyticsPeriod = "today" | "week" | "month" | "all";
  
- interface EnhancedAnalyticsData {
-   total_users: number;
-   new_users: number;
-   active_today: number;
-   checkins_today: number;
-   checkins_unique_users: number;
-   meditation_plays: number;
-   meditation_unique_users: number;
- }
+interface EnhancedAnalyticsData {
+  total_users: number;
+  new_users: number;
+  active_today: number;
+  checkins_today: number;
+  checkins_unique_users: number;
+  meditation_plays: number;
+  meditation_unique_users: number;
+  enraizamento_plays: number;
+  enraizamento_unique_users: number;
+}
  
 interface UserListItem {
   id: string;

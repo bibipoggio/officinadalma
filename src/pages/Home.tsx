@@ -80,6 +80,24 @@ const Home = () => {
   const [enraizamentoDuration, setEnraizamentoDuration] = useState(0);
   const [enraizamentoRate, setEnraizamentoRate] = useState(1);
   const PLAYBACK_RATES = [1, 1.25, 1.5, 1.75, 2];
+  const enraizamentoTrackedRef = useRef(false);
+
+  const trackEnraizamentoPlay = useCallback(async () => {
+    if (enraizamentoTrackedRef.current || !dailyContent?.id) return;
+    enraizamentoTrackedRef.current = true;
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase.from("daily_content_analytics").insert({
+        user_id: user.id,
+        daily_content_id: dailyContent.id,
+        action: "enraizamento_play",
+      });
+    } catch (err) {
+      console.error("Error tracking enraizamento play:", err);
+    }
+  }, [dailyContent?.id]);
 
   const toggleEnraizamento = useCallback(() => {
     if (!enraizamentoRef.current) return;
@@ -87,8 +105,9 @@ const Home = () => {
       enraizamentoRef.current.pause();
     } else {
       enraizamentoRef.current.play();
+      trackEnraizamentoPlay();
     }
-  }, [enraizamentoPlaying]);
+  }, [enraizamentoPlaying, trackEnraizamentoPlay]);
 
   const cycleEnraizamentoRate = useCallback(() => {
     setEnraizamentoRate(prev => {
