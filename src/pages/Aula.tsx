@@ -259,13 +259,24 @@ const Aula = () => {
               </div>
 
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Assine o plano Premium para ter acesso completo a todas as aulas e funcionalidades
-                da plataforma.
+                Assine o plano Premium para ter acesso completo a todas as aulas, ou compre esta aula individualmente.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button variant="outline" onClick={() => navigate(`/aulas/${slug}`)}>
                   Voltar ao curso
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleBuyLesson}
+                  disabled={isBuying}
+                >
+                  {isBuying ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                  )}
+                  Comprar Aula Avulsa — R$29,75
                 </Button>
                 <Button onClick={() => navigate("/assinar")}>Assinar Premium</Button>
               </div>
