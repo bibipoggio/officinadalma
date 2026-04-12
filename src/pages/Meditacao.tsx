@@ -2,12 +2,14 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import { useDailyContentForDate } from "@/hooks/useSubscription";
+import { useDailyContentForDate, useSubscription } from "@/hooks/useSubscription";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 import { 
   Play, 
   Pause, 
@@ -17,6 +19,9 @@ import {
   WifiOff,
   AlertCircle,
   Clock,
+  Lock,
+  ShoppingCart,
+  Loader2,
 } from "lucide-react";
 
 const formatDateDisplay = (dateStr: string) => {
@@ -32,6 +37,9 @@ const formatTime = (seconds: number) => {
 
 const Meditacao = () => {
   const { date } = useParams<{ date: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { isPremium, isLoading: subLoading } = useSubscription();
   const audioRef = useRef<HTMLAudioElement>(null);
   
   const { content, isLoading: contentLoading, error: contentError, refetch } = useDailyContentForDate(date || "");
@@ -41,6 +49,29 @@ const Meditacao = () => {
   const [duration, setDuration] = useState(0);
   const [audioError, setAudioError] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [purchaseLoading, setPurchaseLoading] = useState(true);
+  const [isBuying, setIsBuying] = useState(false);
+
+  // Check if meditation was purchased
+  useEffect(() => {
+    const checkPurchase = async () => {
+      if (!user || !content?.id) {
+        setPurchaseLoading(false);
+        return;
+      }
+      const { data } = await supabase
+        .from("meditacoes_compradas")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("meditation_id", content.id)
+        .eq("status", "aprovado")
+        .maybeSingle();
+      setHasPurchased(!!data);
+      setPurchaseLoading(false);
+    };
+    checkPurchase();
+  }, [user, content?.id]);
 
   // Handle online/offline status
   useEffect(() => {
@@ -108,11 +139,39 @@ const Meditacao = () => {
     }
   };
 
-  const isLoading = contentLoading;
+  const handleBuyMeditation = async () => {
+    if (!user || !content) return;
+    setIsBuying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mp-create-payment", {
+        body: {
+          type: "meditation",
+          meditation_id: content.id,
+          meditation_title: content.meditation_title || content.tonica_title || "Meditação",
+        },
+      });
+      if (error) throw error;
+      if (data?.init_point) {
+        window.open(data.init_point, "_blank");
+      } else if (data?.sandbox_init_point) {
+        window.open(data.sandbox_init_point, "_blank");
+      }
+    } catch (err) {
+      console.error("Buy error:", err);
+      toast.error("Erro ao iniciar compra. Tente novamente.");
+    } finally {
+      setIsBuying(false);
+    }
+  };
+
+  const isLoading = contentLoading || subLoading || purchaseLoading;
   const displayDate = date ? formatDateDisplay(date) : "";
   const mediationDurationMinutes = content?.meditation_duration_seconds 
     ? Math.round(content.meditation_duration_seconds / 60) 
     : null;
+
+  // Determine if content is locked (premium meditation, user not premium and not purchased)
+  const isLocked = !isPremium && !hasPurchased && !!content?.meditation_audio_url;
 
   // Offline state
   if (isOffline) {
@@ -208,8 +267,54 @@ const Meditacao = () => {
           </Card>
         )}
 
+        {/* Locked state - Premium gating */}
+        {!isLoading && isLocked && (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-8 text-center space-y-6">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                <Lock className="w-8 h-8 text-primary" />
+              </div>
+
+              <div className="space-y-2">
+                <h2 className="text-xl font-display font-semibold text-foreground">
+                  {content?.meditation_title || content?.tonica_title || "Meditação do Dia"}
+                </h2>
+                {mediationDurationMinutes && (
+                  <p className="text-sm text-muted-foreground">{mediationDurationMinutes} minutos</p>
+                )}
+                <p className="text-muted-foreground">
+                  Esta meditação faz parte do conteúdo Premium.
+                </p>
+              </div>
+
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                Assine o plano Premium para acesso completo, ou compre esta meditação individualmente.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button variant="outline" onClick={() => navigate("/")}>
+                  Voltar
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleBuyMeditation}
+                  disabled={isBuying}
+                >
+                  {isBuying ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                  )}
+                  Comprar Meditação Avulsa — R$15,93
+                </Button>
+                <Button onClick={() => navigate("/inscricao")}>Assinar Premium</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Audio Error */}
-        {!isLoading && content?.meditation_audio_url && audioError && (
+        {!isLoading && content?.meditation_audio_url && !isLocked && audioError && (
           <Card className="border-destructive/50 bg-destructive/5">
             <CardContent className="p-8 text-center space-y-4">
               <AlertCircle className="w-12 h-12 mx-auto text-destructive" />
@@ -232,7 +337,7 @@ const Meditacao = () => {
         )}
 
         {/* Audio Player */}
-        {!isLoading && content?.meditation_audio_url && !audioError && (
+        {!isLoading && content?.meditation_audio_url && !isLocked && !audioError && (
           <Card variant="elevated">
             <CardContent className="p-6 space-y-6">
               {/* Cover */}

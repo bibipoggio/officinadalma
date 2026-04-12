@@ -43,31 +43,87 @@ serve(async (req) => {
       });
     }
 
-    // Parse request body
-    const { lesson_id, lesson_title } = await req.json();
-    if (!lesson_id || !lesson_title) {
-      return new Response(JSON.stringify({ error: "lesson_id and lesson_title are required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const body = await req.json();
+    const { type } = body; // "lesson" or "meditation"
 
-    // Use service role to insert pending purchase (RLS blocks user inserts)
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Check if already purchased
-    const { data: existing } = await supabaseAdmin
-      .from("aulas_compradas")
-      .select("id, status")
-      .eq("user_id", user.id)
-      .eq("lesson_id", lesson_id)
-      .maybeSingle();
+    let itemTitle: string;
+    let unitPrice: number;
+    let externalRef: Record<string, string>;
+    let table: string;
+    let idField: string;
+    let idValue: string;
+    let amountCents: number;
+    let backUrlSuccess: string;
+    let backUrlFailure: string;
 
-    if (existing?.status === "aprovado") {
-      return new Response(JSON.stringify({ error: "Aula já comprada" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (type === "meditation") {
+      const { meditation_id, meditation_title } = body;
+      if (!meditation_id) {
+        return new Response(JSON.stringify({ error: "meditation_id is required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Check if already purchased
+      const { data: existing } = await supabaseAdmin
+        .from("meditacoes_compradas")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("meditation_id", meditation_id)
+        .maybeSingle();
+
+      if (existing?.status === "aprovado") {
+        return new Response(JSON.stringify({ error: "Meditação já comprada" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      itemTitle = `Meditação Avulsa: ${meditation_title || "Meditação"}`;
+      unitPrice = 15.93;
+      amountCents = 1593;
+      externalRef = { type: "meditation_purchase", user_id: user.id, meditation_id };
+      table = "meditacoes_compradas";
+      idField = "meditation_id";
+      idValue = meditation_id;
+      backUrlSuccess = "https://officinadalma.lovable.app/orientacoes";
+      backUrlFailure = "https://officinadalma.lovable.app/";
+    } else {
+      // Default: lesson purchase
+      const { lesson_id, lesson_title } = body;
+      if (!lesson_id || !lesson_title) {
+        return new Response(JSON.stringify({ error: "lesson_id and lesson_title are required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: existing } = await supabaseAdmin
+        .from("aulas_compradas")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("lesson_id", lesson_id)
+        .maybeSingle();
+
+      if (existing?.status === "aprovado") {
+        return new Response(JSON.stringify({ error: "Aula já comprada" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      itemTitle = `Aula Avulsa: ${lesson_title}`;
+      unitPrice = 29.75;
+      amountCents = 2975;
+      externalRef = { type: "lesson_purchase", user_id: user.id, lesson_id };
+      table = "aulas_compradas";
+      idField = "lesson_id";
+      idValue = lesson_id;
+      backUrlSuccess = "https://officinadalma.lovable.app/orientacoes";
+      backUrlFailure = "https://officinadalma.lovable.app/aulas";
     }
 
     // Create Mercado Pago payment preference
@@ -80,24 +136,18 @@ serve(async (req) => {
       body: JSON.stringify({
         items: [
           {
-            title: `Aula Avulsa: ${lesson_title}`,
+            title: itemTitle,
             quantity: 1,
-            unit_price: 29.75,
+            unit_price: unitPrice,
             currency_id: "BRL",
           },
         ],
-        payer: {
-          email: user.email,
-        },
-        external_reference: JSON.stringify({
-          type: "lesson_purchase",
-          user_id: user.id,
-          lesson_id: lesson_id,
-        }),
+        payer: { email: user.email },
+        external_reference: JSON.stringify(externalRef),
         back_urls: {
-          success: "https://officinadalma.lovable.app/orientacoes",
-          failure: "https://officinadalma.lovable.app/aulas",
-          pending: "https://officinadalma.lovable.app/aulas",
+          success: backUrlSuccess,
+          failure: backUrlFailure,
+          pending: backUrlFailure,
         },
         auto_return: "approved",
         payment_methods: {
@@ -116,24 +166,30 @@ serve(async (req) => {
     }
 
     // Upsert pending purchase record
-    if (existing) {
+    const { data: existingRecord } = await supabaseAdmin
+      .from(table)
+      .select("id")
+      .eq("user_id", user.id)
+      .eq(idField, idValue)
+      .maybeSingle();
+
+    if (existingRecord) {
       await supabaseAdmin
-        .from("aulas_compradas")
+        .from(table)
         .update({ status: "pendente", provider_payment_id: mpData.id, updated_at: new Date().toISOString() })
-        .eq("id", existing.id);
+        .eq("id", existingRecord.id);
     } else {
-      await supabaseAdmin
-        .from("aulas_compradas")
-        .insert({
-          user_id: user.id,
-          lesson_id: lesson_id,
-          status: "pendente",
-          provider_payment_id: mpData.id,
-          amount_cents: 2975,
-        });
+      const insertData: Record<string, unknown> = {
+        user_id: user.id,
+        [idField]: idValue,
+        status: "pendente",
+        provider_payment_id: mpData.id,
+        amount_cents: amountCents,
+      };
+      await supabaseAdmin.from(table).insert(insertData);
     }
 
-    console.log("Payment preference created:", mpData.id, "for lesson:", lesson_id);
+    console.log(`Payment preference created: ${mpData.id} for ${type || "lesson"}: ${idValue}`);
 
     return new Response(
       JSON.stringify({

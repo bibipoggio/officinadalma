@@ -814,6 +814,47 @@ export type Database = {
           },
         ]
       }
+      meditacoes_compradas: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          meditation_id: string
+          provider_payment_id: string | null
+          status: Database["public"]["Enums"]["purchase_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          meditation_id: string
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          meditation_id?: string
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meditacoes_compradas_meditation_id_fkey"
+            columns: ["meditation_id"]
+            isOneToOne: false
+            referencedRelation: "daily_content"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meditation_analytics_events: {
         Row: {
           created_at: string
