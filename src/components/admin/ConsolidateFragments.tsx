@@ -250,6 +250,7 @@ export function ConsolidateFragments({
                   >
                     <Checkbox
                       checked={selectedIds.includes(lesson.id)}
+                      onClick={(e) => e.stopPropagation()}
                       onCheckedChange={() => toggleLesson(lesson.id)}
                     />
                     <span className="text-sm truncate flex-1">
