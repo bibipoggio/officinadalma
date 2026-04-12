@@ -200,7 +200,7 @@ const Inscricao = () => {
               <ClipboardCheck className="w-7 h-7 text-primary" />
             </div>
             <h1 className="text-2xl font-display font-semibold text-foreground">Inscrição Aprovada!</h1>
-            <p className="text-muted-foreground mt-2">Escolha seu plano e prossiga com o pagamento</p>
+            <p className="text-muted-foreground mt-2">{isPromo ? "Prossiga com o pagamento para liberar o acesso premium" : "Escolha seu plano e prossiga com o pagamento"}</p>
           </header>
 
           {/* Plan Selector */}
