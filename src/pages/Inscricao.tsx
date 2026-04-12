@@ -72,8 +72,8 @@ const Inscricao = () => {
         <div className="max-w-md mx-auto py-12">
           <Card>
             <CardContent className="p-8 text-center space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-green-100 flex items-center justify-center">
-                <Check className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Check className="w-8 h-8 text-primary" />
               </div>
               <h1 className="text-2xl font-display font-semibold text-foreground">
                 Assinatura Ativa
