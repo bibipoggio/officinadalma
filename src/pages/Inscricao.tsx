@@ -43,6 +43,7 @@ const Inscricao = () => {
   const { inscricao, isLoading: inscLoading, hasCompleted, saveInscricao } = useInscricao();
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<"mensal" | "semestral">("mensal");
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
