@@ -142,6 +142,10 @@ const Aula = () => {
     }
   };
 
+  // Check if lesson has multiple videos
+  const lessonVideos = lesson?.videos || [];
+  const hasMultipleVideos = lessonVideos.length > 1;
+
   // Detect if media_url is a video (YouTube, Vimeo, or .mp4)
   const isMediaUrlVideo = (() => {
     if (!lesson?.media_url) return false;
@@ -159,7 +163,7 @@ const Aula = () => {
   const hasVideoAndAudio = hasVideo && hasAudio;
   
   const isCompleted = !!progress?.completed_at;
-  const hasMediaContent = hasVideo || hasAudio;
+  const hasMediaContent = hasVideo || hasAudio || hasMultipleVideos;
 
   if (isLoading) {
     return (
