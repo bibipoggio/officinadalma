@@ -555,7 +555,7 @@ const AdminCursos = () => {
         
         const { error } = await supabase
           .from("course_lessons")
-          .insert({ ...lessonData, position: nextPosition });
+          .insert({ ...lessonData, position: nextPosition } as any);
         saveError = error;
         if (!error) {
           setIsCreatingLesson(false);
