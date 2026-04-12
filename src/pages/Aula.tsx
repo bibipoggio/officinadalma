@@ -14,6 +14,8 @@ import {
   RotateCcw,
   Video,
   Headphones,
+  ShoppingCart,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,6 +29,8 @@ import { VideoPlayer } from "@/components/lessons/VideoPlayer";
 import { AudioPlayer } from "@/components/lessons/AudioPlayer";
 import { LessonContent } from "@/components/lessons/LessonContent";
 import { useLessonTracking } from "@/hooks/useLessonAnalytics";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
