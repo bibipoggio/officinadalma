@@ -253,6 +253,7 @@ export type Database = {
           text_files_urls: Json | null
           title: string
           updated_at: string
+          videos: Json | null
         }
         Insert: {
           access_level: string
@@ -275,6 +276,7 @@ export type Database = {
           text_files_urls?: Json | null
           title: string
           updated_at?: string
+          videos?: Json | null
         }
         Update: {
           access_level?: string
@@ -297,6 +299,7 @@ export type Database = {
           text_files_urls?: Json | null
           title?: string
           updated_at?: string
+          videos?: Json | null
         }
         Relationships: [
           {
@@ -810,6 +813,50 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_video_progress: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          last_position_seconds: number
+          lesson_id: string
+          progress_percent: number
+          updated_at: string
+          user_id: string
+          video_index: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          last_position_seconds?: number
+          lesson_id: string
+          progress_percent?: number
+          updated_at?: string
+          user_id: string
+          video_index: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          last_position_seconds?: number
+          lesson_id?: string
+          progress_percent?: number
+          updated_at?: string
+          user_id?: string
+          video_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_video_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
             referencedColumns: ["id"]
           },
         ]
