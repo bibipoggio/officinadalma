@@ -1,20 +1,21 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { useSubscription } from "@/hooks/useSubscription";
-import { PaywallShell } from "@/components/ui/PaywallShell";
-import { PageState } from "@/components/layout/PageState";
-import { FileText, Download } from "lucide-react";
+import { LoadingState } from "@/components/layout/PageState";
+import { FileText, Download, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const PDF_URL =
   "https://jevcgtpkartfvixnauhg.supabase.co/storage/v1/object/public/daily-content/orientacoes%2Forientacoes-acesso-escola.pdf";
 
 export default function Orientacoes() {
   const { isPremium, isLoading } = useSubscription();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
       <AppLayout>
-        <PageState type="loading" message="Carregando..." />
+        <LoadingState message="Carregando..." />
       </AppLayout>
     );
   }
@@ -22,10 +23,18 @@ export default function Orientacoes() {
   if (!isPremium) {
     return (
       <AppLayout>
-        <PaywallShell
-          title="Orientações de Acesso"
-          description="Este conteúdo está disponível apenas para assinantes da Officina da Alma."
-        />
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+            <Lock className="w-8 h-8 text-muted-foreground" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">
+            Orientações de Acesso
+          </h2>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            Este conteúdo está disponível apenas para assinantes da Officina da Alma.
+          </p>
+          <Button onClick={() => navigate("/inscricao")}>Assinar agora</Button>
+        </div>
       </AppLayout>
     );
   }
