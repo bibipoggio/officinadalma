@@ -20,6 +20,7 @@ import Curso from "./pages/Curso";
 import Aula from "./pages/Aula";
 import Conta from "./pages/Conta";
 import MinhasCompras from "./pages/MinhasCompras";
+import MinhaAssinatura from "./pages/MinhaAssinatura";
 import EditarPerfil from "./pages/EditarPerfil";
 import AlterarSenha from "./pages/AlterarSenha";
 import Assinar from "./pages/Assinar";
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/conta/alterar-senha" element={<ProtectedRoute><AlterarSenha /></ProtectedRoute>} />
             <Route path="/conta/compras" element={<ProtectedRoute><MinhasCompras /></ProtectedRoute>} />
             <Route path="/assinar" element={<ProtectedRoute><Assinar /></ProtectedRoute>} />
+            <Route path="/conta/assinatura" element={<ProtectedRoute><MinhaAssinatura /></ProtectedRoute>} />
             <Route path="/inscricao" element={<ProtectedRoute><Inscricao /></ProtectedRoute>} />
             <Route path="/orientacoes" element={<ProtectedRoute><Orientacoes /></ProtectedRoute>} />
             
