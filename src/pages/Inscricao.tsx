@@ -235,6 +235,7 @@ const Inscricao = () => {
               </div>
             </button>
 
+            {!isPromo && (
             <button
               onClick={() => setSelectedPlan("semestral")}
               className={cn(
@@ -261,6 +262,7 @@ const Inscricao = () => {
                 <p className={cn("text-xs", selectedPlan === "semestral" ? "text-primary-foreground/80" : "text-muted-foreground")}>≈ R$ 80,90/mês</p>
               </div>
             </button>
+            )}
           </div>
 
           <Card className="border-2 border-primary">
