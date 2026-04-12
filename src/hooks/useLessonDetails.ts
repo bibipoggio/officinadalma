@@ -142,10 +142,22 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
       const userHasEnrollment = !!enrollmentData;
       setHasEnrollment(userHasEnrollment);
 
+      // Check if lesson was purchased individually
+      const { data: purchaseData } = await supabase
+        .from("aulas_compradas")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("lesson_id", lessonId)
+        .eq("status", "aprovado")
+        .maybeSingle();
+
+      const userHasPurchased = !!purchaseData;
+      setHasPurchased(userHasPurchased);
+
       // Determine if locked
       const isPremiumCourse = courseData.type === "aparte";
       const isPremiumLesson = lessonData.access_level === "premium";
-      const hasAccess = isPremium || userHasEnrollment;
+      const hasAccess = isPremium || userHasEnrollment || userHasPurchased;
 
       const locked = (isPremiumCourse && !hasAccess) || (isPremiumLesson && !hasAccess);
       setIsLocked(locked);
