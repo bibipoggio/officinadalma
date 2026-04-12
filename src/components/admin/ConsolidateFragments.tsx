@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,22 @@ interface ConsolidateFragmentsProps {
   onConsolidated: () => void;
 }
 
+const buildConsolidatedTitle = (selectedLessons: CourseLesson[]) => {
+  const firstTitle = selectedLessons[0]?.title?.trim();
+
+  if (!firstTitle) return "Aula consolidada";
+
+  const baseTitle = firstTitle
+    .replace(/\s*[-–—:]?\s*(parte|fragmento|trecho)\s*\d+\s*$/i, "")
+    .trim();
+
+  const normalizedTitle = baseTitle || firstTitle;
+
+  return /consolidada/i.test(normalizedTitle)
+    ? normalizedTitle
+    : `${normalizedTitle} - Consolidada`;
+};
+
 export function ConsolidateFragments({
   lessons,
   moduleId,
@@ -36,7 +52,10 @@ export function ConsolidateFragments({
   const [isSaving, setIsSaving] = useState(false);
 
   // Only show non-deleted lessons
-  const availableLessons = lessons.filter((l) => !l.deleted_at);
+  const availableLessons = useMemo(
+    () => lessons.filter((l) => !l.deleted_at),
+    [lessons]
+  );
 
   const toggleLesson = (id: string) => {
     setSelectedIds((prev) =>
@@ -44,55 +63,66 @@ export function ConsolidateFragments({
     );
   };
 
-  const selectedLessons = availableLessons.filter((l) =>
-    selectedIds.includes(l.id)
+  const selectedLessons = useMemo(
+    () => availableLessons.filter((l) => selectedIds.includes(l.id)),
+    [availableLessons, selectedIds]
   );
 
-  // Preview merged content
-  const mergedVideos: LessonVideo[] = [];
-  const mergedFiles: { url: string; name: string }[] = [];
-  let mergedBody = "";
+  const suggestedTitle = useMemo(
+    () => buildConsolidatedTitle(selectedLessons),
+    [selectedLessons]
+  );
 
-  selectedLessons.forEach((lesson) => {
-    // Collect videos
-    const lessonVideos = parseLessonVideos(lesson.videos);
-    lessonVideos.forEach((v) => {
-      if (mergedVideos.length < 10) {
-        mergedVideos.push({ ...v, position: mergedVideos.length });
-      }
-    });
-    // If no videos array but has media_url, add as video
-    if (lessonVideos.length === 0 && lesson.media_url) {
-      if (mergedVideos.length < 10) {
-        mergedVideos.push({
+  const { mergedVideos, mergedFiles, mergedBody } = useMemo(() => {
+    const videos: LessonVideo[] = [];
+    const files: { url: string; name: string }[] = [];
+    let body = "";
+
+    selectedLessons.forEach((lesson) => {
+      const lessonVideos = parseLessonVideos(lesson.videos);
+
+      lessonVideos.forEach((video) => {
+        if (videos.length < 10) {
+          videos.push({ ...video, position: videos.length });
+        }
+      });
+
+      if (lessonVideos.length === 0 && lesson.media_url && videos.length < 10) {
+        videos.push({
           url: lesson.media_url,
           title: lesson.title,
-          position: mergedVideos.length,
+          position: videos.length,
         });
       }
-    }
 
-    // Collect files
-    const textFiles = Array.isArray((lesson as any).text_files_urls)
-      ? (lesson as any).text_files_urls
-      : [];
-    const pdfUrl = (lesson as any).pdf_url;
-    if (pdfUrl && mergedFiles.length < 10) {
-      const pdfName = pdfUrl.split("/").pop() || "material.pdf";
-      mergedFiles.push({ url: pdfUrl, name: pdfName });
-    }
-    textFiles.forEach((f: any) => {
-      if (mergedFiles.length < 10 && f?.url) {
-        mergedFiles.push(f);
+      const textFiles = Array.isArray((lesson as any).text_files_urls)
+        ? (lesson as any).text_files_urls
+        : [];
+      const pdfUrl = (lesson as any).pdf_url;
+
+      if (pdfUrl && files.length < 10) {
+        const pdfName = pdfUrl.split("/").pop() || "material.pdf";
+        files.push({ url: pdfUrl, name: pdfName });
+      }
+
+      textFiles.forEach((file: any) => {
+        if (files.length < 10 && file?.url) {
+          files.push(file);
+        }
+      });
+
+      if (lesson.body_markdown) {
+        if (body) body += "\n\n---\n\n";
+        body += `## ${lesson.title}\n\n${lesson.body_markdown}`;
       }
     });
 
-    // Merge body markdown
-    if (lesson.body_markdown) {
-      if (mergedBody) mergedBody += "\n\n---\n\n";
-      mergedBody += `## ${lesson.title}\n\n${lesson.body_markdown}`;
-    }
-  });
+    return {
+      mergedVideos: videos,
+      mergedFiles: files,
+      mergedBody: body,
+    };
+  }, [selectedLessons]);
 
   const handleConsolidate = async () => {
     if (selectedIds.length < 2) {
@@ -102,13 +132,7 @@ export function ConsolidateFragments({
       });
       return;
     }
-    if (!newTitle.trim()) {
-      toast({
-        title: "Informe o título da aula consolidada",
-        variant: "destructive",
-      });
-      return;
-    }
+    const finalTitle = newTitle.trim() || suggestedTitle;
 
     setIsSaving(true);
     try {
@@ -150,7 +174,7 @@ export function ConsolidateFragments({
         .insert({
           course_id: courseId,
           module_id: moduleId,
-          title: newTitle.trim(),
+          title: finalTitle,
           content_type: contentType,
           access_level: hasPremium ? "premium" : "basic",
           media_url: mergedVideos.length > 0 ? mergedVideos[0].url : (selectedLessons[0]?.media_url || null),
@@ -178,7 +202,7 @@ export function ConsolidateFragments({
 
       toast({
         title: "✓ Aulas consolidadas!",
-        description: `${selectedIds.length} partes foram unidas em "${newTitle}". A nova aula está como rascunho.`,
+        description: `${selectedIds.length} partes foram unidas em "${finalTitle}". A nova aula está como rascunho.`,
       });
 
       setOpen(false);
@@ -228,12 +252,17 @@ export function ConsolidateFragments({
           <div className="flex-1 overflow-y-auto space-y-4 py-2">
             {/* Title for new lesson */}
             <div className="space-y-1.5">
-              <Label className="text-sm">Título da aula consolidada *</Label>
+              <Label className="text-sm">Título da aula consolidada</Label>
               <Input
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Ex: Módulo completo - Parte única"
+                placeholder={suggestedTitle || "Ex: Módulo completo - Parte única"}
               />
+              {selectedIds.length >= 2 && !newTitle.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  Se deixar em branco, vamos usar “{suggestedTitle}”.
+                </p>
+              )}
             </div>
 
             {/* Lesson selection */}
@@ -305,7 +334,7 @@ export function ConsolidateFragments({
             </Button>
             <Button
               onClick={handleConsolidate}
-              disabled={isSaving || selectedIds.length < 2 || !newTitle.trim()}
+              disabled={isSaving || selectedIds.length < 2}
             >
               {isSaving
                 ? "Consolidando..."
