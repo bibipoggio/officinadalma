@@ -116,8 +116,13 @@ const Inscricao = () => {
 
   const handleSubscribe = () => {
     if (!user) return;
-    // Redirect to Mercado Pago plan checkout with user reference
-    const planUrl = `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=74b17db669014a39a31dac10bb79a7ca&external_reference=${user.id}`;
+    // Promo plan (1ª turma R$79) until May 2026, then standard plan (R$97)
+    const PLAN_ID_PROMO = "74b17db669014a39a31dac10bb79a7ca";
+    const PLAN_ID_PADRAO = "b1f6ffd2f3ab42fbada29ac49bf3353a";
+    const now = new Date();
+    const isPromo = now < new Date("2026-06-01T00:00:00-03:00");
+    const planId = isPromo ? PLAN_ID_PROMO : PLAN_ID_PADRAO;
+    const planUrl = `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=${planId}&external_reference=${user.id}`;
     window.open(planUrl, "_blank");
   };
 
