@@ -210,8 +210,8 @@ const Inscricao = () => {
               className={cn(
                 "relative flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
                 selectedPlan === "mensal"
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border hover:border-primary/40"
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-border bg-card hover:border-primary/40"
               )}
             >
               <div className="flex items-center gap-3">
