@@ -118,12 +118,14 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
         return;
       }
 
-      // Parse text_files_urls from JSON
+      // Parse text_files_urls and videos from JSON
       const parsedLesson: Lesson = {
         ...lessonData,
         text_files_urls: Array.isArray(lessonData.text_files_urls) 
           ? lessonData.text_files_urls as unknown as TextFile[]
           : null,
+        videos: parseLessonVideos(lessonData.videos),
+      };
       };
       setLesson(parsedLesson);
 
