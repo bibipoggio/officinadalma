@@ -16,7 +16,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const mpAccessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
-    const planId = Deno.env.get("MP_PREAPPROVAL_PLAN_ID_PROMO") || "74b17db669014a39a31dac10bb79a7ca";
+    const planId = "74b17db669014a39a31dac10bb79a7ca";
 
     if (!mpAccessToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN not configured");
