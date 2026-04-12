@@ -35,6 +35,7 @@ import AdminArquivos from "./pages/AdminArquivos";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminEventos from "./pages/AdminEventos";
 import AdminUsuarios from "./pages/AdminUsuarios";
+import Orientacoes from "./pages/Orientacoes";
 import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 

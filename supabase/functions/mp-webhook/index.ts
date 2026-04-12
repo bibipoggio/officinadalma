@@ -23,7 +23,7 @@ serve(async (req) => {
     if (req.method === "GET") {
       // User redirect — just show success
       return new Response(
-        `<html><head><meta http-equiv="refresh" content="3;url=https://officinadalma.lovable.app/"></head><body><p>Pagamento processado! Redirecionando...</p></body></html>`,
+        `<html><head><meta http-equiv="refresh" content="3;url=https://officinadalma.lovable.app/orientacoes"></head><body><p>Pagamento processado! Redirecionando para as orientações...</p></body></html>`,
         { status: 200, headers: { "Content-Type": "text/html" } }
       );
     }
