@@ -46,7 +46,13 @@ export interface CourseLesson {
   position: number;
   summary: string | null;
   deleted_at: string | null;
-  videos: LessonVideo[] | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  videos: any;
+}
+
+export function parseLessonVideos(videos: any): LessonVideo[] {
+  if (!videos || !Array.isArray(videos)) return [];
+  return videos.filter((v: any) => v && typeof v.url === "string") as LessonVideo[];
 }
 
 export function useAdminCourses() {

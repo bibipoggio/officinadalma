@@ -39,13 +39,18 @@ interface Lesson {
   audio_url: string | null;
   pdf_url: string | null;
   text_files_urls: TextFile[] | null;
-  videos: LessonVideo[] | null;
+  videos: LessonVideo[];
   duration_seconds: number | null;
   audio_duration_seconds: number | null;
   access_level: string;
   position: number;
   is_published: boolean;
   released_at: string | null;
+}
+
+function parseLessonVideos(videos: any): LessonVideo[] {
+  if (!videos || !Array.isArray(videos)) return [];
+  return videos.filter((v: any) => v && typeof v.url === "string") as LessonVideo[];
 }
 
 interface LessonProgress {
