@@ -35,6 +35,7 @@ import AdminArquivos from "./pages/AdminArquivos";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminEventos from "./pages/AdminEventos";
 import AdminUsuarios from "./pages/AdminUsuarios";
+import Orientacoes from "./pages/Orientacoes";
 import Instalar from "./pages/Instalar";
 import NotFound from "./pages/NotFound";
 
@@ -73,6 +74,7 @@ const App = () => (
             <Route path="/conta/alterar-senha" element={<ProtectedRoute><AlterarSenha /></ProtectedRoute>} />
             <Route path="/assinar" element={<ProtectedRoute><Assinar /></ProtectedRoute>} />
             <Route path="/inscricao" element={<ProtectedRoute><Inscricao /></ProtectedRoute>} />
+            <Route path="/orientacoes" element={<ProtectedRoute><Orientacoes /></ProtectedRoute>} />
             
             {/* Admin Routes (requires moderator or admin) */}
             <Route path="/admin/conteudo-diario" element={<ProtectedRoute requireAdmin><AdminConteudoDiario /></ProtectedRoute>} />
