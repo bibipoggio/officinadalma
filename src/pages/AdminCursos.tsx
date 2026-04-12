@@ -1,3 +1,4 @@
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { LoadingState } from "@/components/layout/PageState";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { FilesUpload } from "@/components/admin/FilesUpload";
 import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { SortableLessonItem } from "@/components/admin/SortableLessonItem";
+import { ConsolidateFragments } from "@/components/admin/ConsolidateFragments";
 import { useState, useEffect, useCallback } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
 import { 
@@ -1495,17 +1497,35 @@ const AdminCursos = () => {
                               renderLessonForm(module.id)
                             )}
 
-                            {/* Add lesson button - simplified */}
+                            {/* Add lesson button + consolidate */}
                             {!isCreatingLesson && !editingLessonId && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full h-9"
-                                onClick={() => handleStartCreateLesson(module.id)}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nova aula
-                              </Button>
+                              <div className="space-y-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full h-9"
+                                  onClick={() => handleStartCreateLesson(module.id)}
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Nova aula
+                                </Button>
+                                <ConsolidateFragments
+                                  lessons={moduleLessons}
+                                  moduleId={module.id}
+                                  courseId={selectedCourseId!}
+                                  onConsolidated={async () => {
+                                    const { data } = await supabase
+                                      .from("course_lessons")
+                                      .select("*")
+                                      .eq("module_id", module.id)
+                                      .order("position", { ascending: true });
+                                    setAllLessons(prev => ({
+                                      ...prev,
+                                      [module.id]: (data || []) as CourseLesson[],
+                                    }));
+                                  }}
+                                />
+                              </div>
                             )}
                           </AccordionContent>
                         </AccordionItem>
