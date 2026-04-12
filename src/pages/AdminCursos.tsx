@@ -140,8 +140,8 @@ const AdminCursos = () => {
     is_published: boolean;
     summary: string;
     module_id: string;
-    /** Unified files array including PDFs and text files */
     files: { url: string; name: string }[];
+    videos: LessonVideo[];
   }>({
     title: "",
     access_level: "basic",
@@ -156,6 +156,7 @@ const AdminCursos = () => {
     summary: "",
     module_id: "",
     files: [],
+    videos: [],
   });
   
   const [isSaving, setIsSaving] = useState(false);
