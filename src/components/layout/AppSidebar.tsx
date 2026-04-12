@@ -36,7 +36,7 @@ const menuItems = [
   { href: "/comunidade", label: "Comunidade", icon: Users },
   { href: "/aulas", label: "Aulas", icon: GraduationCap },
   { href: "/conta", label: "Minha Conta", icon: User },
-  { href: "/assinar", label: "Assinar", icon: CreditCard },
+  { href: "/inscricao", label: "Assinar", icon: CreditCard },
 ];
 
 const adminItems = [
