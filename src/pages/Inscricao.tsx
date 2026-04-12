@@ -217,13 +217,13 @@ const Inscricao = () => {
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                  selectedPlan === "mensal" ? "border-primary" : "border-muted-foreground/40"
+                  selectedPlan === "mensal" ? "border-primary-foreground" : "border-muted-foreground/40"
                 )}>
-                  {selectedPlan === "mensal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  {selectedPlan === "mensal" && <div className="w-2.5 h-2.5 rounded-full bg-primary-foreground" />}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Mensal</p>
-                  <p className="text-xs text-muted-foreground">Pagamento mensal recorrente (12x)</p>
+                  <p className={cn("font-semibold", selectedPlan === "mensal" ? "text-primary-foreground" : "text-foreground")}>Mensal</p>
+                  <p className={cn("text-xs", selectedPlan === "mensal" ? "text-primary-foreground/80" : "text-muted-foreground")}>Pagamento mensal recorrente (12x)</p>
                 </div>
               </div>
               <div className="text-right">
