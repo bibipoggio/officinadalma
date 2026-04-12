@@ -240,25 +240,25 @@ const Inscricao = () => {
               className={cn(
                 "relative flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
                 selectedPlan === "semestral"
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border hover:border-primary/40"
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-border bg-card hover:border-primary/40"
               )}
             >
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                  selectedPlan === "semestral" ? "border-primary" : "border-muted-foreground/40"
+                  selectedPlan === "semestral" ? "border-primary-foreground" : "border-muted-foreground/40"
                 )}>
-                  {selectedPlan === "semestral" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                  {selectedPlan === "semestral" && <div className="w-2.5 h-2.5 rounded-full bg-primary-foreground" />}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">Semestral</p>
-                  <p className="text-xs text-muted-foreground">Pagamento único por 6 meses</p>
+                  <p className={cn("font-semibold", selectedPlan === "semestral" ? "text-primary-foreground" : "text-foreground")}>Semestral</p>
+                  <p className={cn("text-xs", selectedPlan === "semestral" ? "text-primary-foreground/80" : "text-muted-foreground")}>Pagamento único por 6 meses</p>
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xl font-bold text-foreground">R$ 485,39</span>
-                <p className="text-xs text-muted-foreground">≈ R$ 80,90/mês</p>
+                <span className={cn("text-xl font-bold", selectedPlan === "semestral" ? "text-primary-foreground" : "text-foreground")}>R$ 485,39</span>
+                <p className={cn("text-xs", selectedPlan === "semestral" ? "text-primary-foreground/80" : "text-muted-foreground")}>≈ R$ 80,90/mês</p>
               </div>
             </button>
           </div>
