@@ -15,6 +15,7 @@ import { FilesUpload } from "@/components/admin/FilesUpload";
 import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { SortableLessonItem } from "@/components/admin/SortableLessonItem";
+import { ConsolidateFragments } from "@/components/admin/ConsolidateFragments";
 import { useState, useEffect, useCallback } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
 import { 
