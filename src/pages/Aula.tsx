@@ -36,10 +36,12 @@ const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const Aula = () => {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [mediaMode, setMediaMode] = useState<"video" | "audio">("video");
+  const [isBuying, setIsBuying] = useState(false);
 
   const {
     lesson,
