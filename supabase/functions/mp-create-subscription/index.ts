@@ -16,9 +16,13 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const mpAccessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
+    const planId = Deno.env.get("MP_PREAPPROVAL_PLAN_ID_PROMO");
 
     if (!mpAccessToken) {
       throw new Error("MERCADO_PAGO_ACCESS_TOKEN not configured");
+    }
+    if (!planId) {
+      throw new Error("MP_PREAPPROVAL_PLAN_ID_PROMO not configured");
     }
 
     // Authenticate user
@@ -42,14 +46,7 @@ serve(async (req) => {
       });
     }
 
-    // Get user profile for payer info
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("id", user.id)
-      .single();
-
-    // Create Mercado Pago preapproval (subscription)
+    // Create subscription linked to the plan
     const response = await fetch("https://api.mercadopago.com/preapproval", {
       method: "POST",
       headers: {
@@ -57,15 +54,8 @@ serve(async (req) => {
         Authorization: `Bearer ${mpAccessToken}`,
       },
       body: JSON.stringify({
-        reason: "Officina da Alma — Assinatura Anual",
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: "months",
-          transaction_amount: 79,
-          currency_id: "BRL",
-        },
+        preapproval_plan_id: planId,
         payer_email: user.email,
-        back_url: `${supabaseUrl.replace('.supabase.co', '.supabase.co')}/functions/v1/mp-webhook`,
         external_reference: user.id,
         status: "pending",
       }),
@@ -77,6 +67,8 @@ serve(async (req) => {
       console.error("MP error:", mpData);
       throw new Error(`Mercado Pago API error: ${response.status}`);
     }
+
+    console.log("Subscription created with plan:", planId, "id:", mpData.id);
 
     return new Response(
       JSON.stringify({
