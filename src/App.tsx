@@ -19,6 +19,7 @@ import Aulas from "./pages/Aulas";
 import Curso from "./pages/Curso";
 import Aula from "./pages/Aula";
 import Conta from "./pages/Conta";
+import MinhasCompras from "./pages/MinhasCompras";
 import EditarPerfil from "./pages/EditarPerfil";
 import AlterarSenha from "./pages/AlterarSenha";
 import Assinar from "./pages/Assinar";
@@ -72,6 +73,7 @@ const App = () => (
             <Route path="/conta" element={<ProtectedRoute><Conta /></ProtectedRoute>} />
             <Route path="/conta/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
             <Route path="/conta/alterar-senha" element={<ProtectedRoute><AlterarSenha /></ProtectedRoute>} />
+            <Route path="/conta/compras" element={<ProtectedRoute><MinhasCompras /></ProtectedRoute>} />
             <Route path="/assinar" element={<ProtectedRoute><Assinar /></ProtectedRoute>} />
             <Route path="/inscricao" element={<ProtectedRoute><Inscricao /></ProtectedRoute>} />
             <Route path="/orientacoes" element={<ProtectedRoute><Orientacoes /></ProtectedRoute>} />
