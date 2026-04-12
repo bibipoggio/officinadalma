@@ -91,7 +91,7 @@ serve(async (req) => {
       const payment = await mpRes.json();
       console.log("MP payment data:", JSON.stringify(payment));
 
-      let externalRef: { type?: string; user_id?: string; lesson_id?: string } | null = null;
+      let externalRef: { type?: string; user_id?: string; lesson_id?: string; meditation_id?: string } | null = null;
       try {
         externalRef = JSON.parse(payment.external_reference || "{}");
       } catch {
@@ -99,12 +99,13 @@ serve(async (req) => {
         return new Response("OK", { status: 200 });
       }
 
-      if (externalRef?.type === "lesson_purchase" && externalRef.user_id && externalRef.lesson_id) {
-        const paymentStatus = payment.status; // approved, pending, rejected, etc.
-        const purchaseStatus = paymentStatus === "approved" ? "aprovado"
-          : paymentStatus === "rejected" ? "rejeitado"
-          : "pendente";
+      const paymentStatus = payment.status;
+      const purchaseStatus = paymentStatus === "approved" ? "aprovado"
+        : paymentStatus === "rejected" ? "rejeitado"
+        : "pendente";
 
+      // Handle lesson purchase
+      if (externalRef?.type === "lesson_purchase" && externalRef.user_id && externalRef.lesson_id) {
         console.log(`Lesson purchase: user=${externalRef.user_id}, lesson=${externalRef.lesson_id}, status=${purchaseStatus}`);
 
         const { error: upsertError } = await supabase
@@ -124,7 +125,32 @@ serve(async (req) => {
         if (upsertError) {
           console.error("Lesson purchase upsert error:", upsertError);
         } else {
-          console.log(`Lesson purchase ${purchaseStatus} for user ${externalRef.user_id}, lesson ${externalRef.lesson_id}`);
+          console.log(`Lesson purchase ${purchaseStatus} for user ${externalRef.user_id}`);
+        }
+      }
+
+      // Handle meditation purchase
+      if (externalRef?.type === "meditation_purchase" && externalRef.user_id && externalRef.meditation_id) {
+        console.log(`Meditation purchase: user=${externalRef.user_id}, meditation=${externalRef.meditation_id}, status=${purchaseStatus}`);
+
+        const { error: upsertError } = await supabase
+          .from("meditacoes_compradas")
+          .upsert(
+            {
+              user_id: externalRef.user_id,
+              meditation_id: externalRef.meditation_id,
+              status: purchaseStatus,
+              provider_payment_id: data.id.toString(),
+              amount_cents: Math.round((payment.transaction_amount || 15.93) * 100),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,meditation_id" }
+          );
+
+        if (upsertError) {
+          console.error("Meditation purchase upsert error:", upsertError);
+        } else {
+          console.log(`Meditation purchase ${purchaseStatus} for user ${externalRef.user_id}`);
         }
       }
     }
