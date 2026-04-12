@@ -145,7 +145,7 @@ const MinhasCompras = () => {
 
         {!isLoading && !hasAny && (
           <EmptyState
-            icon={ShoppingBag}
+            icon={<ShoppingBag className="w-8 h-8 text-muted-foreground" />}
             title="Nenhuma compra"
             description="Você ainda não comprou nenhuma aula ou meditação avulsa."
           />
