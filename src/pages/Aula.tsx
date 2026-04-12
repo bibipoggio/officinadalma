@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { LessonComments } from "@/components/lessons/LessonComments";
 import { VideoPlayer } from "@/components/lessons/VideoPlayer";
+import { MultiVideoPlayer } from "@/components/lessons/MultiVideoPlayer";
 import { AudioPlayer } from "@/components/lessons/AudioPlayer";
 import { LessonContent } from "@/components/lessons/LessonContent";
 import { useLessonTracking } from "@/hooks/useLessonAnalytics";
@@ -141,6 +142,10 @@ const Aula = () => {
     }
   };
 
+  // Check if lesson has multiple videos
+  const lessonVideos = lesson?.videos || [];
+  const hasMultipleVideos = lessonVideos.length > 1;
+
   // Detect if media_url is a video (YouTube, Vimeo, or .mp4)
   const isMediaUrlVideo = (() => {
     if (!lesson?.media_url) return false;
@@ -158,7 +163,7 @@ const Aula = () => {
   const hasVideoAndAudio = hasVideo && hasAudio;
   
   const isCompleted = !!progress?.completed_at;
-  const hasMediaContent = hasVideo || hasAudio;
+  const hasMediaContent = hasVideo || hasAudio || hasMultipleVideos;
 
   if (isLoading) {
     return (
@@ -332,8 +337,19 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Video Player - show when video available and not in audio mode */}
-            {hasVideo && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
+            {/* Multi-Video Player */}
+            {hasMultipleVideos && lessonId && (
+              <MultiVideoPlayer
+                lessonId={lessonId}
+                videos={lessonVideos}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={handlePlaybackRateChange}
+                onAllCompleted={handleMediaEnded}
+              />
+            )}
+
+            {/* Single Video Player - show when video available and not multi-video */}
+            {!hasMultipleVideos && hasVideo && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
               <VideoPlayer
                 src={lesson.media_url}
                 title={lesson.title}

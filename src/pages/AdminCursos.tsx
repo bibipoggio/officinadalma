@@ -23,9 +23,11 @@ import {
   useAdminLessons,
   generateSlug,
   isValidUrl,
+  parseLessonVideos,
   type Course,
   type CourseModule,
   type CourseLesson,
+  type LessonVideo,
 } from "@/hooks/useAdminCourses";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -138,8 +140,8 @@ const AdminCursos = () => {
     is_published: boolean;
     summary: string;
     module_id: string;
-    /** Unified files array including PDFs and text files */
     files: { url: string; name: string }[];
+    videos: LessonVideo[];
   }>({
     title: "",
     access_level: "basic",
@@ -154,6 +156,7 @@ const AdminCursos = () => {
     summary: "",
     module_id: "",
     files: [],
+    videos: [],
   });
   
   const [isSaving, setIsSaving] = useState(false);
@@ -364,6 +367,7 @@ const AdminCursos = () => {
       summary: "",
       module_id: moduleId,
       files: [] as { url: string; name: string }[],
+      videos: [] as LessonVideo[],
     };
     
     setLessonForm(defaultForm);
@@ -411,6 +415,7 @@ const AdminCursos = () => {
         summary: draft.summary || "",
         module_id: draft.module_id || "",
         files,
+        videos: (draft as any).videos || [],
       });
       setShowDraftPrompt(false);
       toast({ title: "Rascunho recuperado!" });
@@ -451,6 +456,7 @@ const AdminCursos = () => {
       summary: lesson.summary || "",
       module_id: lesson.module_id,
       files: allFiles,
+      videos: parseLessonVideos(lesson.videos),
     });
     setEditingLessonId(lesson.id);
     setIsCreatingLesson(false);
@@ -528,6 +534,7 @@ const AdminCursos = () => {
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
         text_files_urls: textFiles,
+        videos: (lessonForm.videos.length > 0 ? lessonForm.videos : []) as any,
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
@@ -548,7 +555,7 @@ const AdminCursos = () => {
         
         const { error } = await supabase
           .from("course_lessons")
-          .insert({ ...lessonData, position: nextPosition });
+          .insert({ ...lessonData, position: nextPosition } as any);
         saveError = error;
         if (!error) {
           setIsCreatingLesson(false);
@@ -868,8 +875,71 @@ const AdminCursos = () => {
           </div>
         )}
 
-        {/* Video Upload - available for video and text lessons */}
+        {/* Multiple Videos Editor */}
         {(lessonForm.content_type === "video" || lessonForm.content_type === "text") && (
+          <div className="space-y-2 border rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold">Vídeos ({lessonForm.videos.length}/10)</Label>
+              {lessonForm.videos.length < 10 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLessonForm(prev => ({
+                    ...prev,
+                    videos: [...prev.videos, { url: "", title: "", position: prev.videos.length }],
+                  }))}
+                >
+                  <Plus className="w-3 h-3 mr-1" /> Adicionar Vídeo
+                </Button>
+              )}
+            </div>
+            {lessonForm.videos.length === 0 && (
+              <p className="text-xs text-muted-foreground">Nenhum vídeo adicionado. Use o botão acima ou o campo abaixo para vídeo único.</p>
+            )}
+            {lessonForm.videos.map((video, idx) => (
+              <div key={idx} className="flex gap-2 items-start">
+                <div className="flex-1 space-y-1">
+                  <Input
+                    value={video.title}
+                    onChange={(e) => {
+                      const updated = [...lessonForm.videos];
+                      updated[idx] = { ...updated[idx], title: e.target.value };
+                      setLessonForm(prev => ({ ...prev, videos: updated }));
+                    }}
+                    placeholder={`Título do vídeo ${idx + 1}`}
+                    className="h-8 text-xs"
+                  />
+                  <Input
+                    value={video.url}
+                    onChange={(e) => {
+                      const updated = [...lessonForm.videos];
+                      updated[idx] = { ...updated[idx], url: e.target.value };
+                      setLessonForm(prev => ({ ...prev, videos: updated }));
+                    }}
+                    placeholder="URL (YouTube, Vimeo, Bunny ou .mp4)"
+                    className="h-8 text-xs"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 shrink-0 mt-0.5"
+                  onClick={() => {
+                    const updated = lessonForm.videos.filter((_, i) => i !== idx);
+                    setLessonForm(prev => ({ ...prev, videos: updated }));
+                  }}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Single Video Upload fallback - available for video and text lessons */}
+        {(lessonForm.content_type === "video" || lessonForm.content_type === "text") && lessonForm.videos.length === 0 && (
           <MediaUpload
             currentUrl={lessonForm.media_url || null}
             onUrlChange={(url) => setLessonForm(prev => ({ ...prev, media_url: url || "" }))}

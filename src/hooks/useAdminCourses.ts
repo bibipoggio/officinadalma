@@ -22,6 +22,12 @@ export interface CourseModule {
   is_published: boolean;
 }
 
+export interface LessonVideo {
+  url: string;
+  title: string;
+  position: number;
+}
+
 export interface CourseLesson {
   id: string;
   course_id: string;
@@ -40,6 +46,13 @@ export interface CourseLesson {
   position: number;
   summary: string | null;
   deleted_at: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  videos: any;
+}
+
+export function parseLessonVideos(videos: any): LessonVideo[] {
+  if (!videos || !Array.isArray(videos)) return [];
+  return videos.filter((v: any) => v && typeof v.url === "string") as LessonVideo[];
 }
 
 export function useAdminCourses() {

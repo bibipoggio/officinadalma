@@ -21,6 +21,12 @@ export interface TextFile {
   name: string;
 }
 
+export interface LessonVideo {
+  url: string;
+  title: string;
+  position: number;
+}
+
 interface Lesson {
   id: string;
   course_id: string;
@@ -33,12 +39,18 @@ interface Lesson {
   audio_url: string | null;
   pdf_url: string | null;
   text_files_urls: TextFile[] | null;
+  videos: LessonVideo[];
   duration_seconds: number | null;
   audio_duration_seconds: number | null;
   access_level: string;
   position: number;
   is_published: boolean;
   released_at: string | null;
+}
+
+function parseLessonVideos(videos: any): LessonVideo[] {
+  if (!videos || !Array.isArray(videos)) return [];
+  return videos.filter((v: any) => v && typeof v.url === "string") as LessonVideo[];
 }
 
 interface LessonProgress {
@@ -106,12 +118,13 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
         return;
       }
 
-      // Parse text_files_urls from JSON
+      // Parse text_files_urls and videos from JSON
       const parsedLesson: Lesson = {
         ...lessonData,
         text_files_urls: Array.isArray(lessonData.text_files_urls) 
           ? lessonData.text_files_urls as unknown as TextFile[]
           : null,
+        videos: parseLessonVideos(lessonData.videos),
       };
       setLesson(parsedLesson);
 
