@@ -22,6 +22,12 @@ export interface CourseModule {
   is_published: boolean;
 }
 
+export interface LessonVideo {
+  url: string;
+  title: string;
+  position: number;
+}
+
 export interface CourseLesson {
   id: string;
   course_id: string;
@@ -40,6 +46,7 @@ export interface CourseLesson {
   position: number;
   summary: string | null;
   deleted_at: string | null;
+  videos: LessonVideo[] | null;
 }
 
 export function useAdminCourses() {

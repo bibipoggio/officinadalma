@@ -21,6 +21,12 @@ export interface TextFile {
   name: string;
 }
 
+export interface LessonVideo {
+  url: string;
+  title: string;
+  position: number;
+}
+
 interface Lesson {
   id: string;
   course_id: string;
@@ -33,6 +39,7 @@ interface Lesson {
   audio_url: string | null;
   pdf_url: string | null;
   text_files_urls: TextFile[] | null;
+  videos: LessonVideo[] | null;
   duration_seconds: number | null;
   audio_duration_seconds: number | null;
   access_level: string;
