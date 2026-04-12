@@ -153,7 +153,7 @@ export function ConsolidateFragments({
           title: newTitle.trim(),
           content_type: contentType,
           access_level: hasPremium ? "premium" : "basic",
-          media_url: mergedVideos.length === 0 ? selectedLessons[0]?.media_url : null,
+          media_url: mergedVideos.length > 0 ? mergedVideos[0].url : (selectedLessons[0]?.media_url || null),
           audio_url: audioUrl,
           pdf_url: pdfFile?.url || null,
           body_markdown: mergedBody || null,
