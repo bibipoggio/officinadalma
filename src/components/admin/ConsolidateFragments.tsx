@@ -243,9 +243,10 @@ export function ConsolidateFragments({
               </Label>
               <div className="space-y-1 max-h-48 overflow-y-auto border rounded-lg p-2">
                 {availableLessons.map((lesson) => (
-                  <label
+                  <div
                     key={lesson.id}
                     className="flex items-center gap-2 p-2 rounded-md hover:bg-muted/50 cursor-pointer"
+                    onClick={() => toggleLesson(lesson.id)}
                   >
                     <Checkbox
                       checked={selectedIds.includes(lesson.id)}
@@ -257,7 +258,7 @@ export function ConsolidateFragments({
                     <span className="text-xs text-muted-foreground shrink-0">
                       {lesson.content_type}
                     </span>
-                  </label>
+                  </div>
                 ))}
               </div>
             </div>
