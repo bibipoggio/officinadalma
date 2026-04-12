@@ -200,7 +200,7 @@ const Inscricao = () => {
               <ClipboardCheck className="w-7 h-7 text-primary" />
             </div>
             <h1 className="text-2xl font-display font-semibold text-foreground">Inscrição Aprovada!</h1>
-            <p className="text-muted-foreground mt-2">Escolha seu plano e prossiga com o pagamento</p>
+            <p className="text-muted-foreground mt-2">{isPromo ? "Prossiga com o pagamento para liberar o acesso premium" : "Escolha seu plano e prossiga com o pagamento"}</p>
           </header>
 
           {/* Plan Selector */}
@@ -235,6 +235,7 @@ const Inscricao = () => {
               </div>
             </button>
 
+            {!isPromo && (
             <button
               onClick={() => setSelectedPlan("semestral")}
               className={cn(
@@ -261,6 +262,7 @@ const Inscricao = () => {
                 <p className={cn("text-xs", selectedPlan === "semestral" ? "text-primary-foreground/80" : "text-muted-foreground")}>≈ R$ 80,90/mês</p>
               </div>
             </button>
+            )}
           </div>
 
           <Card className="border-2 border-primary">
