@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, Sparkles, Loader2, CreditCard, ArrowLeft, ArrowRight, ClipboardCheck, Clock } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useInscricao } from "@/hooks/useInscricao";
@@ -43,6 +44,7 @@ const Inscricao = () => {
   const { inscricao, isLoading: inscLoading, hasCompleted, saveInscricao } = useInscricao();
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<"mensal" | "semestral">("mensal");
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -116,12 +118,19 @@ const Inscricao = () => {
 
   const handleSubscribe = () => {
     if (!user) return;
-    // Promo plan (1ª turma R$79) until May 2026, then standard plan (R$97)
     const PLAN_ID_PROMO = "74b17db669014a39a31dac10bb79a7ca";
     const PLAN_ID_PADRAO = "b1f6ffd2f3ab42fbada29ac49bf3353a";
-    const now = new Date();
-    const isPromo = now < new Date("2026-05-01T00:00:00-03:00");
-    const planId = isPromo ? PLAN_ID_PROMO : PLAN_ID_PADRAO;
+    const PLAN_ID_SEMESTRAL = "600173620c9045cc8e454f9b797b3c41";
+
+    let planId: string;
+    if (selectedPlan === "semestral") {
+      planId = PLAN_ID_SEMESTRAL;
+    } else {
+      const now = new Date();
+      const isPromo = now < new Date("2026-05-01T00:00:00-03:00");
+      planId = isPromo ? PLAN_ID_PROMO : PLAN_ID_PADRAO;
+    }
+
     const planUrl = `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=${planId}&external_reference=${user.id}`;
     window.open(planUrl, "_blank");
   };
@@ -176,7 +185,12 @@ const Inscricao = () => {
     );
   }
 
-  // Approved → show payment
+  // Calculate current mensal price
+  const now = new Date();
+  const isPromo = now < new Date("2026-05-01T00:00:00-03:00");
+  const mensalPrice = isPromo ? "79" : "97";
+  const mensalLabel = isPromo ? "Promoção 1ª Turma" : "";
+
   if (hasCompleted && inscricao?.status === "aprovado") {
     return (
       <AppLayout>
@@ -186,21 +200,71 @@ const Inscricao = () => {
               <ClipboardCheck className="w-7 h-7 text-primary" />
             </div>
             <h1 className="text-2xl font-display font-semibold text-foreground">Inscrição Aprovada!</h1>
-            <p className="text-muted-foreground mt-2">Prossiga com o pagamento para liberar o acesso premium</p>
+            <p className="text-muted-foreground mt-2">Escolha seu plano e prossiga com o pagamento</p>
           </header>
+
+          {/* Plan Selector */}
+          <div className="grid gap-3">
+            <button
+              onClick={() => setSelectedPlan("mensal")}
+              className={cn(
+                "relative flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
+                selectedPlan === "mensal"
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/40"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                  selectedPlan === "mensal" ? "border-primary" : "border-muted-foreground/40"
+                )}>
+                  {selectedPlan === "mensal" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Mensal</p>
+                  <p className="text-xs text-muted-foreground">Pagamento mensal recorrente (12x)</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-bold text-foreground">R$ {mensalPrice}</span>
+                <span className="text-sm text-muted-foreground">/mês</span>
+                {isPromo && (
+                  <p className="text-xs text-primary font-medium">{mensalLabel}</p>
+                )}
+              </div>
+            </button>
+
+            <button
+              onClick={() => setSelectedPlan("semestral")}
+              className={cn(
+                "relative flex items-center justify-between rounded-xl border-2 p-4 text-left transition-all",
+                selectedPlan === "semestral"
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/40"
+              )}
+            >
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-5 h-5 rounded-full border-2 flex items-center justify-center",
+                  selectedPlan === "semestral" ? "border-primary" : "border-muted-foreground/40"
+                )}>
+                  {selectedPlan === "semestral" && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">Semestral</p>
+                  <p className="text-xs text-muted-foreground">Pagamento único por 6 meses</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <span className="text-xl font-bold text-foreground">R$ 485,39</span>
+                <p className="text-xs text-muted-foreground">≈ R$ 80,90/mês</p>
+              </div>
+            </button>
+          </div>
 
           <Card className="border-2 border-primary">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Assinatura Mensal</h3>
-                  <p className="text-sm text-muted-foreground">Pagamento mensal recorrente</p>
-                </div>
-                <div className="text-right">
-                  <span className="text-3xl font-bold text-foreground">R$ 79</span>
-                  <span className="text-sm text-muted-foreground">/mês</span>
-                </div>
-              </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                 <CreditCard className="w-4 h-4" />
                 <span>Pague com PIX ou Cartão de Crédito</span>
