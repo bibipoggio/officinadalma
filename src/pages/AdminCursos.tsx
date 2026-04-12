@@ -23,9 +23,11 @@ import {
   useAdminLessons,
   generateSlug,
   isValidUrl,
+  parseLessonVideos,
   type Course,
   type CourseModule,
   type CourseLesson,
+  type LessonVideo,
 } from "@/hooks/useAdminCourses";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
