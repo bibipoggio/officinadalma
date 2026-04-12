@@ -193,7 +193,7 @@ const Inscricao = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Assinatura Anual</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Assinatura Mensal</h3>
                   <p className="text-sm text-muted-foreground">Pagamento mensal recorrente</p>
                 </div>
                 <div className="text-right">
