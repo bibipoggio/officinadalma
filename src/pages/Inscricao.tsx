@@ -114,24 +114,11 @@ const Inscricao = () => {
     }
   };
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = () => {
     if (!user) return;
-    setIsProcessing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("mp-create-subscription", { body: {} });
-      if (error) throw error;
-      const checkoutUrl = data.sandbox_init_point || data.init_point;
-      if (checkoutUrl) {
-        window.open(checkoutUrl, "_blank");
-      } else {
-        throw new Error("No checkout URL returned");
-      }
-    } catch (err) {
-      console.error("Subscription error:", err);
-      toast({ title: "Erro ao processar", description: "Não foi possível iniciar o pagamento. Tente novamente.", variant: "destructive" });
-    } finally {
-      setIsProcessing(false);
-    }
+    // Redirect to Mercado Pago plan checkout with user reference
+    const planUrl = `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=74b17db669014a39a31dac10bb79a7ca&external_reference=${user.id}`;
+    window.open(planUrl, "_blank");
   };
 
   if (subLoading || inscLoading) {
