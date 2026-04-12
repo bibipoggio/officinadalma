@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { NotificationSettings } from "@/components/notifications/NotificationSettings";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Lock, CreditCard, LogOut, Shield, Instagram, MessageCircle } from "lucide-react";
+import { User, Mail, Lock, CreditCard, LogOut, Shield, Instagram, MessageCircle, ShoppingBag } from "lucide-react";
 
 const Conta = () => {
   const { user, profile, role, isLoading, signOut, hasAdminAccess } = useAuth();
@@ -16,6 +16,7 @@ const Conta = () => {
     { icon: Mail, label: "Alterar Email", onClick: () => {} },
     { icon: Lock, label: "Alterar Senha", onClick: () => navigate("/conta/alterar-senha") },
     { icon: CreditCard, label: "Assinatura", onClick: () => navigate("/assinar") },
+    { icon: ShoppingBag, label: "Minhas Compras", onClick: () => navigate("/conta/compras") },
   ];
 
   const handleLogout = async () => {
