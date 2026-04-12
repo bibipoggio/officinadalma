@@ -235,6 +235,7 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
     course,
     progress,
     hasEnrollment,
+    hasPurchased,
     prevLesson,
     nextLesson,
     isLoading: isLoading || loadingSubscription,
