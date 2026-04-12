@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.admin-update-user-suspension]
 verify_jwt = false
+
+[functions.mp-create-subscription]
+verify_jwt = false
+
+[functions.mp-webhook]
+verify_jwt = false
