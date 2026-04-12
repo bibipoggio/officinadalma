@@ -120,6 +120,27 @@ const Aula = () => {
     }
   };
 
+  const handleBuyLesson = async () => {
+    if (!user || !lesson || !lessonId) return;
+    setIsBuying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mp-create-payment", {
+        body: { lesson_id: lessonId, lesson_title: lesson.title },
+      });
+      if (error) throw error;
+      if (data?.init_point) {
+        window.open(data.init_point, "_blank");
+      } else if (data?.sandbox_init_point) {
+        window.open(data.sandbox_init_point, "_blank");
+      }
+    } catch (err) {
+      console.error("Buy error:", err);
+      toast.error("Erro ao iniciar compra. Tente novamente.");
+    } finally {
+      setIsBuying(false);
+    }
+  };
+
   // Detect if media_url is a video (YouTube, Vimeo, or .mp4)
   const isMediaUrlVideo = (() => {
     if (!lesson?.media_url) return false;
