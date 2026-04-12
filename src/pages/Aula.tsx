@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { LessonComments } from "@/components/lessons/LessonComments";
 import { VideoPlayer } from "@/components/lessons/VideoPlayer";
+import { MultiVideoPlayer } from "@/components/lessons/MultiVideoPlayer";
 import { AudioPlayer } from "@/components/lessons/AudioPlayer";
 import { LessonContent } from "@/components/lessons/LessonContent";
 import { useLessonTracking } from "@/hooks/useLessonAnalytics";
