@@ -1334,6 +1334,21 @@ export type Database = {
         }[]
       }
       get_admin_analytics: { Args: never; Returns: Json }
+      get_admin_inscricoes: {
+        Args: never
+        Returns: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          provider_subscription_id: string
+          respostas: Json
+          status: Database["public"]["Enums"]["inscricao_status"]
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_admin_users_list: {
         Args: never
         Returns: {

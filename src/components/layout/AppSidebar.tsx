@@ -20,6 +20,7 @@ import {
   Instagram,
   MessageCircle,
   ExternalLink,
+  ClipboardCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -46,6 +47,7 @@ const adminItems = [
   { href: "/admin/arquivos", label: "Arquivos", icon: FolderOpen },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/eventos", label: "Eventos", icon: Bell },
+  { href: "/admin/inscricoes", label: "Inscrições", icon: ClipboardCheck },
   { href: "/admin/usuarios", label: "Usuários", icon: UserCog },
 ];
 
