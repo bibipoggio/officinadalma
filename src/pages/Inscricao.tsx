@@ -120,7 +120,7 @@ const Inscricao = () => {
     const PLAN_ID_PROMO = "74b17db669014a39a31dac10bb79a7ca";
     const PLAN_ID_PADRAO = "b1f6ffd2f3ab42fbada29ac49bf3353a";
     const now = new Date();
-    const isPromo = now < new Date("2026-06-01T00:00:00-03:00");
+    const isPromo = now < new Date("2026-05-01T00:00:00-03:00");
     const planId = isPromo ? PLAN_ID_PROMO : PLAN_ID_PADRAO;
     const planUrl = `https://www.mercadopago.com.br/subscriptions/checkout?preapproval_plan_id=${planId}&external_reference=${user.id}`;
     window.open(planUrl, "_blank");
