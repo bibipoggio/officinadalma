@@ -77,6 +77,7 @@ export interface DailyContent {
   tonica_full: string;
   tonica_practice: string;
   meditation_audio_url: string | null;
+  meditation_title: string | null;
   meditation_duration_seconds: number | null;
   spotify_episode_url: string | null;
   enraizamento_audio_url: string | null;
