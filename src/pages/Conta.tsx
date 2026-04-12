@@ -15,7 +15,7 @@ const Conta = () => {
     { icon: User, label: "Editar Perfil", onClick: () => navigate("/conta/editar") },
     { icon: Mail, label: "Alterar Email", onClick: () => {} },
     { icon: Lock, label: "Alterar Senha", onClick: () => navigate("/conta/alterar-senha") },
-    { icon: CreditCard, label: "Assinatura", onClick: () => navigate("/assinar") },
+    { icon: CreditCard, label: "Assinatura", onClick: () => navigate("/conta/assinatura") },
     { icon: ShoppingBag, label: "Minhas Compras", onClick: () => navigate("/conta/compras") },
   ];
 
