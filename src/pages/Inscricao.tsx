@@ -227,10 +227,10 @@ const Inscricao = () => {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-xl font-bold text-foreground">R$ {mensalPrice}</span>
-                <span className="text-sm text-muted-foreground">/mês</span>
+                <span className={cn("text-xl font-bold", selectedPlan === "mensal" ? "text-primary-foreground" : "text-foreground")}>R$ {mensalPrice}</span>
+                <span className={cn("text-sm", selectedPlan === "mensal" ? "text-primary-foreground/80" : "text-muted-foreground")}>/mês</span>
                 {isPromo && (
-                  <p className="text-xs text-primary font-medium">{mensalLabel}</p>
+                  <p className={cn("text-xs font-medium", selectedPlan === "mensal" ? "text-primary-foreground/90" : "text-primary")}>{mensalLabel}</p>
                 )}
               </div>
             </button>
