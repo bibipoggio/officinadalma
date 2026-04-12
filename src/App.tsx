@@ -22,6 +22,7 @@ import Conta from "./pages/Conta";
 import EditarPerfil from "./pages/EditarPerfil";
 import AlterarSenha from "./pages/AlterarSenha";
 import Assinar from "./pages/Assinar";
+import Inscricao from "./pages/Inscricao";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import CompletarPerfil from "./pages/CompletarPerfil";
@@ -71,6 +72,7 @@ const App = () => (
             <Route path="/conta/editar" element={<ProtectedRoute><EditarPerfil /></ProtectedRoute>} />
             <Route path="/conta/alterar-senha" element={<ProtectedRoute><AlterarSenha /></ProtectedRoute>} />
             <Route path="/assinar" element={<ProtectedRoute><Assinar /></ProtectedRoute>} />
+            <Route path="/inscricao" element={<ProtectedRoute><Inscricao /></ProtectedRoute>} />
             
             {/* Admin Routes (requires moderator or admin) */}
             <Route path="/admin/conteudo-diario" element={<ProtectedRoute requireAdmin><AdminConteudoDiario /></ProtectedRoute>} />
