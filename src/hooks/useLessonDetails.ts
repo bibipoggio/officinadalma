@@ -62,6 +62,7 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
   const [course, setCourse] = useState<Course | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [hasEnrollment, setHasEnrollment] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
   const [prevLesson, setPrevLesson] = useState<AdjacentLesson | null>(null);
   const [nextLesson, setNextLesson] = useState<AdjacentLesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
