@@ -600,6 +600,33 @@ export type Database = {
         }
         Relationships: []
       }
+      inscricoes: {
+        Row: {
+          created_at: string
+          id: string
+          respostas: Json
+          status: Database["public"]["Enums"]["inscricao_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          respostas?: Json
+          status?: Database["public"]["Enums"]["inscricao_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          respostas?: Json
+          status?: Database["public"]["Enums"]["inscricao_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       lesson_analytics: {
         Row: {
           action: string
@@ -1353,6 +1380,7 @@ export type Database = {
     }
     Enums: {
       app_role: "user" | "moderator" | "admin"
+      inscricao_status: "pendente" | "aprovado" | "rejeitado"
       report_status: "pending" | "reviewed" | "dismissed" | "actioned"
       share_mode: "private" | "community" | "anonymous"
       subscription_provider: "mercado_pago"
@@ -1484,6 +1512,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["user", "moderator", "admin"],
+      inscricao_status: ["pendente", "aprovado", "rejeitado"],
       report_status: ["pending", "reviewed", "dismissed", "actioned"],
       share_mode: ["private", "community", "anonymous"],
       subscription_provider: ["mercado_pago"],
