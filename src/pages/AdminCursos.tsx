@@ -1496,17 +1496,35 @@ const AdminCursos = () => {
                               renderLessonForm(module.id)
                             )}
 
-                            {/* Add lesson button - simplified */}
+                            {/* Add lesson button + consolidate */}
                             {!isCreatingLesson && !editingLessonId && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full h-9"
-                                onClick={() => handleStartCreateLesson(module.id)}
-                              >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Nova aula
-                              </Button>
+                              <div className="space-y-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full h-9"
+                                  onClick={() => handleStartCreateLesson(module.id)}
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Nova aula
+                                </Button>
+                                <ConsolidateFragments
+                                  lessons={moduleLessons}
+                                  moduleId={module.id}
+                                  courseId={selectedCourseId!}
+                                  onConsolidated={async () => {
+                                    const { data } = await supabase
+                                      .from("course_lessons")
+                                      .select("*")
+                                      .eq("module_id", module.id)
+                                      .order("position", { ascending: true });
+                                    setAllLessons(prev => ({
+                                      ...prev,
+                                      [module.id]: (data || []) as CourseLesson[],
+                                    }));
+                                  }}
+                                />
+                              </div>
                             )}
                           </AccordionContent>
                         </AccordionItem>
