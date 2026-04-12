@@ -62,6 +62,7 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
   const [course, setCourse] = useState<Course | null>(null);
   const [progress, setProgress] = useState<LessonProgress | null>(null);
   const [hasEnrollment, setHasEnrollment] = useState(false);
+  const [hasPurchased, setHasPurchased] = useState(false);
   const [prevLesson, setPrevLesson] = useState<AdjacentLesson | null>(null);
   const [nextLesson, setNextLesson] = useState<AdjacentLesson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -141,10 +142,22 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
       const userHasEnrollment = !!enrollmentData;
       setHasEnrollment(userHasEnrollment);
 
+      // Check if lesson was purchased individually
+      const { data: purchaseData } = await supabase
+        .from("aulas_compradas")
+        .select("id, status")
+        .eq("user_id", user.id)
+        .eq("lesson_id", lessonId)
+        .eq("status", "aprovado")
+        .maybeSingle();
+
+      const userHasPurchased = !!purchaseData;
+      setHasPurchased(userHasPurchased);
+
       // Determine if locked
       const isPremiumCourse = courseData.type === "aparte";
       const isPremiumLesson = lessonData.access_level === "premium";
-      const hasAccess = isPremium || userHasEnrollment;
+      const hasAccess = isPremium || userHasEnrollment || userHasPurchased;
 
       const locked = (isPremiumCourse && !hasAccess) || (isPremiumLesson && !hasAccess);
       setIsLocked(locked);
@@ -222,6 +235,7 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
     course,
     progress,
     hasEnrollment,
+    hasPurchased,
     prevLesson,
     nextLesson,
     isLoading: isLoading || loadingSubscription,

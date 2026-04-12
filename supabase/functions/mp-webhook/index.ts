@@ -19,9 +19,8 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Handle both GET (back_url redirect) and POST (IPN notification)
+    // Handle GET (back_url redirect)
     if (req.method === "GET") {
-      // User redirect — just show success
       return new Response(
         `<html><head><meta http-equiv="refresh" content="3;url=https://officinadalma.lovable.app/orientacoes"></head><body><p>Pagamento processado! Redirecionando para as orientações...</p></body></html>`,
         { status: 200, headers: { "Content-Type": "text/html" } }
@@ -34,8 +33,8 @@ serve(async (req) => {
 
     const { type, data } = body;
 
+    // Handle subscription pre-approval notifications
     if (type === "subscription_preapproval") {
-      // Fetch subscription details from MP
       const mpRes = await fetch(
         `https://api.mercadopago.com/preapproval/${data.id}`,
         {
@@ -46,21 +45,19 @@ serve(async (req) => {
       console.log("MP subscription data:", JSON.stringify(subscription));
 
       const userId = subscription.external_reference;
-      const mpStatus = subscription.status; // authorized, paused, cancelled, pending
+      const mpStatus = subscription.status;
 
       if (!userId) {
         console.error("No external_reference (user_id) in subscription");
         return new Response("OK", { status: 200 });
       }
 
-      // Map MP status to period end
       const isActive = mpStatus === "authorized";
       const now = new Date();
       const periodEnd = isActive
         ? new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString()
         : null;
 
-      // Upsert subscription
       const { error: upsertError } = await supabase
         .from("subscriptions")
         .upsert(
@@ -83,14 +80,61 @@ serve(async (req) => {
       }
     }
 
-    // Always return 200 to MP
+    // Handle single payment notifications (lesson purchases)
+    if (type === "payment") {
+      const mpRes = await fetch(
+        `https://api.mercadopago.com/v1/payments/${data.id}`,
+        {
+          headers: { Authorization: `Bearer ${mpAccessToken}` },
+        }
+      );
+      const payment = await mpRes.json();
+      console.log("MP payment data:", JSON.stringify(payment));
+
+      let externalRef: { type?: string; user_id?: string; lesson_id?: string } | null = null;
+      try {
+        externalRef = JSON.parse(payment.external_reference || "{}");
+      } catch {
+        console.error("Failed to parse external_reference:", payment.external_reference);
+        return new Response("OK", { status: 200 });
+      }
+
+      if (externalRef?.type === "lesson_purchase" && externalRef.user_id && externalRef.lesson_id) {
+        const paymentStatus = payment.status; // approved, pending, rejected, etc.
+        const purchaseStatus = paymentStatus === "approved" ? "aprovado"
+          : paymentStatus === "rejected" ? "rejeitado"
+          : "pendente";
+
+        console.log(`Lesson purchase: user=${externalRef.user_id}, lesson=${externalRef.lesson_id}, status=${purchaseStatus}`);
+
+        const { error: upsertError } = await supabase
+          .from("aulas_compradas")
+          .upsert(
+            {
+              user_id: externalRef.user_id,
+              lesson_id: externalRef.lesson_id,
+              status: purchaseStatus,
+              provider_payment_id: data.id.toString(),
+              amount_cents: Math.round((payment.transaction_amount || 29.75) * 100),
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "user_id,lesson_id" }
+          );
+
+        if (upsertError) {
+          console.error("Lesson purchase upsert error:", upsertError);
+        } else {
+          console.log(`Lesson purchase ${purchaseStatus} for user ${externalRef.user_id}, lesson ${externalRef.lesson_id}`);
+        }
+      }
+    }
+
     return new Response("OK", {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "text/plain" },
     });
   } catch (error) {
     console.error("Webhook error:", error);
-    // Return 200 to avoid MP retries on our errors
     return new Response("OK", { status: 200 });
   }
 });

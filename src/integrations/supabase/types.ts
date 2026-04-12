@@ -47,6 +47,47 @@ export type Database = {
         }
         Relationships: []
       }
+      aulas_compradas: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          lesson_id: string
+          provider_payment_id: string | null
+          status: Database["public"]["Enums"]["purchase_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          lesson_id: string
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          provider_payment_id?: string | null
+          status?: Database["public"]["Enums"]["purchase_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aulas_compradas_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "course_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkin_reactions: {
         Row: {
           checkin_id: string
@@ -1381,6 +1422,7 @@ export type Database = {
     Enums: {
       app_role: "user" | "moderator" | "admin"
       inscricao_status: "pendente" | "aprovado" | "rejeitado"
+      purchase_status: "pendente" | "aprovado" | "rejeitado"
       report_status: "pending" | "reviewed" | "dismissed" | "actioned"
       share_mode: "private" | "community" | "anonymous"
       subscription_provider: "mercado_pago"
@@ -1513,6 +1555,7 @@ export const Constants = {
     Enums: {
       app_role: ["user", "moderator", "admin"],
       inscricao_status: ["pendente", "aprovado", "rejeitado"],
+      purchase_status: ["pendente", "aprovado", "rejeitado"],
       report_status: ["pending", "reviewed", "dismissed", "actioned"],
       share_mode: ["private", "community", "anonymous"],
       subscription_provider: ["mercado_pago"],

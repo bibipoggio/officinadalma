@@ -14,6 +14,8 @@ import {
   RotateCcw,
   Video,
   Headphones,
+  ShoppingCart,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,15 +29,19 @@ import { VideoPlayer } from "@/components/lessons/VideoPlayer";
 import { AudioPlayer } from "@/components/lessons/AudioPlayer";
 import { LessonContent } from "@/components/lessons/LessonContent";
 import { useLessonTracking } from "@/hooks/useLessonAnalytics";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const Aula = () => {
   const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [mediaMode, setMediaMode] = useState<"video" | "audio">("video");
+  const [isBuying, setIsBuying] = useState(false);
 
   const {
     lesson,
@@ -111,6 +117,27 @@ const Aula = () => {
       if (lessonId) {
         trackComplete(lessonId);
       }
+    }
+  };
+
+  const handleBuyLesson = async () => {
+    if (!user || !lesson || !lessonId) return;
+    setIsBuying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("mp-create-payment", {
+        body: { lesson_id: lessonId, lesson_title: lesson.title },
+      });
+      if (error) throw error;
+      if (data?.init_point) {
+        window.open(data.init_point, "_blank");
+      } else if (data?.sandbox_init_point) {
+        window.open(data.sandbox_init_point, "_blank");
+      }
+    } catch (err) {
+      console.error("Buy error:", err);
+      toast.error("Erro ao iniciar compra. Tente novamente.");
+    } finally {
+      setIsBuying(false);
     }
   };
 
@@ -232,13 +259,24 @@ const Aula = () => {
               </div>
 
               <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Assine o plano Premium para ter acesso completo a todas as aulas e funcionalidades
-                da plataforma.
+                Assine o plano Premium para ter acesso completo a todas as aulas, ou compre esta aula individualmente.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button variant="outline" onClick={() => navigate(`/aulas/${slug}`)}>
                   Voltar ao curso
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={handleBuyLesson}
+                  disabled={isBuying}
+                >
+                  {isBuying ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                  )}
+                  Comprar Aula Avulsa — R$29,75
                 </Button>
                 <Button onClick={() => navigate("/assinar")}>Assinar Premium</Button>
               </div>
