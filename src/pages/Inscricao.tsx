@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Check, Sparkles, Loader2, CreditCard, ArrowLeft, ArrowRight, ClipboardCheck, Clock } from "lucide-react";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useInscricao } from "@/hooks/useInscricao";
