@@ -534,6 +534,7 @@ const AdminCursos = () => {
         is_published: lessonForm.is_published,
         summary: lessonForm.summary.trim() || null,
         text_files_urls: textFiles,
+        videos: lessonForm.videos.length > 0 ? lessonForm.videos : [],
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
