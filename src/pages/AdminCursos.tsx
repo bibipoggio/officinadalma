@@ -367,6 +367,7 @@ const AdminCursos = () => {
       summary: "",
       module_id: moduleId,
       files: [] as { url: string; name: string }[],
+      videos: [] as LessonVideo[],
     };
     
     setLessonForm(defaultForm);
@@ -414,6 +415,7 @@ const AdminCursos = () => {
         summary: draft.summary || "",
         module_id: draft.module_id || "",
         files,
+        videos: (draft as any).videos || [],
       });
       setShowDraftPrompt(false);
       toast({ title: "Rascunho recuperado!" });
@@ -454,6 +456,7 @@ const AdminCursos = () => {
       summary: lesson.summary || "",
       module_id: lesson.module_id,
       files: allFiles,
+      videos: parseLessonVideos(lesson.videos),
     });
     setEditingLessonId(lesson.id);
     setIsCreatingLesson(false);
