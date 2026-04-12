@@ -337,8 +337,19 @@ const Aula = () => {
               </div>
             )}
 
-            {/* Video Player - show when video available and not in audio mode */}
-            {hasVideo && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
+            {/* Multi-Video Player */}
+            {hasMultipleVideos && lessonId && (
+              <MultiVideoPlayer
+                lessonId={lessonId}
+                videos={lessonVideos}
+                playbackRate={playbackRate}
+                onPlaybackRateChange={handlePlaybackRateChange}
+                onAllCompleted={handleMediaEnded}
+              />
+            )}
+
+            {/* Single Video Player - show when video available and not multi-video */}
+            {!hasMultipleVideos && hasVideo && lesson.media_url && (!hasVideoAndAudio || mediaMode === "video") && (
               <VideoPlayer
                 src={lesson.media_url}
                 title={lesson.title}
