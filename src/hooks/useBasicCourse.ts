@@ -50,6 +50,7 @@ export function useBasicCourse(slug: string = "perolas-de-sabedoria") {
         .from("course_lessons")
         .select("id", { count: "exact", head: true })
         .eq("course_id", courseData.id)
+        .is("deleted_at", null)
         .eq("is_published", true);
 
       if (!countError && count !== null) {
@@ -62,6 +63,7 @@ export function useBasicCourse(slug: string = "perolas-de-sabedoria") {
         .from("course_lessons")
         .select("id, title, summary")
         .eq("course_id", courseData.id)
+        .is("deleted_at", null)
         .eq("is_published", true)
         .or(`released_at.is.null,released_at.lte.${now}`)
         .order("position", { ascending: false })
