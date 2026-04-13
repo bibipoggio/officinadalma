@@ -1,0 +1,1 @@
+ALTER TABLE public.course_lessons DROP CONSTRAINT course_lessons_module_position_unique;
