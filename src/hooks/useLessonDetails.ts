@@ -100,7 +100,8 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
       let query = supabase
         .from("course_lessons")
         .select("*")
-        .eq("id", lessonId);
+        .eq("id", lessonId)
+        .is("deleted_at", null);
       
       // Only apply publish filters for non-admin users
       if (!isAdmin) {
@@ -210,6 +211,7 @@ export function useLessonDetails(lessonId: string, courseSlug: string) {
         .from("course_lessons")
         .select("id, title, position")
         .eq("module_id", lessonData.module_id)
+        .is("deleted_at", null)
         .eq("is_published", true)
         .or(`released_at.is.null,released_at.lte.${now}`)
         .order("position", { ascending: true });

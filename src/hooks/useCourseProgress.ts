@@ -28,6 +28,7 @@ export function useCourseProgress(courseIds: string[]) {
         .from("course_lessons")
         .select("id, course_id")
         .in("course_id", courseIds)
+        .is("deleted_at", null)
         .eq("is_published", true);
 
       if (lessonsError) throw lessonsError;

@@ -118,6 +118,7 @@ export function useCourseDetails(slug: string) {
         .from("course_lessons")
         .select("*")
         .eq("course_id", courseData.id)
+        .is("deleted_at", null)
         .eq("is_published", true)
         .or(`released_at.is.null,released_at.lte.${now}`)
         .order("position", { ascending: true });

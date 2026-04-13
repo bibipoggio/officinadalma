@@ -180,6 +180,8 @@ const AdminCursos = () => {
   // We need to fetch lessons for all modules at once
   const [allLessons, setAllLessons] = useState<Record<string, CourseLesson[]>>({});
   const [lessonsLoading, setLessonsLoading] = useState(false);
+  const [pendingOrderByModule, setPendingOrderByModule] = useState<Record<string, boolean>>({});
+  const [savingOrderModuleId, setSavingOrderModuleId] = useState<string | null>(null);
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
 
@@ -197,6 +199,37 @@ const AdminCursos = () => {
   
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
 
+  const clearPendingOrderFlag = useCallback((moduleId: string) => {
+    setPendingOrderByModule((prev) => {
+      if (!prev[moduleId]) return prev;
+
+      const next = { ...prev };
+      delete next[moduleId];
+      return next;
+    });
+  }, []);
+
+  const refreshModuleLessons = useCallback(
+    async (moduleId: string) => {
+      const { data, error } = await supabase
+        .from("course_lessons")
+        .select("*")
+        .eq("module_id", moduleId)
+        .order("position", { ascending: true });
+
+      if (error) throw error;
+
+      setAllLessons((prev) => ({
+        ...prev,
+        [moduleId]: (data || []) as CourseLesson[],
+      }));
+      clearPendingOrderFlag(moduleId);
+
+      return (data || []) as CourseLesson[];
+    },
+    [clearPendingOrderFlag]
+  );
+
   // Fetch lessons when modules change
   useEffect(() => {
     if (!selectedCourseId || modules.length === 0) {
@@ -209,7 +242,6 @@ const AdminCursos = () => {
       const lessonsMap: Record<string, CourseLesson[]> = {};
       
       for (const module of modules) {
-        const { supabase } = await import("@/integrations/supabase/client");
         const { data } = await supabase
           .from("course_lessons")
           .select("*")
@@ -220,6 +252,7 @@ const AdminCursos = () => {
       }
       
       setAllLessons(lessonsMap);
+      setPendingOrderByModule({});
       setLessonsLoading(false);
     };
     
@@ -512,8 +545,6 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      
       const audioDurationSeconds = lessonForm.audio_duration_minutes 
         ? parseInt(lessonForm.audio_duration_minutes) * 60 
         : null;
@@ -576,16 +607,7 @@ const AdminCursos = () => {
       }
       
       // Refresh lessons
-      const { data: refreshedLessons } = await supabase
-        .from("course_lessons")
-        .select("*")
-        .eq("module_id", lessonForm.module_id)
-        .order("position", { ascending: true });
-      
-      setAllLessons(prev => ({
-        ...prev,
-        [lessonForm.module_id]: (refreshedLessons || []) as CourseLesson[],
-      }));
+      await refreshModuleLessons(lessonForm.module_id);
       
       // Clear draft after successful save
       clearDraft();
@@ -617,7 +639,6 @@ const AdminCursos = () => {
   }, [clearDraft]);
 
   const handleDuplicateLesson = async (lesson: CourseLesson) => {
-    const { supabase } = await import("@/integrations/supabase/client");
     const moduleLessons = allLessons[lesson.module_id] || [];
     const nextPosition = moduleLessons.length + 1;
     
@@ -634,22 +655,12 @@ const AdminCursos = () => {
       });
     
     // Refresh lessons
-    const { data: refreshedLessons } = await supabase
-      .from("course_lessons")
-      .select("*")
-      .eq("module_id", lesson.module_id)
-      .order("position", { ascending: true });
-    
-    setAllLessons(prev => ({
-      ...prev,
-      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
-    }));
+    await refreshModuleLessons(lesson.module_id);
     
     toast({ title: "Aula duplicada!" });
   };
 
   const handleMoveLesson = async (lesson: CourseLesson, direction: "up" | "down") => {
-    const { supabase } = await import("@/integrations/supabase/client");
     const moduleLessons = allLessons[lesson.module_id] || [];
     const currentIndex = moduleLessons.findIndex(l => l.id === lesson.id);
     
@@ -664,21 +675,11 @@ const AdminCursos = () => {
     }
     
     // Refresh lessons
-    const { data: refreshedLessons } = await supabase
-      .from("course_lessons")
-      .select("*")
-      .eq("module_id", lesson.module_id)
-      .order("position", { ascending: true });
-    
-    setAllLessons(prev => ({
-      ...prev,
-      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
-    }));
+    await refreshModuleLessons(lesson.module_id);
   };
 
   // Quick toggle lesson publish status
   const handleToggleLessonPublish = async (lesson: CourseLesson) => {
-    const { supabase } = await import("@/integrations/supabase/client");
     const newStatus = !lesson.is_published;
     
     const { error } = await supabase
@@ -696,16 +697,7 @@ const AdminCursos = () => {
     }
     
     // Refresh lessons for this module
-    const { data: refreshedLessons } = await supabase
-      .from("course_lessons")
-      .select("*")
-      .eq("module_id", lesson.module_id)
-      .order("position", { ascending: true });
-    
-    setAllLessons(prev => ({
-      ...prev,
-      [lesson.module_id]: (refreshedLessons || []) as CourseLesson[],
-    }));
+    await refreshModuleLessons(lesson.module_id);
     
     toast({ 
       title: newStatus ? "✓ Aula publicada!" : "Aula despublicada",
@@ -720,7 +712,6 @@ const AdminCursos = () => {
     if (!deletingLesson) return;
     setIsDeletingLesson(true);
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
       const { error } = await supabase
         .from("course_lessons")
         .update({ deleted_at: new Date().toISOString() })
@@ -732,16 +723,7 @@ const AdminCursos = () => {
       }
 
       // Refresh lessons
-      const { data: refreshedLessons } = await supabase
-        .from("course_lessons")
-        .select("*")
-        .eq("module_id", deletingLesson.module_id)
-        .order("position", { ascending: true });
-
-      setAllLessons(prev => ({
-        ...prev,
-        [deletingLesson.module_id]: (refreshedLessons || []) as CourseLesson[],
-      }));
+      await refreshModuleLessons(deletingLesson.module_id);
 
       toast({ title: "Aula removida", description: "A aula não está mais disponível para os alunos." });
     } finally {
@@ -767,28 +749,42 @@ const AdminCursos = () => {
     const withPositions = reordered.map((l, i) => ({ ...l, position: i + 1 }));
 
     setAllLessons(prev => ({ ...prev, [moduleId]: withPositions }));
+    setPendingOrderByModule((prev) => ({ ...prev, [moduleId]: true }));
+  };
 
-    // Persist new positions and check for errors
+  const handleSaveLessonOrder = async (moduleId: string) => {
+    const moduleLessons = allLessons[moduleId] || [];
+    if (moduleLessons.length === 0) return;
+
+    setSavingOrderModuleId(moduleId);
+
     try {
       const results = await Promise.all(
-        withPositions.map((lesson, i) =>
-          supabase.from("course_lessons").update({ position: i + 1 }).eq("id", lesson.id)
+        moduleLessons.map((lesson) =>
+          supabase
+            .from("course_lessons")
+            .update({ position: lesson.position })
+            .eq("id", lesson.id)
         )
       );
-      const hasError = results.some(r => r.error);
+
+      const hasError = results.some((result) => result.error);
       if (hasError) {
-        throw new Error("Failed to update some positions");
+        throw new Error("Falha ao salvar a nova ordem das aulas");
       }
-      toast({ title: "Ordem atualizada!" });
-    } catch {
-      toast({ title: "Erro ao reordenar", variant: "destructive" });
-      // Refresh from DB on error
-      const { data } = await supabase
-        .from("course_lessons")
-        .select("*")
-        .eq("module_id", moduleId)
-        .order("position", { ascending: true });
-      setAllLessons(prev => ({ ...prev, [moduleId]: (data || []) as CourseLesson[] }));
+
+      await refreshModuleLessons(moduleId);
+      toast({ title: "Ordem validada e salva!" });
+    } catch (error) {
+      console.error("Error saving lesson order:", error);
+      toast({
+        title: "Erro ao salvar a ordem",
+        description: "Não foi possível confirmar a nova ordem. Tente novamente.",
+        variant: "destructive",
+      });
+      await refreshModuleLessons(moduleId);
+    } finally {
+      setSavingOrderModuleId(null);
     }
   };
 
@@ -1461,39 +1457,57 @@ const AdminCursos = () => {
                           <AccordionContent className="px-2 sm:px-4 pb-3 sm:pb-4 overflow-visible">
                             {/* Lessons list with drag and drop */}
                             {moduleLessons.length > 0 && (
-                              <DndContext
-                                sensors={sensors}
-                                collisionDetection={closestCenter}
-                                onDragEnd={(event) => handleDragEnd(event, module.id)}
-                              >
-                                <SortableContext
-                                  items={moduleLessons.map(l => l.id)}
-                                  strategy={verticalListSortingStrategy}
-                                >
-                                  <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
-                                    {moduleLessons.map((lesson) => {
-                                      if (editingLessonId === lesson.id) {
-                                        return (
-                                          <div key={lesson.id}>
-                                            {renderLessonForm(module.id)}
-                                          </div>
-                                        );
-                                      }
-                                      
-                                      return (
-                                        <SortableLessonItem
-                                          key={lesson.id}
-                                          lesson={lesson}
-                                          onEdit={handleEditLesson}
-                                          onDuplicate={handleDuplicateLesson}
-                                          onDelete={(l) => setDeletingLesson(l)}
-                                          onTogglePublish={handleToggleLessonPublish}
-                                        />
-                                      );
-                                    })}
+                              <>
+                                {pendingOrderByModule[module.id] && (
+                                  <div className="mb-3 flex flex-col gap-2 rounded-lg border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-xs sm:text-sm text-muted-foreground">
+                                      Revise a ordem acima e confirme para salvar a nova sequência das aulas.
+                                    </p>
+                                    <Button
+                                      size="sm"
+                                      className="shrink-0"
+                                      onClick={() => handleSaveLessonOrder(module.id)}
+                                      disabled={savingOrderModuleId === module.id}
+                                    >
+                                      {savingOrderModuleId === module.id ? "Salvando ordem..." : "Validar e salvar ordem"}
+                                    </Button>
                                   </div>
-                                </SortableContext>
-                              </DndContext>
+                                )}
+
+                                <DndContext
+                                  sensors={sensors}
+                                  collisionDetection={closestCenter}
+                                  onDragEnd={(event) => handleDragEnd(event, module.id)}
+                                >
+                                  <SortableContext
+                                    items={moduleLessons.map(l => l.id)}
+                                    strategy={verticalListSortingStrategy}
+                                  >
+                                    <div className="space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
+                                      {moduleLessons.map((lesson) => {
+                                        if (editingLessonId === lesson.id) {
+                                          return (
+                                            <div key={lesson.id}>
+                                              {renderLessonForm(module.id)}
+                                            </div>
+                                          );
+                                        }
+                                        
+                                        return (
+                                          <SortableLessonItem
+                                            key={lesson.id}
+                                            lesson={lesson}
+                                            onEdit={handleEditLesson}
+                                            onDuplicate={handleDuplicateLesson}
+                                            onDelete={(l) => setDeletingLesson(l)}
+                                            onTogglePublish={handleToggleLessonPublish}
+                                          />
+                                        );
+                                      })}
+                                    </div>
+                                  </SortableContext>
+                                </DndContext>
+                              </>
                             )}
 
                             {/* Creating lesson form */}
@@ -1520,15 +1534,7 @@ const AdminCursos = () => {
                               moduleId={module.id}
                               courseId={selectedCourseId!}
                               onConsolidated={async () => {
-                                const { data } = await supabase
-                                  .from("course_lessons")
-                                  .select("*")
-                                  .eq("module_id", module.id)
-                                  .order("position", { ascending: true });
-                                setAllLessons(prev => ({
-                                  ...prev,
-                                  [module.id]: (data || []) as CourseLesson[],
-                                }));
+                                await refreshModuleLessons(module.id);
                               }}
                             />
                           </AccordionContent>
