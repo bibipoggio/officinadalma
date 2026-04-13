@@ -760,25 +760,29 @@ const AdminCursos = () => {
     const newIndex = moduleLessons.findIndex(l => l.id === over.id);
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // Optimistic reorder
+    // Optimistic reorder with updated position fields
     const reordered = [...moduleLessons];
     const [moved] = reordered.splice(oldIndex, 1);
     reordered.splice(newIndex, 0, moved);
+    const withPositions = reordered.map((l, i) => ({ ...l, position: i + 1 }));
 
-    setAllLessons(prev => ({ ...prev, [moduleId]: reordered }));
+    setAllLessons(prev => ({ ...prev, [moduleId]: withPositions }));
 
-    // Persist new positions
+    // Persist new positions and check for errors
     try {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const updates = reordered.map((lesson, i) => 
-        supabase.from("course_lessons").update({ position: i + 1 }).eq("id", lesson.id)
+      const results = await Promise.all(
+        withPositions.map((lesson, i) =>
+          supabase.from("course_lessons").update({ position: i + 1 }).eq("id", lesson.id)
+        )
       );
-      await Promise.all(updates);
+      const hasError = results.some(r => r.error);
+      if (hasError) {
+        throw new Error("Failed to update some positions");
+      }
       toast({ title: "Ordem atualizada!" });
     } catch {
       toast({ title: "Erro ao reordenar", variant: "destructive" });
       // Refresh from DB on error
-      const { supabase } = await import("@/integrations/supabase/client");
       const { data } = await supabase
         .from("course_lessons")
         .select("*")
