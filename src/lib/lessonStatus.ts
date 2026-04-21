@@ -12,7 +12,7 @@ export interface LessonStatusInfo {
 }
 
 export interface LessonChecklistItem {
-  key: "title" | "content" | "released_at";
+  key: "title" | "content";
   label: string;
   ok: boolean;
 }
