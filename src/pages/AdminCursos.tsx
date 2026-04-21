@@ -93,18 +93,7 @@ const formatDateDisplay = (dateStr: string | null) => {
   return format(date, "dd/MM/yyyy", { locale: ptBR });
 };
 
-const getLessonStatus = (lesson: CourseLesson): { label: string; color: string; icon: string } => {
-  if (lesson.deleted_at) {
-    return { label: "Removida", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: "✕" };
-  }
-  if (!lesson.is_published) {
-    return { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: "●" };
-  }
-  if (lesson.released_at && new Date(lesson.released_at) > new Date()) {
-    return { label: "Agendada", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400", icon: "⏱" };
-  }
-  return { label: "Publicada", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "✓" };
-};
+// Status visual derivation now lives in `@/lib/lessonStatus` via getLessonStatus.
 
 const AdminCursos = () => {
   const { toast } = useToast();
