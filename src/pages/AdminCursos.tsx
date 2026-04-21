@@ -17,8 +17,11 @@ import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { SortableLessonItem } from "@/components/admin/SortableLessonItem";
 import { ConsolidateFragments } from "@/components/admin/ConsolidateFragments";
-import { useState, useEffect, useCallback } from "react";
+import { LessonStatusChecklist } from "@/components/admin/LessonStatusChecklist";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
+import { useLessonAutoSaveDB } from "@/hooks/useLessonAutoSaveDB";
+import { getLessonChecklist, isLessonComplete } from "@/lib/lessonStatus";
 import { 
   useAdminCourses, 
   useAdminModules, 
