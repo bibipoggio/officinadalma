@@ -3,24 +3,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { GripVertical, Pencil, Copy, Trash2, FileText, Video, FileAudio } from "lucide-react";
 import type { CourseLesson } from "@/hooks/useAdminCourses";
+import { getLessonStatus } from "@/lib/lessonStatus";
 
 const contentTypeConfig = {
   video: { label: "Vídeo", icon: Video, color: "text-blue-600 bg-blue-100 dark:bg-blue-900/30" },
   audio: { label: "Áudio", icon: FileAudio, color: "text-purple-600 bg-purple-100 dark:bg-purple-900/30" },
   text: { label: "Texto", icon: FileText, color: "text-green-600 bg-green-100 dark:bg-green-900/30" },
-};
-
-const getLessonStatus = (lesson: CourseLesson): { label: string; color: string; icon: string } => {
-  if (lesson.deleted_at) {
-    return { label: "Removida", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: "✕" };
-  }
-  if (!lesson.is_published) {
-    return { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: "●" };
-  }
-  if (lesson.released_at && new Date(lesson.released_at) > new Date()) {
-    return { label: "Agendada", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400", icon: "⏱" };
-  }
-  return { label: "Publicada", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "✓" };
 };
 
 interface SortableLessonItemProps {
