@@ -12,7 +12,7 @@ export interface LessonStatusInfo {
 }
 
 export interface LessonChecklistItem {
-  key: "title" | "content" | "released_at";
+  key: "title" | "content";
   label: string;
   ok: boolean;
 }
@@ -54,7 +54,6 @@ export function getLessonChecklist(lesson: LessonLike): LessonChecklistItem[] {
       label: "Pelo menos 1 vídeo, áudio, texto ou arquivo",
       ok: hasContent,
     },
-    { key: "released_at", label: "Data de publicação", ok: !!lesson.released_at },
   ];
 }
 
