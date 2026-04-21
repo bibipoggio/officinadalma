@@ -548,37 +548,37 @@ const AdminCursos = () => {
     }, 100);
   }, []);
 
-  const handleSaveLesson = async () => {
+  /**
+   * Persists the current lesson form.
+   *  - mode "draft": saves with is_published=false, no completeness validation.
+   *  - mode "publish": validates required fields then saves with is_published=true.
+   */
+  const persistLesson = async (mode: "draft" | "publish") => {
+    // Light validation: title is always required for any save
     if (!lessonForm.title.trim()) {
       toast({ title: "Falta preencher: Título", variant: "destructive" });
-      return;
+      return false;
     }
 
-    // Validate required media for video/audio content types
-    if (lessonForm.content_type === "video" && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Arquivo de vídeo", variant: "destructive" });
-      return;
-    }
-
-    if (lessonForm.content_type === "audio" && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Arquivo de áudio", variant: "destructive" });
-      return;
-    }
-
-    // Validate URL format if provided
+    // URL format checks (apply to both modes when fields are filled)
     if (lessonForm.media_url && !isValidUrl(lessonForm.media_url)) {
       toast({ title: "O link do vídeo não é válido.", variant: "destructive" });
-      return;
+      return false;
     }
-
     if (lessonForm.audio_url && !isValidUrl(lessonForm.audio_url)) {
       toast({ title: "O link do áudio não é válido.", variant: "destructive" });
-      return;
+      return false;
     }
 
-    if (lessonForm.content_type === "text" && !lessonForm.body_markdown.trim()) {
-      toast({ title: "Falta preencher: Conteúdo do texto", variant: "destructive" });
-      return;
+    // Publish mode: enforce checklist
+    if (mode === "publish" && !lessonComplete) {
+      const missing = lessonChecklist.filter((c) => !c.ok).map((c) => c.label).join(", ");
+      toast({
+        title: "Não é possível publicar aula incompleta",
+        description: `Preencha o mínimo: ${missing}.`,
+        variant: "destructive",
+      });
+      return false;
     }
 
     const durationMinutes = parseInt(lessonForm.duration_minutes, 10);
@@ -586,14 +586,13 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
-      const audioDurationSeconds = lessonForm.audio_duration_minutes 
-        ? parseInt(lessonForm.audio_duration_minutes) * 60 
+      const audioDurationSeconds = lessonForm.audio_duration_minutes
+        ? parseInt(lessonForm.audio_duration_minutes) * 60
         : null;
 
-      // Separate PDF from other files for database storage
-      const pdfFile = lessonForm.files.find(f => f.name.toLowerCase().endsWith('.pdf'));
-      const textFiles = lessonForm.files.filter(f => !f.name.toLowerCase().endsWith('.pdf'));
-      
+      const pdfFile = lessonForm.files.find((f) => f.name.toLowerCase().endsWith(".pdf"));
+      const textFiles = lessonForm.files.filter((f) => !f.name.toLowerCase().endsWith(".pdf"));
+
       const lessonData = {
         title: lessonForm.title.trim(),
         access_level: lessonForm.access_level,
@@ -605,16 +604,17 @@ const AdminCursos = () => {
         duration_seconds: durationSeconds,
         audio_duration_seconds: audioDurationSeconds,
         released_at: lessonForm.released_at?.toISOString() || null,
-        is_published: lessonForm.is_published,
+        is_published: mode === "publish",
         summary: lessonForm.summary.trim() || null,
         text_files_urls: textFiles,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         videos: (lessonForm.videos.length > 0 ? lessonForm.videos : []) as any,
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
 
       let saveError = null;
-      
+
       if (editingLessonId) {
         const { error } = await supabase
           .from("course_lessons")
@@ -623,10 +623,9 @@ const AdminCursos = () => {
         saveError = error;
         if (!error) setEditingLessonId(null);
       } else {
-        // Get next position
         const moduleLessons = allLessons[lessonForm.module_id] || [];
         const nextPosition = moduleLessons.length + 1;
-        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase
           .from("course_lessons")
           .insert({ ...lessonData, position: nextPosition } as any);
@@ -636,39 +635,51 @@ const AdminCursos = () => {
           setCreatingLessonForModule(null);
         }
       }
-      
+
       if (saveError) {
         console.error("Error saving lesson:", saveError);
-        toast({ 
-          title: "Erro ao salvar aula", 
+        toast({
+          title: mode === "publish" ? "Erro ao publicar aula" : "Erro ao salvar rascunho",
           description: saveError.message || "Verifique os dados e tente novamente.",
-          variant: "destructive" 
+          variant: "destructive",
         });
-        return;
+        return false;
       }
-      
-      // Refresh lessons
+
+      // Reflect new state locally + clear local draft
+      setLessonForm((prev) => ({ ...prev, is_published: mode === "publish" }));
       await refreshModuleLessons(lessonForm.module_id);
-      
-      // Clear draft after successful save
       clearDraft();
-      toast({ 
-        title: "✓ Aula salva com sucesso!", 
-        description: lessonForm.is_published 
-          ? "A aula está publicada e visível para alunos." 
-          : "A aula foi salva como rascunho."
+
+      toast({
+        title:
+          mode === "publish"
+            ? "✓ Aula publicada!"
+            : "✓ Rascunho salvo",
+        description:
+          mode === "publish"
+            ? "A aula está visível para os alunos."
+            : "Você pode continuar editando ou publicar quando estiver pronto.",
       });
+      return true;
     } catch (err) {
       console.error("Error saving lesson:", err);
-      toast({ 
-        title: "Erro ao salvar aula", 
+      toast({
+        title: "Erro ao salvar aula",
         description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive" 
+        variant: "destructive",
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
+
+  const handleSaveDraft = () => persistLesson("draft");
+  const handlePublishLesson = () => persistLesson("publish");
+  // "Salvar e Publicar" — same as publish; kept as a distinct handler for clarity
+  const handleSaveAndPublishLesson = () => persistLesson("publish");
+
 
   const handleCancelLessonEdit = useCallback(() => {
     // Ask if user wants to discard draft
