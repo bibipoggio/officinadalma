@@ -1133,22 +1133,54 @@ const AdminCursos = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-background rounded-lg p-3">
-          <Label className="text-sm">Publicar aula</Label>
-          <Switch
-            checked={lessonForm.is_published}
-            onCheckedChange={(checked) => setLessonForm(prev => ({ ...prev, is_published: checked }))}
-          />
-        </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
-        <Button variant="outline" className="flex-1 h-10" onClick={handleCancelLessonEdit}>
+      {/* Status & checklist */}
+      <LessonStatusChecklist
+        checklist={lessonChecklist}
+        isPublished={lessonForm.is_published}
+        lastSavedAt={editingLessonId ? autoSavedAt : null}
+        isSaving={editingLessonId ? isAutoSavingDB : false}
+      />
+
+      {/* Action buttons: 3 explicit modes */}
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+        <Button
+          variant="outline"
+          className="h-10 sm:flex-none"
+          onClick={handleCancelLessonEdit}
+          disabled={isSaving}
+        >
           Cancelar
         </Button>
-        <Button className="flex-1 h-10" onClick={handleSaveLesson} disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar"}
+        <Button
+          variant="ethereal"
+          className="h-10 sm:flex-1"
+          onClick={handleSaveDraft}
+          disabled={isSaving}
+          title="Salva o conteúdo atual sem publicar"
+        >
+          {isSaving ? "Salvando..." : "Salvar Rascunho"}
         </Button>
+        {lessonForm.is_published ? (
+          <Button
+            className="h-10 sm:flex-1"
+            onClick={handleSaveAndPublishLesson}
+            disabled={isSaving || !lessonComplete}
+            title={!lessonComplete ? "Preencha mínimo: título + 1 conteúdo + data" : "Salva e mantém publicada"}
+          >
+            {isSaving ? "Publicando..." : "Salvar e Publicar"}
+          </Button>
+        ) : (
+          <Button
+            className="h-10 sm:flex-1"
+            onClick={handlePublishLesson}
+            disabled={isSaving || !lessonComplete}
+            title={!lessonComplete ? "Preencha mínimo: título + 1 conteúdo + data" : "Publicar agora"}
+          >
+            {isSaving ? "Publicando..." : "Publicar"}
+          </Button>
+        )}
       </div>
     </div>
   );
