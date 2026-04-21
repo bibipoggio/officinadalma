@@ -19,7 +19,6 @@ export function LessonStatusChecklist({
   const status = getLessonStatus({
     title: checklist.find((c) => c.key === "title")?.ok ? "x" : "",
     is_published: isPublished,
-    released_at: checklist.find((c) => c.key === "released_at")?.ok ? new Date().toISOString() : null,
     body_markdown: checklist.find((c) => c.key === "content")?.ok ? "x" : "",
   });
 
