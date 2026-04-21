@@ -1458,6 +1458,21 @@ export type Database = {
       }
       get_enhanced_analytics: { Args: { p_period?: string }; Returns: Json }
       get_lesson_analytics: { Args: never; Returns: Json }
+      get_lesson_status: {
+        Args: {
+          _audio_url: string
+          _body_markdown: string
+          _content_type: string
+          _is_published: boolean
+          _media_url: string
+          _pdf_url: string
+          _released_at: string
+          _text_files_urls: Json
+          _title: string
+          _videos: Json
+        }
+        Returns: Database["public"]["Enums"]["lesson_status"]
+      }
       get_meditation_funnel_analytics: {
         Args: { p_period?: string }
         Returns: Json
@@ -1525,6 +1540,7 @@ export type Database = {
     Enums: {
       app_role: "user" | "moderator" | "admin"
       inscricao_status: "pendente" | "aprovado" | "rejeitado"
+      lesson_status: "rascunho" | "publicada" | "incompleta"
       purchase_status: "pendente" | "aprovado" | "rejeitado"
       report_status: "pending" | "reviewed" | "dismissed" | "actioned"
       share_mode: "private" | "community" | "anonymous"
@@ -1658,6 +1674,7 @@ export const Constants = {
     Enums: {
       app_role: ["user", "moderator", "admin"],
       inscricao_status: ["pendente", "aprovado", "rejeitado"],
+      lesson_status: ["rascunho", "publicada", "incompleta"],
       purchase_status: ["pendente", "aprovado", "rejeitado"],
       report_status: ["pending", "reviewed", "dismissed", "actioned"],
       share_mode: ["private", "community", "anonymous"],

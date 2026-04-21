@@ -17,8 +17,11 @@ import { CourseImageUpload } from "@/components/admin/CourseImageUpload";
 import { ConfirmModal } from "@/components/ui/Modal";
 import { SortableLessonItem } from "@/components/admin/SortableLessonItem";
 import { ConsolidateFragments } from "@/components/admin/ConsolidateFragments";
-import { useState, useEffect, useCallback } from "react";
+import { LessonStatusChecklist } from "@/components/admin/LessonStatusChecklist";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAutoSaveLessonDraft } from "@/hooks/useAutoSaveLessonDraft";
+import { useLessonAutoSaveDB } from "@/hooks/useLessonAutoSaveDB";
+import { getLessonChecklist, isLessonComplete } from "@/lib/lessonStatus";
 import { 
   useAdminCourses, 
   useAdminModules, 
@@ -90,18 +93,7 @@ const formatDateDisplay = (dateStr: string | null) => {
   return format(date, "dd/MM/yyyy", { locale: ptBR });
 };
 
-const getLessonStatus = (lesson: CourseLesson): { label: string; color: string; icon: string } => {
-  if (lesson.deleted_at) {
-    return { label: "Removida", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400", icon: "✕" };
-  }
-  if (!lesson.is_published) {
-    return { label: "Rascunho", color: "bg-muted text-muted-foreground", icon: "●" };
-  }
-  if (lesson.released_at && new Date(lesson.released_at) > new Date()) {
-    return { label: "Agendada", color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400", icon: "⏱" };
-  }
-  return { label: "Publicada", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400", icon: "✓" };
-};
+// Status visual derivation now lives in `@/lib/lessonStatus` via getLessonStatus.
 
 const AdminCursos = () => {
   const { toast } = useToast();
@@ -185,7 +177,23 @@ const AdminCursos = () => {
 
   const selectedCourse = courses.find(c => c.id === selectedCourseId);
 
-  // Auto-save hook for lesson drafts
+  // Required-fields checklist for the lesson currently being edited
+  const lessonChecklist = useMemo(
+    () =>
+      getLessonChecklist({
+        title: lessonForm.title,
+        media_url: lessonForm.media_url,
+        audio_url: lessonForm.audio_url,
+        body_markdown: lessonForm.body_markdown,
+        videos: lessonForm.videos,
+        files: lessonForm.files,
+        released_at: lessonForm.released_at?.toISOString() ?? null,
+      }),
+    [lessonForm]
+  );
+  const lessonComplete = lessonChecklist.every((c) => c.ok);
+
+  // Auto-save hook for lesson drafts (legacy localStorage — kept for new-lesson flow)
   const { saveDraft, loadDraft, clearDraft, hasDraft } = useAutoSaveLessonDraft(
     {
       ...lessonForm,
@@ -196,6 +204,39 @@ const AdminCursos = () => {
     isCreatingLesson,
     creatingLessonForModule
   );
+
+  // DB auto-save: only enabled when editing an EXISTING lesson row.
+  const dbAutoSavePayload = useMemo(() => {
+    if (!editingLessonId) return null;
+    const pdfFile = lessonForm.files.find((f) => f.name.toLowerCase().endsWith(".pdf"));
+    const textFiles = lessonForm.files.filter((f) => !f.name.toLowerCase().endsWith(".pdf"));
+    const durationMinutes = parseInt(lessonForm.duration_minutes, 10);
+    const audioMinutes = parseInt(lessonForm.audio_duration_minutes, 10);
+    return {
+      title: lessonForm.title.trim(),
+      access_level: lessonForm.access_level,
+      content_type: lessonForm.content_type,
+      media_url: lessonForm.media_url.trim() || null,
+      audio_url: lessonForm.audio_url.trim() || null,
+      pdf_url: pdfFile?.url ?? null,
+      body_markdown: lessonForm.body_markdown.trim() || null,
+      duration_seconds: isNaN(durationMinutes) ? null : durationMinutes * 60,
+      audio_duration_seconds: isNaN(audioMinutes) ? null : audioMinutes * 60,
+      released_at: lessonForm.released_at?.toISOString() ?? null,
+      summary: lessonForm.summary.trim() || null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      text_files_urls: textFiles as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      videos: (lessonForm.videos.length > 0 ? lessonForm.videos : []) as any,
+    };
+  }, [editingLessonId, lessonForm]);
+
+  const { isSaving: isAutoSavingDB, lastSavedAt: autoSavedAt } = useLessonAutoSaveDB({
+    lessonId: editingLessonId,
+    payload: dbAutoSavePayload,
+    enabled: !!editingLessonId,
+  });
+
   
   const [showDraftPrompt, setShowDraftPrompt] = useState(false);
 
@@ -507,37 +548,37 @@ const AdminCursos = () => {
     }, 100);
   }, []);
 
-  const handleSaveLesson = async () => {
+  /**
+   * Persists the current lesson form.
+   *  - mode "draft": saves with is_published=false, no completeness validation.
+   *  - mode "publish": validates required fields then saves with is_published=true.
+   */
+  const persistLesson = async (mode: "draft" | "publish") => {
+    // Light validation: title is always required for any save
     if (!lessonForm.title.trim()) {
       toast({ title: "Falta preencher: Título", variant: "destructive" });
-      return;
+      return false;
     }
 
-    // Validate required media for video/audio content types
-    if (lessonForm.content_type === "video" && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Arquivo de vídeo", variant: "destructive" });
-      return;
-    }
-
-    if (lessonForm.content_type === "audio" && !lessonForm.media_url.trim()) {
-      toast({ title: "Falta preencher: Arquivo de áudio", variant: "destructive" });
-      return;
-    }
-
-    // Validate URL format if provided
+    // URL format checks (apply to both modes when fields are filled)
     if (lessonForm.media_url && !isValidUrl(lessonForm.media_url)) {
       toast({ title: "O link do vídeo não é válido.", variant: "destructive" });
-      return;
+      return false;
     }
-
     if (lessonForm.audio_url && !isValidUrl(lessonForm.audio_url)) {
       toast({ title: "O link do áudio não é válido.", variant: "destructive" });
-      return;
+      return false;
     }
 
-    if (lessonForm.content_type === "text" && !lessonForm.body_markdown.trim()) {
-      toast({ title: "Falta preencher: Conteúdo do texto", variant: "destructive" });
-      return;
+    // Publish mode: enforce checklist
+    if (mode === "publish" && !lessonComplete) {
+      const missing = lessonChecklist.filter((c) => !c.ok).map((c) => c.label).join(", ");
+      toast({
+        title: "Não é possível publicar aula incompleta",
+        description: `Preencha o mínimo: ${missing}.`,
+        variant: "destructive",
+      });
+      return false;
     }
 
     const durationMinutes = parseInt(lessonForm.duration_minutes, 10);
@@ -545,14 +586,13 @@ const AdminCursos = () => {
 
     setIsSaving(true);
     try {
-      const audioDurationSeconds = lessonForm.audio_duration_minutes 
-        ? parseInt(lessonForm.audio_duration_minutes) * 60 
+      const audioDurationSeconds = lessonForm.audio_duration_minutes
+        ? parseInt(lessonForm.audio_duration_minutes) * 60
         : null;
 
-      // Separate PDF from other files for database storage
-      const pdfFile = lessonForm.files.find(f => f.name.toLowerCase().endsWith('.pdf'));
-      const textFiles = lessonForm.files.filter(f => !f.name.toLowerCase().endsWith('.pdf'));
-      
+      const pdfFile = lessonForm.files.find((f) => f.name.toLowerCase().endsWith(".pdf"));
+      const textFiles = lessonForm.files.filter((f) => !f.name.toLowerCase().endsWith(".pdf"));
+
       const lessonData = {
         title: lessonForm.title.trim(),
         access_level: lessonForm.access_level,
@@ -564,16 +604,17 @@ const AdminCursos = () => {
         duration_seconds: durationSeconds,
         audio_duration_seconds: audioDurationSeconds,
         released_at: lessonForm.released_at?.toISOString() || null,
-        is_published: lessonForm.is_published,
+        is_published: mode === "publish",
         summary: lessonForm.summary.trim() || null,
         text_files_urls: textFiles,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         videos: (lessonForm.videos.length > 0 ? lessonForm.videos : []) as any,
         course_id: selectedCourseId!,
         module_id: lessonForm.module_id,
       };
 
       let saveError = null;
-      
+
       if (editingLessonId) {
         const { error } = await supabase
           .from("course_lessons")
@@ -582,10 +623,9 @@ const AdminCursos = () => {
         saveError = error;
         if (!error) setEditingLessonId(null);
       } else {
-        // Get next position
         const moduleLessons = allLessons[lessonForm.module_id] || [];
         const nextPosition = moduleLessons.length + 1;
-        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase
           .from("course_lessons")
           .insert({ ...lessonData, position: nextPosition } as any);
@@ -595,39 +635,51 @@ const AdminCursos = () => {
           setCreatingLessonForModule(null);
         }
       }
-      
+
       if (saveError) {
         console.error("Error saving lesson:", saveError);
-        toast({ 
-          title: "Erro ao salvar aula", 
+        toast({
+          title: mode === "publish" ? "Erro ao publicar aula" : "Erro ao salvar rascunho",
           description: saveError.message || "Verifique os dados e tente novamente.",
-          variant: "destructive" 
+          variant: "destructive",
         });
-        return;
+        return false;
       }
-      
-      // Refresh lessons
+
+      // Reflect new state locally + clear local draft
+      setLessonForm((prev) => ({ ...prev, is_published: mode === "publish" }));
       await refreshModuleLessons(lessonForm.module_id);
-      
-      // Clear draft after successful save
       clearDraft();
-      toast({ 
-        title: "✓ Aula salva com sucesso!", 
-        description: lessonForm.is_published 
-          ? "A aula está publicada e visível para alunos." 
-          : "A aula foi salva como rascunho."
+
+      toast({
+        title:
+          mode === "publish"
+            ? "✓ Aula publicada!"
+            : "✓ Rascunho salvo",
+        description:
+          mode === "publish"
+            ? "A aula está visível para os alunos."
+            : "Você pode continuar editando ou publicar quando estiver pronto.",
       });
+      return true;
     } catch (err) {
       console.error("Error saving lesson:", err);
-      toast({ 
-        title: "Erro ao salvar aula", 
+      toast({
+        title: "Erro ao salvar aula",
         description: "Ocorreu um erro inesperado. Tente novamente.",
-        variant: "destructive" 
+        variant: "destructive",
       });
+      return false;
     } finally {
       setIsSaving(false);
     }
   };
+
+  const handleSaveDraft = () => persistLesson("draft");
+  const handlePublishLesson = () => persistLesson("publish");
+  // "Salvar e Publicar" — same as publish; kept as a distinct handler for clarity
+  const handleSaveAndPublishLesson = () => persistLesson("publish");
+
 
   const handleCancelLessonEdit = useCallback(() => {
     // Ask if user wants to discard draft
@@ -1081,22 +1133,54 @@ const AdminCursos = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-background rounded-lg p-3">
-          <Label className="text-sm">Publicar aula</Label>
-          <Switch
-            checked={lessonForm.is_published}
-            onCheckedChange={(checked) => setLessonForm(prev => ({ ...prev, is_published: checked }))}
-          />
-        </div>
       </div>
 
-      <div className="flex gap-2 pt-1">
-        <Button variant="outline" className="flex-1 h-10" onClick={handleCancelLessonEdit}>
+      {/* Status & checklist */}
+      <LessonStatusChecklist
+        checklist={lessonChecklist}
+        isPublished={lessonForm.is_published}
+        lastSavedAt={editingLessonId ? autoSavedAt : null}
+        isSaving={editingLessonId ? isAutoSavingDB : false}
+      />
+
+      {/* Action buttons: 3 explicit modes */}
+      <div className="flex flex-col gap-2 pt-1 sm:flex-row">
+        <Button
+          variant="outline"
+          className="h-10 sm:flex-none"
+          onClick={handleCancelLessonEdit}
+          disabled={isSaving}
+        >
           Cancelar
         </Button>
-        <Button className="flex-1 h-10" onClick={handleSaveLesson} disabled={isSaving}>
-          {isSaving ? "Salvando..." : "Salvar"}
+        <Button
+          variant="ethereal"
+          className="h-10 sm:flex-1"
+          onClick={handleSaveDraft}
+          disabled={isSaving}
+          title="Salva o conteúdo atual sem publicar"
+        >
+          {isSaving ? "Salvando..." : "Salvar Rascunho"}
         </Button>
+        {lessonForm.is_published ? (
+          <Button
+            className="h-10 sm:flex-1"
+            onClick={handleSaveAndPublishLesson}
+            disabled={isSaving || !lessonComplete}
+            title={!lessonComplete ? "Preencha mínimo: título + 1 conteúdo + data" : "Salva e mantém publicada"}
+          >
+            {isSaving ? "Publicando..." : "Salvar e Publicar"}
+          </Button>
+        ) : (
+          <Button
+            className="h-10 sm:flex-1"
+            onClick={handlePublishLesson}
+            disabled={isSaving || !lessonComplete}
+            title={!lessonComplete ? "Preencha mínimo: título + 1 conteúdo + data" : "Publicar agora"}
+          >
+            {isSaving ? "Publicando..." : "Publicar"}
+          </Button>
+        )}
       </div>
     </div>
   );
